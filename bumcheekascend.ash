@@ -2287,6 +2287,8 @@ boolean bcascToot() {
     }
     if (item_amount($item["pork elf goodies sack"]) > 0) {
         use(1, $item[pork elf goodies sack]);
+        foreach stone in $items[hamethyst, baconstone, porquoise]
+            autosell(item_amount(stone), stone);
     }
 	checkStage("toot", true);
     return true;
