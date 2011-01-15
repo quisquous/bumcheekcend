@@ -2837,9 +2837,33 @@ void bcs12() {
 			item_turnin($item[round green sunglasses]);
 		}
 		*/
-		
-		//Kill the boss.
-		abort("Probably best that you kill the boss yourself. I haven't turned in the war gear for you.");
+
+		if (!checkStage("prewarboss")) {
+			checkStage("prewarboss", true);
+			abort("Stopping to let you sell war items.  Run script again to continue.");
+		}
+		// Kill the boss.
+		int bossMoxie = 250;
+		cli_execute("maximize moxie -ML, -melee, +outfit frat war");
+		setMood("");
+		cli_execute("mood execute");
+		if (get_property("telescopeUpgrades") > 0) {
+			cli_execute("telescope look high");
+		}
+		if (my_buffedstat($stat[Moxie]) < bossMoxie) {
+			if (have_skill($skill[Advanced Saucecrafting]) && contains_text(visit_url("campground.php?action=inspectkitchen"), "Chef-in-the-Box")) {
+				cli_execute("cast 1 saucecrafting; use 1 serum of sarcasm");
+			}
+		}
+		if (my_buffedstat($stat[Moxie]) < bossMoxie) {
+			abort("Can't get to " + bossMoxie + " moxie for the boss fight.  You're on your own.");
+		}
+		cli_execute("restore hp;restore mp");
+		visit_url("bigisland.php?place=camp&whichcamp=1");
+		visit_url("bigisland.php?place=camp&whichcamp=2");
+		visit_url("bigisland.php?action=bossfight&pwd");
+		if (index_of(run_combat(), "WINWINWIN") == -1)
+			abort("Failed to kill the boss!\n");
 	}
 	
 	levelMe(148, true);
