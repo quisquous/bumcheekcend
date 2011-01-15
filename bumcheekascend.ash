@@ -2322,6 +2322,47 @@ boolean bcascToot() {
     return true;
 }
 
+boolean bcascBurnTeleportitis() {
+	if (have_effect($effect[Teleportitis]) == 0) return true;
+
+	print("BCC: Burning off teleportitis", "purple");
+
+	// Burn it off on shore adventures.
+	if (get_property("telescopeUpgrades") >= 7) {
+		if (cli_execute("telescope look low")) {}
+		string shore = get_property("telescope7");
+		location vacation;
+		item goal;
+
+		if (contains_text(shore, "horns")) {
+			vacation = $location[moxie vacation];
+			goal = $item[barbed-wire fence];
+		} else if (contains_text(shore, "beam")) {
+			vacation = $location[muscle vacation];
+			goal = $item[stick of dynamite];
+		} else if (contains_text(shore, "stinger")) {
+			vacation = $location[mysticality vacation];
+			goal = $item[tropical orchid];
+		} else {
+			abort("Internal error.  Couldn't sort out telescope text.");
+		}
+
+		if (item_amount(goal) == 0) {
+			adventure(1, vacation);
+		}
+	}
+	if (have_effect($effect[Teleportitis]) == 0) return true;
+
+	bcascMining();
+	if (have_effect($effect[Teleportitis]) == 0) return true;
+
+	bcascDailyDungeon();
+	if (have_effect($effect[Teleportitis]) == 0) return true;
+
+	adventure(have_effect($effect[Teleportitis]), $location[Haunted Kitchen]);
+	return true;
+}
+
 boolean bcascWand() {
 	if (checkStage("wand")) return true;
 
@@ -2356,7 +2397,7 @@ boolean bcascWand() {
 		}
 
 		if (have_effect($effect[Teleportitis]) > 0)
-			abort("You have teleportitis. Better let you take over now.");
+			bcascBurnTeleportitis();
 
 		//Then we have to get the wand itself. Must have at least 5000 meat for this, so use 6000 for safety. 
 		if (my_meat() > 6000) {
@@ -3046,7 +3087,7 @@ void bumcheekcend() {
 
 void main() {
 	if (have_effect($effect[Teleportitis]) > 0 && my_level() < 13) {
-		abort("You have teleportitis. Better let you take over now.");
+		bcascBurnTeleportitis();
 	}
 
 	print("******************", "green");
