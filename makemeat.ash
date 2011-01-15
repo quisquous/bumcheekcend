@@ -70,7 +70,6 @@ void process_inventory() {
 		ancient vinyl coin purse,
 		black pension check,
 		briefcase,
-		chest of the bonerdagon,
 		evil golden arches,
 		fat wallet,
 		feng shui for big dumb idiots,
