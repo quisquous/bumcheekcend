@@ -2276,8 +2276,10 @@ boolean bcascTrapper() {
 			visit_url("trapper.php");
 		}
 		cli_execute("outfit mining");
-		if (!bcascMining())
+		if (!bcascMining()) {
 			print("BCC: The script has stopped mining for ore, probably because you ran out of unaccomapnied miner adventures. We'll try again tomorrow.", "purple");
+			return false;
+		}
 	}
 	while (contains_text(visit_url("trapper.php"), "6 chunks of goat cheese")) {
 		cli_execute("friars food");
