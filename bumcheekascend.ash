@@ -1090,6 +1090,32 @@ boolean bcascCyrpt() {
 	return true;
 }
 
+void bcascDailyDungeon() {
+	void zapKeys() {
+		if (canZap()) {
+			if (i_a("boris's ring") + i_a("jarlsberg's earring") + i_a("sneaky pete's breath spray") > 0 ) {
+				print("BCC: Your wand is safe, so I'm going to try to zap something");
+				if (i_a("boris's ring") > 0) { cli_execute("zap boris's ring"); 
+				} else if (i_a("jarlsberg's earring") > 0) { cli_execute("zap jarlsberg's earring"); 
+				} else if (i_a("sneaky pete's breath spray") > 0) { cli_execute("zap sneaky pete's breath spray"); 
+				}
+			}
+		} else {
+			print("BCC: You don't have a wand. No Zapping for you.", "purple");
+		}
+	}
+	
+	zapKeys();
+
+	if (numUniqueKeys() >= 2)
+		return;
+
+	cli_execute("make * skeleton key");
+	if (!contains_text(visit_url("dungeon.php"), "reached the bottom")) cli_execute("adv " + my_adventures() + " daily dungeon");
+
+	zapKeys();
+}
+	
 boolean bcascDinghyHippy() {
 	if (checkStage("dinghy")) return true;
 	//We shore first so that we can get the hippy outfit ASAP.
@@ -2433,37 +2459,7 @@ void bcs8() {
 	bcascTrapper();
 	bcascWand();
 	bcascPirateFledges();
-	
-	//By here, we should have all the stats we need. 
-	if (numUniqueKeys() < 2) {
-		if (canZap()) {
-			if (i_a("boris's ring") + i_a("jarlsberg's earring") + i_a("sneaky pete's breath spray") > 0 ) {
-				print("BCC: Your wand is safe, so I'm going to try to zap something");
-				if (i_a("boris's ring") > 0) { cli_execute("zap boris's ring"); 
-				} else if (i_a("jarlsberg's earring") > 0) { cli_execute("zap jarlsberg's earring"); 
-				} else if (i_a("sneaky pete's breath spray") > 0) { cli_execute("zap sneaky pete's breath spray"); 
-				}
-			}
-		} else {
-			print("BCC: You don't have a wand. No Zapping for you.", "purple");
-		}
-		
-		int amountKeys = 0;
-		if (numUniqueKeys() < 2) {
-			//Make skeleton keys if we can.
-			if (i_a("skeleton bone") > 1 && i_a("loose teeth") > 1) {
-				if (i_a("skeleton bone") > i_a("loose teeth")) {
-					amountKeys = i_a("loose teeth") - 1;
-				} else {
-					amountKeys = i_a("skeleton bone") - 1;
-				}
-				cli_execute("make "+amountKeys+" skeleton key");
-			}
-			
-			//Finally, adventure in the DD
-			if (!contains_text(visit_url("dungeon.php"), "reached the bottom")) cli_execute("adv * daily dungeon");
-		}
-	}
+	bcascDailyDungeon();
 	
 	levelMe(68, true);
 }
