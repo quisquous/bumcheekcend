@@ -61,7 +61,6 @@ void dispose_all_but(int keep, item thing) {
 }
 
 void process_inventory() {
-
 	if (item_amount($item[evil golden arch]) > 1)
 		cli_execute("make * golden arches");
 
@@ -123,6 +122,7 @@ void process_inventory() {
 		hemp string,
 		hors d'oeuvre tray,
 		hot katana blade,
+		hot plate,
 		huge spoon,
 		infernal fife,
 		infernal insoles,
@@ -176,13 +176,16 @@ void process_inventory() {
 		7-foot dwarven mattock,
 		baseball,
 		broken skull,
+		dead guy's watch,
 		dehydrated caviar,
 		disease,
+		eyepatch,
 		filthy corduroys,
 		filthy knitted dread sack,
 		firecracker,
 		harem pants,
 		harem veil,
+		jolly roger charrrm bracelet,
 		knob goblin elite helm,
 		knob goblin elite pants,
 		knob goblin elite polearm,
@@ -194,7 +197,11 @@ void process_inventory() {
 		razor-sharp can lid,
 		ruby w,
 		safety vest,
+		stuffed shoulder parrot,
+		swashbuckling pants,
+		tap shoes,
 		tasty fun good rice candy,
+		worn tophat,
 		wussiness potion,
 	] {
 		dispose_all_but(1, thing);
