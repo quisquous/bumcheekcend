@@ -75,10 +75,12 @@ void process_inventory() {
 		feng shui for big dumb idiots,
 		frobozz instant house,
 		knob kitchen grab-bag,
+		large box,
 		newbiesport tent,
 		old coin purse,
 		old leather wallet,
 		penultimate fantasy chest,
+		small box,
 		warm subject gift certificate,
 	] {
 		use(item_amount(thing), thing);
