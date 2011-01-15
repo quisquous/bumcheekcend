@@ -88,12 +88,15 @@ void process_inventory() {
 
 	// Sell all
 	foreach thing in $items[
+		1337 7r0uz0rz,
+		ascii shirt,
 		asparagus knife,
 		baconstone,
 		beach glass bead,
 		bone flute,
 		bowl of cottage cheese,
 		brimstone chicken sandwich,
+		caret,
 		carob chunks,
 		clay peace-sign bead,
 		coffin lid,
@@ -102,10 +105,12 @@ void process_inventory() {
 		diamond-studded cane,
 		double bacon beelzeburger,
 		double-barreled sling,
+		draggin' ball hat,
 		dried face,
 		fat stacks of cash,
 		filthy pestle,
 		flaming crutch,
+		flaming talons,
 		ghuol ears,
 		ghuol guolash,
 		hamethyst,
@@ -135,12 +140,15 @@ void process_inventory() {
 		patchouli incense stick,
 		phat turquoise bead,
 		porquoise,
+		pr0n legs,
 		rusty grave robbing shovel,
+		spam witch sammich,
 		spiked femur,
 		spooky shrunken head,
 		spooky stick,
 		stone of extreme power,
 		strongness elixir,
+		trollhouse cookies,
 		uncle jick's brownie mix,
 		vampire cape,
 		viking helmet,
@@ -163,17 +171,22 @@ void process_inventory() {
 		knob goblin elite helm,
 		knob goblin elite pants,
 		knob goblin elite polearm,
+		meat vortex,
+		metallic a,
 		miner's helmet,
 		miner's pants,
 		possessed tomato,
 		razor-sharp can lid,
 		ruby w,
 		safety vest,
+		tasty fun good rice candy,
 		wussiness potion,
 	] {
 		dispose_all_but(1, thing);
 	}
 
+	dispose_all_but(2, $item[lowercase n]);
+	dispose_all_but(2, $item[original g]);
 	dispose_all_but(3, $item[hot wing]);
 
 	// TODO(picklish) - smartly handle extra ore
