@@ -70,6 +70,7 @@ void process_inventory() {
         ancient vinyl coin purse,
         black pension check,
         briefcase,
+        chest of the bonerdagon,
         evil golden arches,
         fat wallet,
         feng shui for big dumb idiots,
@@ -89,10 +90,12 @@ void process_inventory() {
         asparagus knife,
         baconstone,
         beach glass bead,
+        bone flute,
         bowl of cottage cheese,
         brimstone chicken sandwich,
         carob chunks,
         clay peace-sign bead,
+        coffin lid,
         demon skin,
         dense meat stack,
         diamond-studded cane,
@@ -102,9 +105,12 @@ void process_inventory() {
         fat stacks of cash,
         filthy pestle,
         flaming crutch,
+        ghuol ears,
+        ghuol guolash,
         hamethyst,
         hemp string,
         hot katana blade,
+        huge spoon,
         infernal fife,
         infernal insoles,
         jumbo dr. lucifer,
@@ -116,7 +122,9 @@ void process_inventory() {
         knob goblin spatula,
         knob goblin tongs,
         leather mask,
+        lihc face,
         lord of the flies-sized fries,
+        lump of diamond,
         mad train wine,
         magicalness-in-a-can,
         meat paste,
@@ -126,8 +134,11 @@ void process_inventory() {
         patchouli incense stick,
         phat turquoise bead,
         porquoise,
+        rusty grave robbing shovel,
+        spiked femur,
         spooky shrunken head,
         spooky stick,
+        stone of extreme power,
         strongness elixir,
         uncle jick's brownie mix,
         vampire cape,
@@ -139,6 +150,7 @@ void process_inventory() {
 
     // Sell all but one
     foreach thing in $items[
+        7-foot dwarven mattock,
         baseball,
         broken skull,
         disease,
@@ -150,15 +162,20 @@ void process_inventory() {
         knob goblin elite helm,
         knob goblin elite pants,
         knob goblin elite polearm,
+        miner's helmet,
+        miner's pants,
         possessed tomato,
         razor-sharp can lid,
         ruby w,
+        safety vest,
         wussiness potion,
     ] {
         dispose_all_but(1, thing);
     }
 
     dispose_all_but(3, $item[hot wing]);
+
+    // TODO(picklish) - smartly handle extra ore
 
     // Save large stat spleen items early on, because they're decent filler
     // when wads aren't available.
