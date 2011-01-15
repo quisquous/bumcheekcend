@@ -836,7 +836,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 				cli_execute("goal set 1 dance card");
 				//We can't use bumAdv here as we'd get into an infinite loop. And that would be bad. 
 				if ((my_buffedstat($stat[Moxie]) < 130) && canMCD()) cli_execute("mcd 0");
-				if (adventure(5, $location[Haunted Ballroom])) {}
+				if (adventure(1, $location[Haunted Ballroom])) {}
 			}
 		}
 	}
