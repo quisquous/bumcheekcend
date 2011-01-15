@@ -3010,8 +3010,6 @@ void bcs13() {
 				}
 				print("BCC: Hi-keeba!", "purple");
 				visit_url("lair6.php?place=6");
-				print("BCC: Getting all your items out of Storage. Not all bankers are evil, eh?", "purple");
-				visit_url("storage.php?action=takeall&pwd");
 				abort("Tada! Thankyou for using bumcheekascend.ash.");
 			} else {
 				abort("Bring it on.");
