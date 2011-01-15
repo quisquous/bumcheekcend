@@ -211,6 +211,15 @@ void process_inventory() {
         }
     }
 
+    if (item_amount($item[spookyraven library key]) > 0) {
+        foreach thing in $items[
+            handful of hand chalk,
+            pool cue,
+        ] {
+            dispose_all(thing);
+        }
+    }
+
     // Finally, clean up any pulverizing messes.  Don't bother selling wads,
     // because they'll likely get used and the meat isn't needed by then.
     foreach thing in $items[
