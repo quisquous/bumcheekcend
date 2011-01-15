@@ -2307,18 +2307,31 @@ boolean bcascWand() {
 		//Use the plus sign if we have it. Just in case someone's found the oracle but forgotten to use the plus sign.
 		if (i_a("plus sign") > 0) { if (cli_execute("use plus sign")) {} }
 	
-		//Check for the DoD image. 
-		if (index_of(visit_url("dungeons.php"), "greater.gif") > 0) {
+		// Need at least 1000 meat for the oracle adventure.  Let's be safe and say 2000.
+		if (my_meat() < 2000) {
+			print("BCC: Waiting on the oracle until you have more meat.", "purple");
+			return false;
+		}
+
+		// Check for the DoD image. 
+		while (index_of(visit_url("dungeons.php"), "greater.gif") > 0) {
 			//Then we need to check for the plus sign. 
 			if (i_a("plus sign") == 0) {
 				cli_execute("set choiceAdventure451 = 3");
 				bumAdv($location[Greater-Than Sign], "", "itemsnc", "1 plus sign", "Getting the Plus Sign", "-");
 			}
-			cli_execute("set choiceAdventure451 = 5");
-			bumAdv($location[Greater-Than Sign], "", "itemsnc", "1 choiceadv", "Getting Teleportitis", "-");
-			abort("Woah, man. You got teleportitis. Better stop and adventure to know what the plus sign is!");
+			while (have_effect($effect[Teleportitis]) == 0) {
+				cli_execute("set choiceAdventure451 = 5");
+				bumAdv($location[Greater-Than Sign], "", "itemsnc", "1 choiceadv", "Getting Teleportitis", "-");
+			}
+			cli_execute("set choiceAdventure3 = 3");
+			adventure(1, $location[Greater-Than Sign]);
+			if (i_a("plus sign") > 0) { if (cli_execute("use plus sign")) {} }
 		}
-		
+
+		if (have_effect($effect[Teleportitis]) > 0)
+			abort("You have teleportitis. Better let you take over now.");
+
 		//Then we have to get the wand itself. Must have at least 5000 meat for this, so use 6000 for safety. 
 		if (my_meat() > 6000) {
 			cli_execute("set choiceAdventure25 = 2");
