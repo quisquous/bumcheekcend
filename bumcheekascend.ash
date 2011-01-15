@@ -435,8 +435,10 @@ void defaultMood() {
 	if (my_level() > 5) { cli_execute("trigger lose_effect, Butt-Rock Hair, use 5 hair spray"); }
 	cli_execute("trigger lose_effect, The Moxious Madrigal, cast 1 The Moxious Madrigal");
 	if (my_level() < 7) cli_execute("trigger lose_effect, The Magical Mojomuscular Melody, cast 1 The Magical Mojomuscular Melody");
-	cli_execute("trigger lose_effect, Mariachi Mood, cast 1 Moxie of the Mariachi");
-	cli_execute("trigger lose_effect, Disco State of Mind, cast 1 Disco Aerobics");
+	if (have_skill($skill[Moxie of the Mariachi]))
+		cli_execute("trigger lose_effect, Mariachi Mood, cast 1 Moxie of the Mariachi");
+	if (have_skill($skill[Disco Aerobics]))
+		cli_execute("trigger lose_effect, Disco State of Mind, cast 1 Disco Aerobics");
 }
 
 int i_a(string name) {
