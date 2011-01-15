@@ -41,7 +41,7 @@ void dispose(int amount, item thing) {
         autosell(amount, thing);
     } else {
         if (pulverize_value(thing) > autosell_price(thing)) {
-            cli_execute("pulverize " + amount + " thing");
+            cli_execute("pulverize " + amount + " " + thing);
         } else {
             autosell(amount, thing);
         }
