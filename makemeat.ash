@@ -11,6 +11,11 @@ int pulverize_value(item thing) {
 	// TODO(picklish) - doesn't return 0 for items bought from stores
 	// TODO(picklish) - doesn't return 0 for antique arms and armor
 	int power = get_power(thing);
+
+	// TODO(picklish) - add a config option to prefer wads, if needed
+	if (power >= 160)
+		return 100000;
+
 	if (power < 10)
 		return 0;
 	else if (power < 40)
