@@ -2710,7 +2710,6 @@ void bcs12() {
 	
 	boolean killSide(int numDeadNeeded) {
 		setFamiliar("");
-		if (my_adventures() == 0) abort("You don't have any adventures :(");
 		
 		int numKilled;
 		if (bcasc_doWarAs == "frat") {
@@ -2724,6 +2723,7 @@ void bcs12() {
 		}
 		
 		while (numKilled < numDeadNeeded) {
+			if (my_adventures() == 0) abort("You don't have any adventures :(");
 			cli_execute("adv 1 battlefield ("+bcasc_doWarAs);
 			
 			if (bcasc_doWarAs == "frat") {
