@@ -10,8 +10,33 @@ void checkFamiliar() {
 	}
 }
 
+boolean castSugar() {
+	if (item_amount($item[sugar sheet]) > 0)
+		return true;
+	if (!have_skill($skill[summon sugar sheets]))
+		return false;
+	if (!use_skill(1, $skill[summon sugar sheets]))
+		return false;
+	return item_amount($item[sugar sheet]) > 0;
+}
+
+void equipSugar() {
+	if (item_amount($item[sugar shirt]) == 0) {
+		if (!have_skill($skill[torso awaregness]))
+			return;
+		if (equipped_item($slot[shirt]) == $item[sugar shirt])
+			return;
+		if (!castSugar())
+			return;
+		if (!retrieve_item(1, $item[sugar shirt]))
+			return;
+	}
+	equip($slot[shirt], $item[sugar shirt]);
+}
+
 void main() {
 	print("BETWEEN BATTLE", "green");
 	process_inventory();
 	checkFamiliar();
+	equipSugar();
 }
