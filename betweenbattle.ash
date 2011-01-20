@@ -145,7 +145,7 @@ void checkFamiliar() {
 	}
 
 	if (my_spleen_use() >= 12 && my_familiar() == $familiar[sandworm])
-		setFamiliar("");
+		use_familiar($familiar[Frumious Bandersnatch]);
 	if (my_level() <= 2)
 		use_familiar($familiar[Frumious Bandersnatch]);
 }
