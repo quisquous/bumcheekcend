@@ -1,6 +1,64 @@
 import <makemeat.ash>
 import <bumcheekascend.ash>
 
+effect skillToEffect(skill s) {
+	switch (s) {
+		case $skill[moxious madrigal]: return $effect[moxious madrigal];
+		case $skill[leash of linguini]: return $effect[leash of linguini];
+		case $skill[mojomuscular melody]: return $effect[mojomuscular melody];
+	}
+
+	return $effect[none];
+}
+
+boolean tryCast(skill s) {
+	effect e = skillToEffect(s);
+	if (e == $effect[none] || !have_skill(s) || have_effect(e) > 0)
+		return false;
+	
+	use_skill(1, s);
+	return have_effect(e) > 0;
+}
+
+boolean needOlfaction(location loc) {
+	// TODO(picklish) - don't depend on CSS settings here.
+	switch (loc) {
+	case $location[8-bit realm]:
+	case $location[dark neck of the woods]:
+	case $location[dungeons of doom]:
+	case $location[friar's gate]:
+	case $location[goatlet]:
+	case $location[haunted ballroom]:
+		return true;
+	default:
+		return false;
+	}
+}
+
+void olfactionPreparation() {
+	skill o = $skill[transcendent olfaction];
+	if (!have_skill(o) || have_effect($effect[on the trail]) > 0)
+		return;
+	if (!needOlfaction(my_location()))
+		return;
+
+	int cost = mp_cost(o) + combat_mana_cost_modifier();
+	int needed = cost - my_mp();
+	if (needed <= 0)
+		return;
+
+	if (cost > my_maxmp()) {
+		tryCast($skill[mojo muscularmelody]);
+		if (cost > my_maxmp())
+			return;
+	}
+
+	if (needed > 10 && item_amount($item[tonic water]) > 0)
+		use(1, $item[tonic water]);
+
+	restore_mp(needed);
+}
+
 boolean castSugar() {
 	if (item_amount($item[sugar sheet]) > 0)
 		return true;
@@ -125,4 +183,5 @@ void main() {
 
 	process_inventory();
 	checkFamiliar();
+	olfactionPreparation();
 }
