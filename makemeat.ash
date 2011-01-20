@@ -129,7 +129,6 @@ void process_inventory() {
 		desiccated apricot,
 		diamond-studded cane,
 		double bacon beelzeburger,
-		double-barreled sling,
 		draggin' ball hat,
 		dried face,
 		drywall axe,
