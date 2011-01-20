@@ -19,7 +19,7 @@ boolean tryCast(skill s) {
 	effect e = skillToEffect(s);
 	if (e == $effect[none] || !have_skill(s) || have_effect(e) > 0)
 		return false;
-	
+
 	use_skill(1, s);
 	return have_effect(e) > 0;
 }
@@ -158,7 +158,6 @@ void equipSugar() {
 }
 
 void main() {
-	print("BETWEEN BATTLE", "green");
 	if (my_turncount() == 0)
 		firstTurn();
 	equipSugar();
