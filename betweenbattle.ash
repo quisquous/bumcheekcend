@@ -29,12 +29,13 @@ boolean needOlfaction(location loc) {
 	// TODO(picklish) - don't depend on CSS settings here.
 	switch (loc) {
 	case $location[8-bit realm]:
-	case $location[dark neck of the woods]:
 	case $location[dungeons of doom]:
-	case $location[friar's gate]:
 	case $location[goatlet]:
 	case $location[haunted ballroom]:
 		return true;
+	case $location[dark neck of the woods]:
+	case $location[friar's gate]:
+		return item_amount($item[hellion cube]) <= 10;
 	default:
 		return false;
 	}
