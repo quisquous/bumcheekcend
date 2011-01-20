@@ -1,15 +1,6 @@
 import <makemeat.ash>
 import <bumcheekascend.ash>
 
-void checkFamiliar() {
-	// Don't bother using the HeBo when there's no yellow ray.
-	if (my_familiar() == $familiar[He-Boulder] && have_effect($effect[Everything Looks Yellow]) > 0) {
-		// If we're using the He-Bo, it's likely that there was only one set of
-		// items that we care about.  So, switch to a stat familiar.
-		setFamiliar("");
-	}
-}
-
 boolean castSugar() {
 	if (item_amount($item[sugar sheet]) > 0)
 		return true;
@@ -18,6 +9,76 @@ boolean castSugar() {
 	if (!use_skill(1, $skill[summon sugar sheets]))
 		return false;
 	return item_amount($item[sugar sheet]) > 0;
+}
+
+string consultRedRay(int round, string opp, string text) {
+	if (have_effect($effect[everything looks red]) > 0) {
+		return "attack";
+	}
+	if (contains_text(text, "red eye")) {
+		return "skill point at your opponent";
+	} else {
+		switch (my_class()) {
+			case $class[Disco Bandit] : return "skill suckerpunch"; break;
+			case $class[Accordion Thief] : return "skill sing"; break;
+		}
+	}
+	return "attack";
+}
+
+void useRedRay() {
+	if (have_effect($effect[everything looks red]) > 0)
+		return;
+	if (!have_familiar($familiar[he-boulder]))
+		return;
+
+	familiar oldFamiliar = my_familiar();
+
+	use_familiar($familiar[he-boulder]);
+	if (item_amount($item[sugar shield]) == 0 && equipped_item($slot[familiar]) != $item[sugar shield]) {
+		if (castSugar()) {
+			retrieve_item(1, $item[sugar shield]);
+			equip($slot[familiar], $item[sugar shield]);
+		}
+	}
+	if (have_skill($skill[leash of linguini]) && have_effect($effect[leash of linguini]) == 0)
+		use_skill(1, $skill[leash of linguini]);
+	if (item_amount($item[clan vip lounge key]) > 0 && get_property("_poolGames") < 3 && have_effect($effect[billiards belligerence]) == 0)
+		cli_execute("pool agg");
+
+	// Since the he-boulder restores a lot of MP, try to capture it.
+	if (have_skill($skill[mojomuscular melody]) && have_effect($effect[mojomuscular melody]) == 0)
+		use_skill(1, $skill[mojomuscular melody]);
+
+	if (canMCD())
+		cli_execute("mcd 10");
+
+	adv1(my_location(), 0, "consultRedRay");
+
+	use_familiar(oldFamiliar);
+}
+
+void firstTurn() {
+	if (item_amount($item[newbiesport tent]) == 0)
+		retrieve_item(1, $item[newbiesport tent]);
+	use(1, $item[newbiesport tent]);
+
+	if (visit_url("clan_viplounge.php").contains_text("a present under it"))
+		visit_url("clan_viplounge.php?action=crimbotree");
+}
+
+void checkFamiliar() {
+	// Don't bother using the HeBo when there's no yellow ray.
+	if (my_familiar() == $familiar[He-Boulder] && have_effect($effect[Everything Looks Yellow]) > 0) {
+		// If we're using the He-Bo, it's likely that there was only one set of
+		// items that we care about.  So, switch to a stat familiar.
+		setFamiliar("");
+	}
+
+	if (my_spleen_use() >= 12 && my_familiar() == $familiar[sandworm])
+		setFamiliar("");
+	if (my_level() <= 2)
+		use_familiar($familiar[Frumious Bandersnatch]);
 }
 
 void equipSugar() {
@@ -36,7 +97,32 @@ void equipSugar() {
 
 void main() {
 	print("BETWEEN BATTLE", "green");
+	if (my_turncount() == 0)
+		firstTurn();
+	equipSugar();
+	if (my_daycount() == 1 && have_effect($effect[everything looks red]) == 0) {
+		if (have_effect($effect[moxious madrigal]) == 0)
+			use_skill(1, $skill[moxious madrigal]);
+		useRedRay();
+	}
+	if (my_daycount() == 1 && my_inebriety() == 0) {
+		if (my_primestat() == $stat[moxie] && visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still")) {
+			use_skill(1, $skill[mojomuscular melody]);
+			retrieve_item(1, $item[tonic water]);
+			use(1, $item[tonic water]);
+			use_skill(1, $skill[ode to booze]);
+			cli_execute("garden pick");
+			cli_execute("drink 3 pumpkin beer");
+		}
+	}
+
+	if (my_location() == $location[boss bat's lair]) {
+		if (have_effect($effect[polka of plenty]) == 0)
+			use_skill(1, $skill[polka of plenty]);
+		if (have_effect($effect[leash of linguini]) == 0)
+			use_skill(1, $skill[leash of linguini]);
+	}
+
 	process_inventory();
 	checkFamiliar();
-	equipSugar();
 }
