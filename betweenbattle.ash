@@ -1,6 +1,10 @@
 import <makemeat.ash>
 import <bumcheekascend.ash>
 
+void debug(String s) {
+	print("PCKLSH: " + s, "green");
+}
+
 effect skillToEffect(skill s) {
 	switch (s) {
 		case $skill[moxious madrigal]: return $effect[moxious madrigal];
