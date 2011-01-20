@@ -69,6 +69,13 @@ void process_inventory() {
 	if (item_amount($item[evil golden arch]) > 1)
 		cli_execute("make * golden arches");
 
+	// Spleen
+	foreach thing in $items[
+		agua de vida,
+	] {
+		use(item_amount(thing), thing);
+	}
+
 	// Useable
 	foreach thing in $items[
 		ancient vinyl coin purse,
