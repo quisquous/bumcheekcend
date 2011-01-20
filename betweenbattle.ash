@@ -164,6 +164,29 @@ void equipSugar() {
 	equip($slot[shirt], $item[sugar shirt]);
 }
 
+void useFriars() {
+	if (get_property("friarsBlessingReceived") == "true")
+		return;
+
+	String bless = "";
+	switch (my_location()) {
+	case $location[friar's gate]:
+	case $location[goatlet]:
+		bless = "food";
+		break;
+	case $location[barrrney's barrr]:
+	case $location[haunted wine cellar (automatic)]:
+		bless = "booze";
+		break;
+	}
+
+	if (my_inebriety() > inebriety_limit())
+		bless = "familiar";
+
+	if (bless != "")
+		cli_execute("friars " + bless);
+}
+
 void main() {
 	if (my_turncount() == 0)
 		firstTurn();
@@ -194,4 +217,5 @@ void main() {
 	process_inventory();
 	checkFamiliar();
 	olfactionPreparation();
+	useFriars();
 }
