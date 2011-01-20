@@ -7,10 +7,11 @@ void debug(String s) {
 
 effect skillToEffect(skill s) {
 	switch (s) {
-		case $skill[moxious madrigal]: return $effect[moxious madrigal];
+		case $skill[fat leon's phat loot lyric]: return $effect[fat leon's phat loot lyric];
 		case $skill[leash of linguini]: return $effect[leash of linguini];
 		case $skill[mojomuscular melody]: return $effect[mojomuscular melody];
-		case $skill[fat leon's phat loot lyric]: return $effect[fat leon's phat loot lyric];
+		case $skill[moxious madrigal]: return $effect[moxious madrigal];
+		case $skill[polka of plenty]: return $effect[polka of plenty];
 	}
 
 	return $effect[none];
@@ -192,13 +193,12 @@ void main() {
 		firstTurn();
 	equipSugar();
 	if (my_daycount() == 1 && have_effect($effect[everything looks red]) == 0) {
-		if (have_effect($effect[moxious madrigal]) == 0)
-			use_skill(1, $skill[moxious madrigal]);
+		tryCast($skill[moxious madrigal]);
 		useRedRay();
 	}
 	if (my_daycount() == 1 && my_inebriety() == 0) {
 		if (my_primestat() == $stat[moxie] && visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still")) {
-			use_skill(1, $skill[mojomuscular melody]);
+			tryCast($skill[mojomuscular melody]);
 			retrieve_item(1, $item[tonic water]);
 			use(1, $item[tonic water]);
 			use_skill(1, $skill[ode to booze]);
@@ -208,10 +208,8 @@ void main() {
 	}
 
 	if (my_location() == $location[boss bat's lair]) {
-		if (have_effect($effect[polka of plenty]) == 0)
-			use_skill(1, $skill[polka of plenty]);
-		if (have_effect($effect[leash of linguini]) == 0)
-			use_skill(1, $skill[leash of linguini]);
+		tryCast($skill[polka of plenty]);
+		tryCast($skill[leash of linguini]);
 	}
 
 	process_inventory();
