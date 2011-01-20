@@ -10,6 +10,7 @@ effect skillToEffect(skill s) {
 		case $skill[moxious madrigal]: return $effect[moxious madrigal];
 		case $skill[leash of linguini]: return $effect[leash of linguini];
 		case $skill[mojomuscular melody]: return $effect[mojomuscular melody];
+		case $skill[fat leon's phat loot lyric]: return $effect[fat leon's phat loot lyric];
 	}
 
 	return $effect[none];
@@ -41,9 +42,14 @@ boolean needOlfaction(location loc) {
 
 void olfactionPreparation() {
 	skill o = $skill[transcendent olfaction];
-	if (!have_skill(o) || have_effect($effect[on the trail]) > 0)
-		return;
 	if (!needOlfaction(my_location()))
+		return;
+
+	// If we need olfaction, we probably should be using an item familiar.
+	setFamiliar("items");
+	tryCast($skill[fat leon's phat loot lyric]);
+
+	if (!have_skill(o) || have_effect($effect[on the trail]) > 0)
 		return;
 
 	int cost = mp_cost(o) + combat_mana_cost_modifier();
