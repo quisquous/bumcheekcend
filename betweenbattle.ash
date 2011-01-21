@@ -68,7 +68,7 @@ void olfactionPreparation() {
 	if (needed > 10 && item_amount($item[tonic water]) > 0)
 		use(1, $item[tonic water]);
 
-	restore_mp(needed);
+	restore_mp(cost);
 }
 
 boolean castSugar() {
