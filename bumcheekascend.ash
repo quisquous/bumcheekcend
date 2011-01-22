@@ -405,6 +405,8 @@ string consultHeBo(int round, string opp, string text) {
 		}
 	}
 	print("BCC: We are trying to use the HeBoulder, but this is not the right monster, so I'm attacking.", "purple");
+	if (my_familiar() == $familiar[He-Boulder] && have_effect($effect[Everything Looks Red]) == 0 && contains_text(text, "red eye"))
+		return "skill point at your opponent";
 	return "attack";
 }
 
@@ -458,6 +460,7 @@ void defaultMood(boolean castMojo) {
 	if (my_level() < 7 && castMojo) cli_execute("trigger lose_effect, The Magical Mojomuscular Melody, cast 1 The Magical Mojomuscular Melody");
 	if (have_skill($skill[Moxie of the Mariachi])) cli_execute("trigger lose_effect, Mariachi Mood, cast 1 Moxie of the Mariachi");
 	if (have_skill($skill[Disco Aerobics])	) cli_execute("trigger lose_effect, Disco State of Mind, cast 1 Disco Aerobics");
+	if (my_level() > 7 && have_skill($skill[Leash of Linguini])) { cli_execute("trigger lose_effect, Leash of Linguini, cast 1 Leash of Linguini"); }
 }
 void defaultMood() { defaultMood(true); }
 
@@ -2095,8 +2098,10 @@ boolean bcascPirateFledges() {
 		cli_execute("maximize mox +outfit swash -ML -melee");
 		cli_execute("speculate up Embarrassed; quiet");
 		while (!hitTheBarrr) {
+			print("Num1:" + numeric_modifier("_spec", "Buffed Moxie"));
+			print("Num2:" + (93 + monster_level_adjustment()));
 			if (numeric_modifier("_spec", "Buffed Moxie") >= 93+monster_level_adjustment()) { hitTheBarrr = true; }
-			if (!hitTheBarrr) { levelMe(my_basestat($stat[Moxie])+3, true); }
+			if (!hitTheBarrr) { abort("No barrr?"); levelMe(my_basestat($stat[Moxie])+3, true); }
 		}
 		
 		//Check if we've unlocked the f'c'le at all.
