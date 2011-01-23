@@ -157,6 +157,7 @@ effect [item] allBangPotions() {
 			case "confusion": potion[id.to_item()] = $effect[ Confused ]; break;
 			case "inebriety": potion[id.to_item()] = $effect[ Antihangover ]; break;
 			case "ettin strength": potion[id.to_item()] = $effect[ Strength of Ten Ettins ]; break;
+			case "blessing": potion[id.to_item()] = $effect[ Izchak's Blessing ]; break;
 			case "healing": break;
 			default: potion[id.to_item()] = get_property("lastBangPotion"+id).to_effect();
 		}
