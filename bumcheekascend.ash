@@ -2400,6 +2400,9 @@ boolean bcascToot() {
         foreach stone in $items[hamethyst, baconstone, porquoise]
             autosell(item_amount(stone), stone);
     }
+	//KoLMafia doesn't clear these on ascension.
+	set_property("mineLayout1", "");
+	set_property("trapperOre", "");
 	checkStage("toot", true);
     return true;
 }
