@@ -274,6 +274,19 @@ boolean canMCD() {
 	return ((in_muscle_sign() || in_mysticality_sign()) || (in_moxie_sign() && item_amount($item[bitchin' meatcar]) > 0));
 }
 
+void setMCD(int moxie, int safe) {
+	//Check if we have access to the MCD
+	if (canMCD()) {
+		print("BCC: We CAN set the MCD.", "purple");
+		//We do. Check maxMCD value
+		int maxmcd = 10 + to_int(in_mysticality_sign());
+		int mcdval = moxie - safe;
+
+		mcdval = max(0, min(mcdval, maxmcd));
+		cli_execute("mcd "+mcdval);
+	}
+}
+
 boolean canZap() {
 	int wandnum = 0;
 	if (item_amount($item[dead mimic]) > 0) use(1, $item[dead mimic]);
@@ -915,18 +928,7 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	//Finally, check for and use the MCD if we can. No need to do this in 
 	if (my_buffedstat($stat[Moxie]) > sMox) {
 		print("BCC: We should set the MCD if we can.", "purple");
-		//Check if we have access to the MCD
-		if (canMCD()) {
-			print("BCC: We CAN set the MCD.", "purple");
-			//We do. Check maxMCD value
-			int maxmcd = 10 + to_int(in_mysticality_sign());
-			int mcdval = my_buffedstat($stat[Moxie]) - sMox;
-			
-			if (mcdval > maxmcd) {
-				mcdval = maxmcd;
-			}
-			cli_execute("mcd "+mcdval);
-		}
+		setMCD(my_buffedstat($stat[Moxie]), sMox);
 	}
 	//Force to 0 in Junkyard
 	if (loc == $location[Next to that Barrel with Something Burning in it] || loc == $location[Near an Abandoned Refrigerator] || loc == $location[Over Where the Old Tires Are] || loc == $location[Out By that Rusted-Out Car]) {
@@ -2098,13 +2100,16 @@ boolean bcascPirateFledges() {
 	while (i_a("pirate fledges") == 0) {
 		cli_execute("maximize mox +outfit swash -ML -melee");
 		cli_execute("speculate up Embarrassed; quiet");
+		int safeBarrMoxie = 93;
+		int specMoxie = 0;
 		while (!hitTheBarrr) {
-			print("Num1:" + numeric_modifier("_spec", "Buffed Moxie"));
-			print("Num2:" + (93 + monster_level_adjustment()));
-			if (numeric_modifier("_spec", "Buffed Moxie") >= 93+monster_level_adjustment()) { hitTheBarrr = true; }
-			if (!hitTheBarrr) { abort("No barrr?"); levelMe(my_basestat($stat[Moxie])+3, true); }
+			specMoxie = numeric_modifier("_spec", "Buffed Moxie");
+			if (specMoxie > safeBarrMoxie) { hitTheBarrr = true; }
+			if (!hitTheBarrr) { levelMe(my_basestat($stat[Moxie])+3, true); }
 		}
-		
+
+		setMCD(specMoxie, safeBarrMoxie);
+
 		//Check if we've unlocked the f'c'le at all.
 		if (index_of(visit_url("cove.php"), "cove3_3x1b.gif") == -1) {
 			setFamiliar("");
