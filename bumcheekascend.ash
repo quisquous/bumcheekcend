@@ -3204,7 +3204,10 @@ void bumcheekcend() {
 
 void main() {
 	if (have_effect($effect[Teleportitis]) > 0 && my_level() < 13) {
-		bcascTeleportitisBurn();
+		if (!contains_text("dungeons.php", "greater.gif") && my_level() >= 8)
+			bcascWand();
+		else
+			bcascTeleportitisBurn();
 	}
 
 	print("******************", "green");
