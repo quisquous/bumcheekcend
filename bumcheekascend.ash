@@ -2104,7 +2104,7 @@ boolean bcascPirateFledges() {
 		int specMoxie = 0;
 		while (!hitTheBarrr) {
 			specMoxie = numeric_modifier("_spec", "Buffed Moxie");
-			if (specMoxie > safeBarrMoxie) { hitTheBarrr = true; }
+			if (specMoxie >= safeBarrMoxie) { hitTheBarrr = true; }
 			if (!hitTheBarrr) { levelMe(my_basestat($stat[Moxie])+3, true); }
 		}
 
