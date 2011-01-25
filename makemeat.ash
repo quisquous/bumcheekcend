@@ -70,10 +70,13 @@ void process_inventory() {
 		cli_execute("make * golden arches");
 
 	// Spleen
-	foreach thing in $items[
-		agua de vida,
-	] {
-		use(item_amount(thing), thing);
+	while (my_spleen_use() > 0 && (spleen_limit() - my_spleen_use()) % 4 != 0 && item_amount($item[mojo filter]) > 0)
+		use(1, $item[mojo filter]);
+
+	if (my_level() >= 4) {
+		while (item_amount($item[agua de vida]) > 0 && my_spleen_use() + 4 <= spleen_limit()) {
+			use(1, $item[agua de vida]);
+		}
 	}
 
 	// Useable
