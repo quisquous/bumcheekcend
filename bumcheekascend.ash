@@ -2457,7 +2457,7 @@ boolean bcascWand() {
 	//Check for a wand. Any wand will do. 
 	if (i_a("aluminum wand") + i_a("ebony wand") + i_a("hexagonal wand") + i_a("marble wand") + i_a("pine wand") == 0) {
 		//Use the plus sign if we have it. Just in case someone's found the oracle but forgotten to use the plus sign.
-		cli_execute("use * plus sign");
+		if (i_a("plus sign") > 0) { if (cli_execute("use plus sign")) {} }
 
 		//Need at least 1000 meat for the oracle adventure.  Let's be safe and say 2000.
 		if (my_meat() < 2000) {
@@ -2478,7 +2478,7 @@ boolean bcascWand() {
 			}
 			cli_execute("set choiceAdventure3 = 3");
 			adventure(1, $location[Greater-Than Sign]);
-			cli_execute("use * plus sign");
+			if (i_a("plus sign") > 0) { if (cli_execute("use plus sign")) {} }
 		}
 		
 		if (have_effect($effect[Teleportitis]) > 0) bcascTeleportitisBurn();
