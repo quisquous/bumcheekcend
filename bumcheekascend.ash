@@ -1267,7 +1267,8 @@ boolean bcascFriarsSteel() {
 			return true;
 		} else {
 			while (i_a(steelName) == 0 && limitToCheckFor < 19) {
-				bumAdv($location[Friar's Gate], "", "", "1 "+steelName, "Getting the "+steelName+"!");
+				abort("Unimplemented Pandamonium quest");
+				//bumAdv($location[Friar's Gate], "", "", "1 "+steelName, "Getting the "+steelName+"!");
 				if (cli_execute(whatToDo)) {}
 				limitToCheckFor = inebriety_limit();
 				if (!can_drink()) {
