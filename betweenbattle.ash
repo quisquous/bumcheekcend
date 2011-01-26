@@ -35,7 +35,7 @@ boolean needOlfaction(location loc) {
 	case $location[haunted ballroom]:
 		return true;
 	case $location[dark neck of the woods]:
-	case $location[friar's gate]:
+	case $location[pandamonium slums]:
 		return item_amount($item[hellion cube]) <= 10;
 	default:
 		return false;
@@ -171,7 +171,7 @@ void useFriars() {
 
 	String bless = "";
 	switch (my_location()) {
-	case $location[friar's gate]:
+	case $location[pandamonium slums]:
 	case $location[goatlet]:
 		bless = "food";
 		break;
