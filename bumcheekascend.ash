@@ -2801,6 +2801,7 @@ void bcs12() {
 	
 	boolean killSide(int numDeadNeeded) {
 		setFamiliar("");
+		setMood("i");
 		
 		int numKilled;
 		if (bcasc_doWarAs == "frat") {
