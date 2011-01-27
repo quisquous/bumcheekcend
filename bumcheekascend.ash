@@ -2684,7 +2684,7 @@ void bcs12() {
 			case "beach" :
 				if (get_property("sidequestLighthouseCompleted") != "none") return true;
 				print("BCC: doSideQuest(Beach)", "purple");
-				if (i_a("barrel of gunpowder") < 5) bumAdv($location[Wartime Sonofa Beach], "", "items", "5 barrel of gunpowder", "Getting the Barrels of Gunpowder", "+");
+				if (i_a("barrel of gunpowder") < 5) bumAdv($location[Wartime Sonofa Beach], "", "", "5 barrel of gunpowder", "Getting the Barrels of Gunpowder", "+");
 				cli_execute("outfit "+bcasc_warOutfit);
 				visit_url("bigisland.php?place=lighthouse&action=pyro&pwd=");
 				visit_url("bigisland.php?place=lighthouse&action=pyro&pwd=");
