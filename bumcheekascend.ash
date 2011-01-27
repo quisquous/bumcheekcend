@@ -1632,9 +1632,10 @@ boolean bcascMacguffinHiddenCity() {
 		visit_url("hiddencity.php?which=" + i);
 		visit_url("hiddencity.php?action=trisocket");
 		print("BCC: Off to fight the final protector spirit!", "purple");
-		abort("Due to the Noodles attack, it is hard to automate this fight. You must do this manually.");
 		string url = visit_url("hiddencity.php?which="+i);
-		run_combat();
+		if (!contains_text(run_combat(), "WINWINWIN")) {
+			abort("Failed to kill the protector spectre.  You must do this manually.");
+		}
 		
 		print("BCC: Finished exploring the Hidden City.", "purple");
 	}
