@@ -928,7 +928,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 					}
 				}
 			} else if (my_buffedstat($stat[Moxie]) < 120) {
-				setMood("-");
+				setMood("-i");
 				setFamiliar("");
 				//There's pretty much zero chance we'll get here without the swashbuckling kit, so we'll be OK.
 				buMax("+outfit swash");
