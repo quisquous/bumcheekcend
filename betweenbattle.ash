@@ -68,6 +68,7 @@ void olfactionPreparation() {
 	if (needed > 10 && item_amount($item[tonic water]) > 0)
 		use(1, $item[tonic water]);
 
+	cli_execute("mood execute");
 	restore_mp(cost);
 }
 
