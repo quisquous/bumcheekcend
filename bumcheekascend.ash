@@ -2795,8 +2795,6 @@ boolean bcascTeleportitisBurn() {
 }
 
 boolean bcascTelescope() {
-	if (get_property("bcasc_telescope") != "true") return false;
-
 	record lair { 
 		string loc;
 		string a;
@@ -3428,13 +3426,16 @@ void bcs13() {
 	bcCouncil();
 	
 	load_current_map("bumrats_lairitems", lairitems);
+	bcascTelescope();
 	bcascNaughtySorceress();
 }
 
 
 void bumcheekcend() {
-	print("Doing a check for Telescope Items", "green");
-	bcascTelescope();
+	if (get_property("bcasc_telescope") == "true") {
+		print("Doing a check for Telescope Items", "green");
+		bcascTelescope();
+	}
 	print("Level 1 Starting", "green");
 	bcs1();
 	print("Level 2 Starting", "green");
