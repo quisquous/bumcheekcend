@@ -2820,7 +2820,7 @@ boolean bcascTelescope() {
 	telescope["see some amber waves of grain"]							= new lair("Ultrahydrated Desert", "a ", "bronzed locus", "macguffinpyramid");
 	telescope["see some long coattails"] 								= new lair("Outskirts of the Knob", "a ", "Knob Goblin firecracker", "");
 	telescope["see some pipes with steam shooting out of them"] 		= new lair("Middle Chamber", "", "powdered organs", "macguffinfinal");
-	telescope["see some sort of bronze figure holding a spatula"]		= new lair("Haunted Kitchen", "", "leftovers of indeterminate origin", "manorpantry");
+	telescope["see some sort of bronze figure holding a spatula"]		= new lair("Haunted Kitchen", "", "leftovers of indeterminate origin", "pantry");
 	telescope["see the neck of a huge bass guitar"] 					= new lair("South of the Border", "a ", "mariachi G-string", "dinghy");
 	telescope["see what appears to be the North Pole"] 					= new lair("", "an ", "NG", "chasm");
 	telescope["see what looks like a writing desk"] 					= new lair("Castle in the Clouds in the Sky", "a ", "plot hole", "castle");
