@@ -167,7 +167,7 @@ void equipSugar() {
 }
 
 void useFriars() {
-	if (get_property("friarsBlessingReceived") == "true")
+	if (get_property("friarsBlessingReceived").to_boolean())
 		return;
 
 	String bless = "";
