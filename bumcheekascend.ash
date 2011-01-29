@@ -2847,13 +2847,15 @@ boolean bcascTelescope() {
 			telescopetext = get_property("telescope"+i);
 			
 			level = telescope[telescopetext];
-			
-			if ((get_property("bcasc_stage_"+level.section) == my_ascensions() || level.section == "") && (level.loc != "")) {
-				if (i_a(level.thing) == 0) {
-					bumAdv(to_location(level.loc), "", "items", "1 "+level.thing, "Getting "+level.a+level.thing+" for the NS tower because we have finished the stage '"+level.section+" in this script.");
-				} else {
-					print("BCC: You have at least one "+level.thing+" for telescope part "+i, "purple");
-				}
+		
+			if (level.thing == "") {
+				print("BCC: Not sure what you need for telescope part "+i, "purple");
+			} else if (i_a(level.thing) > 0) {
+				print("BCC: You have at least one "+level.thing+" for telescope part "+i, "purple");
+			} else if (level.loc == "") {
+				print("BCC: Need "+level.thing+" for telescope part "+i, "purple");
+			} else if (get_property("bcasc_stage_"+level.section) == my_ascensions() || level.section == "") {
+				bumAdv(to_location(level.loc), "", "items", "1 "+level.thing, "Getting "+level.a+level.thing+" for the NS tower because we have finished the stage '"+level.section+" in this script.");
 			} else {
 				print("BCC: You haven't completed the stage '"+level.section+"' for the "+level.thing+" for telescope part "+i, "purple");
 			}
