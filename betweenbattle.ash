@@ -33,6 +33,7 @@ boolean needOlfaction(location loc) {
 	case $location[dungeons of doom]:
 	case $location[goatlet]:
 	case $location[haunted ballroom]:
+	case $location[poop deck]:
 		return true;
 	case $location[dark neck of the woods]:
 	case $location[pandamonium slums]:

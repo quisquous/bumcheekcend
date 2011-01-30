@@ -2175,7 +2175,9 @@ boolean bcascMacguffinSpooky() {
 				wines[i] = get_this_wine(to_int(substring(blar[i],0,1)));
 			}
 			if (cli_execute("friars booze")) {}
-			bumAdv($location[Haunted Wine Cellar (Automatic)], "", "items", "1 "+wines[1]+", 1 "+wines[2]+", 1 "+wines[3], "Getting the three wines ("+wines[1]+", "+wines[2]+", "+wines[3]+")");
+			while (i_a(wines[1]) == 0 || i_a(wines[2]) == 0 || i_a(wines[3]) == 0) {
+				bumAdv($location[Haunted Wine Cellar (Automatic)], "", "items", "1 "+wines[1]+", 1 "+wines[2]+", 1 "+wines[3], "Getting the three wines ("+wines[1]+", "+wines[2]+", "+wines[3]+")");
+			}
 			
 			if (equipped_amount($item[Lord Spookyraven's spectacles]) > 0 || equip($slot[acc3],$item[Lord Spookyraven's spectacles])) {}
 			//Pour the wines
