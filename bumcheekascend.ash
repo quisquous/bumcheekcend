@@ -1867,7 +1867,7 @@ boolean bcascMacguffinFinal() {
 		set_property("choiceAdventure134","1");
 		set_property("choiceAdventure135","1");
 		if (!contains_text(visit_url("pyramid.php"),"pyramid3b.gif")) {
-			if (i_a("carved wooden wheel") == 0) bumAdv($location[Upper Chamber], "", "", "carved wooden wheel", "Getting the Carved Wooden Wheel");
+			if (i_a("carved wooden wheel") == 0) bumAdv($location[Upper Chamber], "", "items", "carved wooden wheel", "Getting the Carved Wooden Wheel", "i");
 			bumAdv($location[Middle Chamber], "", "", "choiceadv", "Getting the initial choice adventure", "-");
 		}
 		
