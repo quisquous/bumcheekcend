@@ -308,15 +308,14 @@ boolean betweenBattle() {
 
 boolean buMax(string maxme) {
 	//Basically, we ALWAYS want -tie and -ml, for ALL classes. Otherwise we let an override happen. 
-	if (maxme == "") {
-		//If we don't say anything, assume we want the following set of EXTRA defaults over and above the "normal" -tie -ml
-		switch (my_primestat()) {
-			case $stat[Muscle] : maxme = "+melee +shield"; break;
-			case $stat[Mysticality] : abort("ZOMG NO MYST"); break;
-			case $stat[Moxie] : maxme = "-melee"; break;
-		}
+	//If we don't say anything, assume we want the following set of EXTRA defaults over and above the "normal" -tie -ml
+	string statmax;
+	switch (my_primestat()) {
+		case $stat[Muscle] : statmax = "+melee +shield"; break;
+		case $stat[Mysticality] : abort("ZOMG NO MYST"); break;
+		case $stat[Moxie] : statmax = "-melee"; break;
 	}
-	cli_execute("maximize mainstat "+maxme+" -ml -tie");
+	cli_execute("maximize mainstat "+maxme+" -ml -tie "+statmax);
 	return true;
 }
 boolean buMax() { buMax(""); }
