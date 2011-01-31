@@ -2804,25 +2804,25 @@ boolean bcascTelescope() {
 	lair [string] telescope;
 	lair level;
 	string telescopetext;
-	telescope["catch a glimpse of a flaming katana"] 					= new lair("Lair of the Ninja Snowmen", "a ", "frigid ninja stars", "trapper");
+	telescope["catch a glimpse of a flaming katana"] 					= new lair("Ninja Snowmen", "a ", "frigid ninja stars", "trapper");
 	telescope["catch a glimpse of a translucent wing"] 					= new lair("Sleazy Back Alley", "a ", "spider web", "");
 	telescope["see a fancy-looking tophat"] 							= new lair("Guano Junction", "a ", "sonar-in-a-biscuit", "bats1");
 	telescope["see a flash of albumen"] 								= new lair("Black Forest", "", "black pepper", "macguffinprelim");
 	telescope["see a giant white ear"] 									= new lair("Hidden City", "a ", "pygmy blowgun", "macguffinhiddencity");
 	telescope["see a huge face made of Meat"] 							= new lair("Orc Chasm", "a ", "meat vortex", "chasm");
-	telescope["see a large cowboy hat"] 								= new lair("Castle in the Clouds in the Sky", "a ", "chaos butterfly", "castle");
+	telescope["see a large cowboy hat"] 								= new lair("Giant's Castle", "a ", "chaos butterfly", "castle");
 	telescope["see a periscope"] 										= new lair("Fantasy Airship", "a ", "photoprotoneutron torpedo", "airship");
 	telescope["see a slimy eyestalk"] 									= new lair("Haunted Bathroom", "", "fancy bath salts", "manorbedroom");
 	telescope["see a strange shadow"] 									= new lair("Haunted Library", "an ", "inkwell", "manorbilliards");
 	//telescope["see moonlight reflecting off of what appears to be ice"] = new lair("", "", "hair spray");
 	telescope["see part of a tall wooden frame"] 						= new lair("Harem", "a ", "disease", "knobking");
-	telescope["see some amber waves of grain"]							= new lair("Ultrahydrated Desert", "a ", "bronzed locus", "macguffinpyramid");
+	telescope["see some amber waves of grain"]							= new lair("Desert (Ultrahydrated)", "a ", "bronzed locus", "macguffinpyramid");
 	telescope["see some long coattails"] 								= new lair("Outskirts of the Knob", "a ", "Knob Goblin firecracker", "");
 	telescope["see some pipes with steam shooting out of them"] 		= new lair("Middle Chamber", "", "powdered organs", "macguffinfinal");
 	telescope["see some sort of bronze figure holding a spatula"]		= new lair("Haunted Kitchen", "", "leftovers of indeterminate origin", "pantry");
 	telescope["see the neck of a huge bass guitar"] 					= new lair("South of the Border", "a ", "mariachi G-string", "dinghy");
 	telescope["see what appears to be the North Pole"] 					= new lair("", "an ", "NG", "chasm");
-	telescope["see what looks like a writing desk"] 					= new lair("Castle in the Clouds in the Sky", "a ", "plot hole", "castle");
+	telescope["see what looks like a writing desk"] 					= new lair("Giant's Castle", "a ", "plot hole", "castle");
 	telescope["see the tip of a baseball bat"] 							= new lair("Guano Junction", "a ", "baseball", "bats1");
 	telescope["see what seems to be a giant cuticle"] 					= new lair("Sleazy Back Alley", "a ", "razor-sharp can lid", "");
 	//telescope["see a pair of horns"] 									= new lair("Moxie Vacation", "", "barbed-wire fence", "dinghy");
@@ -2833,11 +2833,11 @@ boolean bcascTelescope() {
 	telescope["a cowardly-looking man"] 								= new lair("", "a ", "wussiness potion", "ZZZZZZZZZZZZZZZZZZZ");
 	telescope["a banana peel"] 											= new lair("Next to that Barrel with Something Burning in it", "", "gremlin juice", "|||||ZZZZZZZZZZZZZZ");
 	telescope["a coiled viper"] 										= new lair("Black Forest", "an ", "adder bladder", "macguffinprelim");
-	telescope["a rose"] 												= new lair("Castle in the Clouds in the Sky", "", "Angry Farmer candy", "castle");
-	telescope["a glum teenager"] 										= new lair("Castle in the Clouds in the Sky", "a ", "thin black candle", "castle");
+	telescope["a rose"] 												= new lair("Giant's Castle", "", "Angry Farmer candy", "castle");
+	telescope["a glum teenager"] 										= new lair("Giant's Castle", "a ", "thin black candle", "castle");
 	telescope["a hedgehog"] 											= new lair("Fantasy Airship", "", "super-spiky hair gel", "airship");
 	telescope["a raven"] 												= new lair("Black Forest", "", "Black No. 2", "macguffinprelim");
-	telescope["a smiling man smoking a pipe"] 							= new lair("Castle in the Clouds in the Sky", "", "Mick's IcyVapoHotness Rub", "castle");
+	telescope["a smiling man smoking a pipe"] 							= new lair("Giant's Castle", "", "Mick's IcyVapoHotness Rub", "castle");
 	
 	if (get_property("telescopeUpgrades") >= 1) {
 		if(get_property("lastTelescopeReset") != get_property("knownAscensions")) cli_execute("telescope");
