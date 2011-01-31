@@ -214,6 +214,11 @@ void main() {
 		tryCast($skill[leash of linguini]);
 	}
 
+	if (my_location() == $location[wartime sonofa beach]) {
+		if (have_effect($effect[hippy stench]) == 0 && item_amount($item[reodorant]) > 0)
+			cli_execute("use * reodorant");
+	}
+
 	process_inventory();
 	checkFamiliar();
 	olfactionPreparation();
