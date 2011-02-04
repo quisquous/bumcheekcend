@@ -3315,7 +3315,6 @@ void bcs12() {
 		setMood("i");
 
 		if (my_adventures() == 0) abort("You don't have any adventures :(");
-		setMood("i");
 		
 		int numKilled;
 		if (bcasc_doWarAs == "frat") {
