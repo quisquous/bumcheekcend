@@ -1,5 +1,5 @@
 /*
-	bumcheekascend.ash v0.15
+	bumcheekascend.ash v0.16
 	A script to ascend a character from start to finish.
 	
 	0.1 - Spun initial release. Gets up to about level 10, haphazardly. 
@@ -113,6 +113,12 @@
 		- Fix bug where it wouldn't do the DD.
 		- Change maximize commands for mus/mys compatibility. 
 		- Add basic support for muscle classes.
+	0.16- Various fixes for muscle ascensions. 
+		- Fix some telescope stuff, expand on options there. 
+		- Added some "base" entries to the maximizer, which are always on. Melee and shield for Mus, ranged for Mox.
+		- It's probably best if muscle classes DON'T attack the gremlins.
+		- Hit the questlog to see if you've completed the Hidden City for (pah!) SOFTcore players...
+		- Added new Azazel quest.
 */
 
 script "bumcheekascend.ash";
@@ -133,7 +139,7 @@ if (bcasc_doWarAs == "frat") {
 	abort("Please specify whether you would like to do the war as a frat or hippy by downloading the relay script at http://kolmafia.us/showthread.php?t=5470 and setting the settings for the script.");
 }
 
-if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.15</b>") == -1) {
+if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.16</b>") == -1) {
 	print("There is a new version available - go download the next version of bumcheekascend.ash at http://kolmafia.us/showthread.php?t=4963!", "red");
 }
 
@@ -190,12 +196,16 @@ effect [item] allBangPotions() {
 //Returns true if we have a shield and Hero of the Halfshell.
 boolean anHero() {
 	if (!have_skill($skill[Hero of the Half-Shell])) return false;
-	foreach i in $items[sewer turtle, barskin buckler, meat shield] {
-		if (i_a(to_string(i)) > 0) {
-			print("BCC: You appear to have a shield ("+to_string(i)+"). Let's be an hero!", "purple");
-			return true;
-		}
+	if (!(my_primestat() == $stat[Muscle])) return false;
+	if (get_property("bcasc_lastShieldCheck") == today_to_string()) return true;
+	
+	cli_execute("maximize +shield");
+	if (item_type(equipped_item($slot[off-hand])) == "shield") {
+		cli_execute("set bcasc_lastShieldCheck = "+today_to_string());
+		print("BCC: You appear to have a shield. If you autosell your last shield, this script is going to behave very strangely and you're an idiot.", "purple");
+		return true;
 	}
+	
 	print("BCC: You don't have a shield. It might be better to get one. ", "purple");
 	return false;
 }
@@ -308,16 +318,24 @@ boolean betweenBattle() {
 
 boolean buMax(string maxme) {
 	//Basically, we ALWAYS want -tie and -ml, for ALL classes. Otherwise we let an override happen. 
+	switch (my_primestat()) {
+		case $stat[Muscle] : 		cli_execute("maximize mainstat "+maxme+" +melee +shield -ml -tie"); break;
+		case $stat[Mysticality] : 	abort("ZOMG NO MYST"); break;
+		case $stat[Moxie] : 		cli_execute("maximize mainstat "+maxme+" -melee -ml -tie"); break;
+	}
+	return true;
+	/*
 	if (maxme == "") {
 		//If we don't say anything, assume we want the following set of EXTRA defaults over and above the "normal" -tie -ml
 		switch (my_primestat()) {
-			case $stat[Muscle] : maxme = "+melee +shield"; break;
+			case $stat[Muscle] : maxme2 = "+melee +shield"; break;
 			case $stat[Mysticality] : abort("ZOMG NO MYST"); break;
-			case $stat[Moxie] : maxme = "-melee"; break;
+			case $stat[Moxie] : maxme2 = "-melee"; break;
 		}
 	}
 	cli_execute("maximize mainstat "+maxme+" -ml -tie");
 	return true;
+	*/
 }
 boolean buMax() { buMax(""); }
 
@@ -494,6 +512,8 @@ string consultJunkyard(int found, string opp, string text) {
 				return "cast lasagna bandages";
 			} else {
 				switch (my_class()) {
+					case $class[turtle tamer] : return "skill toss"; break;
+					case $class[seal clubber] : return "skill clobber"; break;
 					case $class[Disco Bandit] : return "skill suckerpunch"; break;
 					case $class[Accordion Thief] : return "skill sing"; break;
 				}
@@ -859,7 +879,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 		if (my_basestat(my_primestat()) >= sMox) return true;
 		print("Need to Level up a bit to get at least "+sMox+" base Primestat", "fuchsia");
 	} else {		
-		buMax();
+		//buMax();
 		setMood("");
 		cli_execute("mood execute");
 
@@ -878,6 +898,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 		case $stat[Muscle] :
 			if (my_buffedstat($stat[Muscle]) < 120) {
 				//If we're not level 2, then woods.php DEFINITELY won't be available. 
+				print("I need "+sMox+" base moxie (going to Temple)", "fuchsia");
 				if (my_level() >= 2) {
 					//Check for temple.gif, or we're not getting in. 
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
@@ -889,7 +910,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 			} else {
 				setMood("-i");
 				setFamiliar("itemsnc");
-				print("I need "+sMox+" base moxie", "fuchsia");
+				print("I need "+sMox+" base moxie (going to Gallery)", "fuchsia");
 				
 				//Get as many clovers as possible. The !capture is so that it doesn't abort on failure. 
 				print("BCC: Attempting to get clovers to level with.", "purple");
@@ -928,7 +949,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 					}
 				}
 			} else if (my_buffedstat($stat[Moxie]) < 120) {
-				setMood("-");
+				setMood("-i");
 				setFamiliar("");
 				//There's pretty much zero chance we'll get here without the swashbuckling kit, so we'll be OK.
 				buMax("+outfit swash");
@@ -944,6 +965,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 				
 				//If we're above level 11, then use clovers as necessary. 
 				if (my_level() >= 10) {
+					if (my_adventures() == 0) abort("No Adventures to level :(");
 					if (cloversAvailable() > 1) {
 						print("BCC: Going to use clovers to level.", "purple");
 						//First, just quickly use all ten-leaf clovers we have. 
@@ -952,6 +974,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 						}
 					
 						while (my_basestat($stat[Moxie]) < sMox && item_amount($item[disassembled clover]) > 1) {
+							if (my_adventures() == 0) abort("No Adventures to level :(");
 							print("BCC: We have "+item_amount($item[disassembled clover])+" clovers and are using one to level.", "purple");
 							use(1, $item[disassembled clover]);
 							visit_url("adventure.php?snarfblat=109&confirm=on");
@@ -1022,7 +1045,7 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	
 	if (my_buffedstat(my_primestat()) < sMox && loc != $location[Haunted Bedroom])	{
 		//Do something to get more moxie.
-		print("Need to Level up a bit to get "+sMox+" Mainstat");
+		print("Need to Level up a bit to get "+sMox+" Mainstat", "fuschia");
 		levelMe(sMox);
 	}
 	cli_execute("mood execute");
@@ -1076,9 +1099,8 @@ boolean bcasc8Bit() {
 	if (checkStage("8bit")) return true;
 	
 	//Crude check for a one-handed weapon. 
-	buMax("+equip continuum transfunctioner, 1 hand");
-	if (equipped_item($slot[weapon]) == $item[none]) {
-		cli_execute("buy slingshot");
+	if (!maximize("1 hand, " + my_primestat() == $stat[Muscle] ? ", +melee" : ", -melee", true)) {
+		(my_primestat() == $stat[Muscle] ? cli_execute("buy cool whip") : cli_execute("buy slingshot"));
 	}
 	
 	while (i_a("digital key") == 0) {
@@ -1219,7 +1241,7 @@ boolean bcascCyrpt() {
 	while (index_of(visit_url("cyrpt.php"), "cyrpt9d.gif") > 0) bumAdv($location[Defiled Cranny], "", "", "", "Un-Defiling the Cranny (4/4)", "-");
 	
 	if (!contains_text(visit_url("questlog.php?which=2"), "defeated the Bonerdagon")) {
-		if (my_buffedstat($stat[Moxie]) > 101) {
+		if (my_buffedstat(my_primestat()) > 101) {
 			bumAdv($location[Haert of the Cyrpt]);
 			visit_url("council.php");
 			if (item_amount($item[chest of the Bonerdagon]) > 0) {
@@ -1361,6 +1383,8 @@ boolean bcascFriarsSteel() {
 			* Blognort the marshmallow or gin-soaked paper
 			* Stinkface the teddy bear or gin-soaked paper 
 		*/
+		if (item_amount($item[sponge cake]) + item_amount($item[comfy pillow]) + item_amount($item[gin-soaked blotter paper]) + item_amount($item[giant marshmallow]) + item_amount($item[booze-soaked cherry]) + item_amount($item[beer-scented teddy bear]) == 0) return false;
+		
 		int j = 0, f = 0, b = 0, s = 0, jf, bs;
 		if (contains_text(visit_url("pandamonium.php?action=sven"), "<option>Bognort")) b = 1;
 		if (contains_text(visit_url("pandamonium.php?action=sven"), "<option>Flargwurm")) f = 1;
@@ -1372,7 +1396,7 @@ boolean bcascFriarsSteel() {
 		boolean x, y;
 		x = ((item_amount($item[sponge cake]) >= jf) || (item_amount($item[sponge cake]) + item_amount($item[comfy pillow]) >= jf) || (item_amount($item[sponge cake]) + item_amount($item[booze-soaked cherry]) >= jf));
 		y = ((item_amount($item[gin-soaked blotter paper]) >= bs) || (item_amount($item[gin-soaked blotter paper]) + item_amount($item[giant marshmallow]) >= bs) || (item_amount($item[gin-soaked blotter paper]) + item_amount($item[beer-scented teddy bear]) >= bs));
-		print("BCC: x is "+x+" and y is "+y+".", "purple");
+		print("BCC: x is "+x+" and y is "+y+". j, f, b, s are "+j+", "+f+", "+b+", "+s+".", "purple");
 		return x && y;
 	}
 	
@@ -1414,7 +1438,7 @@ boolean bcascFriarsSteel() {
 		levelMe(77, false);
 		print("BCC: Getting Azazel's unicorn", "purple");
 		buMax();
-		setFamiliar("items");
+		setFamiliar("itemsnc");
 		cli_execute("mood execute; conditions clear");
 		while (!logicPuzzleDone()) {
 			adventure(1, $location[Hey Deze Arena]);
@@ -1468,7 +1492,7 @@ boolean bcascFriarsSteel() {
 	} else {
 		abort("There was some problem using the steel item. Perhaps use it manually?");
 	}
-	abort("steel");
+	abort("There was some problem using the steel item. Perhaps use it manually or something?");
 }
 
 boolean bcascGuild1() {
@@ -1636,7 +1660,7 @@ boolean bcascKnobKing() {
 		//Now the Knob Goblin King has 55 Attack, and we'll be fighting him with the MCD set to 7. So that's 55+7+7=69 Moxie we need. 
 		//Arbitrarily using 75 because will need the harem outfit equipped. 
 		buMax();
-		if (my_buffedstat($stat[Moxie]) >= 75) {
+		if (my_buffedstat(my_primestat()) >= 75) {
 			if (canMCD()) cli_execute("mcd 7");
 			bumAdv($location[King's Chamber], "+outfit harem", "", "", "Killing the Knob King");
 			checkStage("knobking", true);
@@ -1736,6 +1760,12 @@ boolean bcascLairFirstGate() {
 							}
 							while (item_amount($item[pile of candy]) > 0 && item_amount($item[marzipan skull]) == 0) {
 								use(1, $item[pile of candy]);
+							}
+						break;
+						
+						case "Meleegra pills2" :
+							while (item_amount($item[Meleegra pills]) == 0) {
+								bumAdv($location[South of the Border], "1 Meleegra&trade; pills", "", "", "Getting some Meelegra pills", "-");
 							}
 						break;
 						
@@ -1897,6 +1927,7 @@ boolean bcascMacguffinFinal() {
 		}
 		
 		//Fight Ed
+		if (my_adventures() < 7) { abort("You don't have enough adventures to fight Ed."); }
 		print("BCC: Fighting Ed", "purple");
 		visit_url("pyramid.php?action=lower");
 		run_combat();
@@ -1913,7 +1944,7 @@ boolean bcascMacguffinFinal() {
 boolean bcascMacguffinHiddenCity() {
 	if (checkStage("macguffinhiddencity")) return true;
 	
-	while (i_a("spectre scepter") == 0 && (item_amount($item[ancient amulet]) + item_amount($item[staff of ed]) == 0)) {
+	while (contains_text(visit_url("questlog.php?which=1"), "Gotta Worship Them All")) {
 		string[int] citymap;
 		string urldata;
 		int altarcount = 0, squareNum;
@@ -2030,10 +2061,18 @@ boolean bcascMacguffinHiddenCity() {
 		print("BCC: The smallish temple is located at square " + i + ".  Going there...", "purple");
 		
 		//Visit the smallish temple and kill the protector spirit. 
+		switch (my_primestat()) {
+			case $stat[Muscle] :
+				if (have_familiar($familiar[Frumious Bandersnatch])) use_familiar($familiar[Frumious Bandersnatch]);
+			break;
+			
+			case $stat[Moxie] :
+				print("BCC: Off to fight the final protector spirit!", "purple");
+				abort("Due to the Noodles attack, it is hard to automate this fight. You must do this manually.");
+			break;
+		}
 		visit_url("hiddencity.php?which=" + i);
 		visit_url("hiddencity.php?action=trisocket");
-		print("BCC: Off to fight the final protector spirit!", "purple");
-		abort("Due to the Noodles attack, it is hard to automate this fight. You must do this manually.");
 		string url = visit_url("hiddencity.php?which="+i);
 		run_combat();
 		
@@ -2538,24 +2577,33 @@ boolean bcascPantry() {
 boolean bcascPirateFledges() {
 	boolean hitTheBarrr = false;
 	if (checkStage("piratefledges")) return true;
+	
 	while (i_a("pirate fledges") == 0) {
-		buMax("outfit swash");
-		cli_execute("speculate up Embarrassed; quiet");
-		int safeBarrMoxie = 93;
-		int specMoxie = 0;
-		while (!hitTheBarrr) {
-			//if (numeric_modifier("_spec", "Buffed Moxie") >= 93+monster_level_adjustment()) { hitTheBarrr = true; }
-			//if (!hitTheBarrr) { levelMe(my_basestat($stat[Moxie])+3, true); }
-			specMoxie = numeric_modifier("_spec", "Buffed Moxie");
-			if (specMoxie > safeBarrMoxie) { hitTheBarrr = true; }
-			if (!hitTheBarrr) { levelMe(my_basestat($stat[Moxie])+3, true); }
+		buMax("+outfit swash");
+		
+		//The Embarassed problem is only an issue if you're a moxie class. Otherwise, ignore it.
+		if (my_primestat() == $stat[Moxie]) {
+			cli_execute("speculate up Embarrassed; quiet");
+			int safeBarrMoxie = 93;
+			int specMoxie = 0;
+			while (!hitTheBarrr) {
+				specMoxie = numeric_modifier("_spec", "Buffed Moxie");
+				if (specMoxie > safeBarrMoxie) { hitTheBarrr = true; }
+				if (!hitTheBarrr) { levelMe(my_basestat($stat[Moxie])+3, true); }
+			}
+			
+			setMCD(specMoxie, safeBarrMoxie);
+		} else {
+			cli_execute("mcd 0");
+			levelMe(93, false);
 		}
 		
-		setMCD(specMoxie, safeBarrMoxie);
-		
+		buMax("+outfit swash");
 		//Check if we've unlocked the f'c'le at all.
 		if (index_of(visit_url("cove.php"), "cove3_3x1b.gif") == -1) {
+			buMax("+outfit swash");
 			setFamiliar("");
+			setMood("i");
 			
 			if (i_a("the big book of pirate insults") == 0) {
 				buy(1, $item[the big book of pirate insults]);
@@ -2591,7 +2639,7 @@ boolean bcascPirateFledges() {
 			
 			//Now, we'll have the blueprints, so we'll need to make sure we have 8 insults before using them. 
 			while (numPirateInsults() < 7) {
-				print("BCC: Adventuring one turn at a time to get 8 insults. Currently, we have "+numPirateInsults()+" insults.", "purple");
+				print("BCC: Adventuring one turn at a time to get 7 insults. Currently, we have "+numPirateInsults()+" insults.", "purple");
 				if (my_adventures() == 0) { abort("You're out of adventures."); }
 				adventure(1, $location[Barrrney's Barrr], "consultBarrr");
 			}
@@ -2807,40 +2855,40 @@ boolean bcascTelescope() {
 	lair [string] telescope;
 	lair level;
 	string telescopetext;
-	telescope["catch a glimpse of a flaming katana"] 					= new lair("Lair of the Ninja Snowmen", "a ", "frigid ninja stars", "trapper");
+	telescope["catch a glimpse of a flaming katana"] 					= new lair("Ninja Snowmen", "a ", "frigid ninja stars", "trapper");
 	telescope["catch a glimpse of a translucent wing"] 					= new lair("Sleazy Back Alley", "a ", "spider web", "");
 	telescope["see a fancy-looking tophat"] 							= new lair("Guano Junction", "a ", "sonar-in-a-biscuit", "bats1");
-	telescope["see a flash of albumen"] 								= new lair("Black Forest", "", "black pepper", "macguffinprelim");
+	//telescope["see a flash of albumen"] 								= new lair("Black Forest", "", "black pepper", "macguffinprelim");
 	telescope["see a giant white ear"] 									= new lair("Hidden City", "a ", "pygmy blowgun", "macguffinhiddencity");
 	telescope["see a huge face made of Meat"] 							= new lair("Orc Chasm", "a ", "meat vortex", "chasm");
-	telescope["see a large cowboy hat"] 								= new lair("Castle in the Clouds in the Sky", "a ", "chaos butterfly", "castle");
+	telescope["see a large cowboy hat"] 								= new lair("Giant's Castle", "a ", "chaos butterfly", "castle");
 	telescope["see a periscope"] 										= new lair("Fantasy Airship", "a ", "photoprotoneutron torpedo", "airship");
 	telescope["see a slimy eyestalk"] 									= new lair("Haunted Bathroom", "", "fancy bath salts", "manorbedroom");
 	telescope["see a strange shadow"] 									= new lair("Haunted Library", "an ", "inkwell", "manorbilliards");
 	//telescope["see moonlight reflecting off of what appears to be ice"] = new lair("", "", "hair spray");
 	telescope["see part of a tall wooden frame"] 						= new lair("Harem", "a ", "disease", "knobking");
-	telescope["see some amber waves of grain"]							= new lair("Ultrahydrated Desert", "a ", "bronzed locus", "macguffinpyramid");
+	telescope["see some amber waves of grain"]							= new lair("Desert (Ultrahydrated)", "a ", "bronzed locus", "macguffinpyramid");
 	telescope["see some long coattails"] 								= new lair("Outskirts of the Knob", "a ", "Knob Goblin firecracker", "");
 	telescope["see some pipes with steam shooting out of them"] 		= new lair("Middle Chamber", "", "powdered organs", "macguffinfinal");
-	telescope["see some sort of bronze figure holding a spatula"]		= new lair("Haunted Kitchen", "", "leftovers of indeterminate origin", "manorpantry");
+	telescope["see some sort of bronze figure holding a spatula"]		= new lair("Haunted Kitchen", "", "leftovers of indeterminate origin", "pantry");
 	telescope["see the neck of a huge bass guitar"] 					= new lair("South of the Border", "a ", "mariachi G-string", "dinghy");
-	telescope["see what appears to be the North Pole"] 					= new lair("", "an ", "NG", "chasm");
-	telescope["see what looks like a writing desk"] 					= new lair("Castle in the Clouds in the Sky", "a ", "plot hole", "castle");
+	//telescope["see what appears to be the North Pole"] 					= new lair("", "an ", "NG", "chasm");
+	telescope["see what looks like a writing desk"] 					= new lair("Giant's Castle", "a ", "plot hole", "castle");
 	telescope["see the tip of a baseball bat"] 							= new lair("Guano Junction", "a ", "baseball", "bats1");
-	telescope["see what seems to be a giant cuticle"] 					= new lair("Sleazy Back Alley", "a ", "razor-sharp can lid", "");
+	telescope["see what seems to be a giant cuticle"] 					= new lair("Haunted Pantry", "a ", "razor-sharp can lid", "");
 	//telescope["see a pair of horns"] 									= new lair("Moxie Vacation", "", "barbed-wire fence", "dinghy");
 	//telescope["see a formidable stinger"] 								= new lair("Mysticality Vacation", "a ", "tropical orchid", "dinghy");
 	//telescope["see a wooden beam"] 										= new lair("Muscle Vacation", "a ", "stick of dynamite", "dinghy");
 	
 	telescope["an armchair"] 											= new lair("Hidden City", "", "pygmy pygment", "macguffinhiddencity");
-	telescope["a cowardly-looking man"] 								= new lair("", "a ", "wussiness potion", "ZZZZZZZZZZZZZZZZZZZ");
-	telescope["a banana peel"] 											= new lair("Next to that Barrel with Something Burning in it", "", "gremlin juice", "|||||ZZZZZZZZZZZZZZ");
+	//telescope["a cowardly-looking man"] 								= new lair("", "a ", "wussiness potion", "ZZZZZZZZZZZZZZZZZZZ");
+	//telescope["a banana peel"] 											= new lair("Next to that Barrel with Something Burning in it", "", "gremlin juice", "|||||ZZZZZZZZZZZZZZ");
 	telescope["a coiled viper"] 										= new lair("Black Forest", "an ", "adder bladder", "macguffinprelim");
-	telescope["a rose"] 												= new lair("Castle in the Clouds in the Sky", "", "Angry Farmer candy", "castle");
-	telescope["a glum teenager"] 										= new lair("Castle in the Clouds in the Sky", "a ", "thin black candle", "castle");
+	telescope["a rose"] 												= new lair("Giant's Castle", "", "Angry Farmer candy", "castle");
+	telescope["a glum teenager"] 										= new lair("Giant's Castle", "a ", "thin black candle", "castle");
 	telescope["a hedgehog"] 											= new lair("Fantasy Airship", "", "super-spiky hair gel", "airship");
 	telescope["a raven"] 												= new lair("Black Forest", "", "Black No. 2", "macguffinprelim");
-	telescope["a smiling man smoking a pipe"] 							= new lair("Castle in the Clouds in the Sky", "", "Mick's IcyVapoHotness Rub", "castle");
+	telescope["a smiling man smoking a pipe"] 							= new lair("Giant's Castle", "", "Mick's IcyVapoHotness Rub", "castle");
 	
 	if (get_property("telescopeUpgrades") >= 1) {
 		if(get_property("lastTelescopeReset") != get_property("knownAscensions")) cli_execute("telescope");
@@ -3263,6 +3311,8 @@ void bcs12() {
 	
 	boolean killSide(int numDeadNeeded) {
 		setFamiliar("");
+		setMood("i");
+
 		if (my_adventures() == 0) abort("You don't have any adventures :(");
 		
 		int numKilled;
@@ -3405,12 +3455,19 @@ void bcs12() {
 		cli_execute("mood execute");
 		
 		//Now deal with getting the moxie we need.
-		if (get_property("telescopeUpgrades") > 0) cli_execute("telescope look high");
-		if (my_buffedstat($stat[Moxie]) < bossMoxie && have_skill($skill[Advanced Saucecrafting])) cli_execute("cast * advanced saucecraft");
-		if (my_buffedstat($stat[Moxie]) < bossMoxie && item_amount($item[scrumptious reagent]) > 0) cli_execute("use 1 serum of sarcasm");
-		if (my_buffedstat($stat[Moxie]) < bossMoxie && item_amount($item[scrumptious reagent]) > 0) cli_execute("use 1 tomato juice of power");
-		
-		if (my_buffedstat($stat[Moxie]) < bossMoxie) abort("Can't get to " + bossMoxie + " moxie for the boss fight.  You're on your own.");
+		switch (my_primestat()) {
+			case $stat[Moxie] :
+				if (get_property("telescopeUpgrades") > 0) cli_execute("telescope look high");
+				if (my_buffedstat($stat[Moxie]) < bossMoxie && have_skill($skill[Advanced Saucecrafting])) cli_execute("cast * advanced saucecraft");
+				if (my_buffedstat($stat[Moxie]) < bossMoxie && item_amount($item[scrumptious reagent]) > 0) cli_execute("use 1 serum of sarcasm");
+				if (my_buffedstat($stat[Moxie]) < bossMoxie && item_amount($item[scrumptious reagent]) > 0) cli_execute("use 1 tomato juice of power");
+				if (my_buffedstat($stat[Moxie]) < bossMoxie) abort("Can't get to " + bossMoxie + " moxie for the boss fight.  You're on your own.");
+			break;
+			
+			default :
+				abort("Not yet doing the boss as Muscle.");
+			break;
+		}
 		
 		cli_execute("restore hp;restore mp");
 		visit_url("bigisland.php?place=camp&whichcamp=1");
@@ -3426,6 +3483,7 @@ void bcs12() {
 void bcs13() {
 	bcCouncil();
 	
+	bcascTelescope();
 	load_current_map("bumrats_lairitems", lairitems);
 	bcascNaughtySorceress();
 }
@@ -3433,7 +3491,7 @@ void bcs13() {
 
 void bumcheekcend() {
 	print("Doing a check for Telescope Items", "green");
-	bcascTelescope();
+	if (get_property("bcasc_telescopeAsYouGo") == "true") bcascTelescope();
 	print("Level 1 Starting", "green");
 	bcs1();
 	print("Level 2 Starting", "green");
