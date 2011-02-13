@@ -1,5 +1,5 @@
 /*
-	bumcheekascend.ash v0.17
+	bumcheekascend.ash v0.18
 	A script to ascend a character from start to finish.
 	
 	0.1 - Spun initial release. Gets up to about level 10, haphazardly. 
@@ -126,6 +126,10 @@
 		- Don't abort at Yossarian if you have the outfit on already.
 		- Don't abort at the 8bit for muscle classes.
 		- Start the steel quest properly now. 
+	0.18- Only make an RNR Legend if you have relevant skills. Thanks, St. Doodle!
+		- Don't switch to the hipster if you're on a 100% run. 
+		- Fix "try" now being a reserved word. 
+		- Dont cast Mojo if you can't. 
 */
 
 script "bumcheekascend.ash";
@@ -146,7 +150,7 @@ if (bcasc_doWarAs == "frat") {
 	abort("Please specify whether you would like to do the war as a frat or hippy by downloading the relay script at http://kolmafia.us/showthread.php?t=5470 and setting the settings for the script.");
 }
 
-if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.17</b>") == -1) {
+if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.18</b>") == -1) {
 	print("There is a new version available - go download the next version of bumcheekascend.ash at http://kolmafia.us/showthread.php?t=4963!", "red");
 }
 
@@ -553,7 +557,7 @@ void defaultMood(boolean castMojo) {
 	switch (my_primestat()) {
 		case $stat[Muscle] :
 			if (my_level() > 5) { cli_execute("trigger lose_effect, Tiger!, use 5 Ben-Gal Balm"); }
-			if (my_level() < 7 && castMojo) cli_execute("trigger lose_effect, The Magical Mojomuscular Melody, cast 1 The Magical Mojomuscular Melody");
+			if (my_level() < 7 && castMojo && have_skill($skill[The Magical Mojomuscular Melody])) cli_execute("trigger lose_effect, The Magical Mojomuscular Melody, cast 1 The Magical Mojomuscular Melody");
 			if (anHero()) {
 				if (have_skill($skill[The Power Ballad of the Arrowsmith])) cli_execute("trigger lose_effect, Power Ballad of the Arrowsmith, cast 1 The Power Ballad of the Arrowsmith");
 			} else {
@@ -722,6 +726,11 @@ boolean setFamiliar(string famtype) {
 	if(bcasc_100familiar != "") {
 		print("BCC: Your familiar is set to a 100% "+bcasc_100familiar, "purple");
 		cli_execute("familiar "+bcasc_100familiar);
+		return true;
+	}
+	
+	if (famtype == "nothing") {
+		use_familiar($familiar[none]);
 		return true;
 	}
 	
@@ -961,7 +970,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 				if (my_level() >= 2) {
 					//Check for temple.gif, or we're not getting in. 
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
-						if (have_familiar($familiar[Mini-Hipster])) use_familiar($familiar[Mini-Hipster]);
+						if (have_familiar($familiar[Mini-Hipster]) && bcasc_100familiar == "") use_familiar($familiar[Mini-Hipster]);
 						adventure(my_adventures(), $location[Hidden Temple]);
 					} else {
 						adventure(my_adventures(), $location[Haunted Pantry]);
@@ -1366,7 +1375,28 @@ boolean bcascEpicWeapons() {
 		return true;
 	}
 	
-	if (my_basestat(my_primestat()) > 10 && i_a("Rock and Roll Legend") == 0 && i_a("Squeezebox of the Ages") == 0 && i_a("The Trickster's Trikitixa") == 0) {
+	boolean requireRNR() {
+		float n = 0;
+		if (have_skill($skill[ The Moxious Madrigal ])) n += 0.1 + (0.1 * to_float(my_primestat() == $stat[Moxie]));
+		if (have_skill($skill[ The Magical Mojomuscular Melody ])) n += 0.1 + (0.3 * to_float(my_primestat() == $stat[Mysticality]));
+		if (have_skill($skill[ Cletus's Canticle of Celerity ])) n += 0.1;
+		if (have_skill($skill[ The Power Ballad of the Arrowsmith ])) n += (0.5 * to_float(my_primestat() == $stat[Muscle]));
+		if (have_skill($skill[ The Polka of Plenty ])) n += 0.1;
+		if (have_skill($skill[ Jackasses' Symphony of Destruction ])) n += 0.2;
+		if (have_skill($skill[ Fat Leon's Phat Loot Lyric ])) n += 0.8;
+		if (have_skill($skill[ Brawnee's Anthem of Absorption ])) n += 0.1;
+		if (have_skill($skill[ The Psalm of Pointiness ])) n += 0.1;
+		if (have_skill($skill[ Stevedave's Shanty of Superiority ])) n += 0.2;
+		if (have_skill($skill[ Aloysius' Antiphon of Aptitude ])) n += 0.2;
+		if (have_skill($skill[ The Ode to Booze ])) n += 0.6;
+		if (have_skill($skill[ The Sonata of Sneakiness ])) n += 0.5;
+		if (have_skill($skill[ Ur-Kel's Aria of Annoyance ])) n += 0.4;
+		if (have_skill($skill[ Dirge of Dreadfulness ])) n += 0.1;
+		if (have_skill($skill[ Inigo's Incantation of Inspiration ])) n+= 0.7;
+		return (n >= 1.0);
+	}
+	
+	if (my_basestat(my_primestat()) > 10 && i_a("Rock and Roll Legend") == 0 && i_a("Squeezebox of the Ages") == 0 && i_a("The Trickster's Trikitixa") == 0 && requireRNR()) {
 		getEpic("AT", "stolen accordion", "hot buttered roll", "rock and roll legend");
 	}
 	
@@ -1491,7 +1521,7 @@ boolean bcascFriarsSteel() {
 	
 	while (item_amount($item[Azazel's lollipop]) == 0) {
 		cli_execute("unequip weapon");
-		void try(item i, string preaction) {
+		void tryThis(item i, string preaction) {
 			if (item_amount(i) > 0) { 
 				equip(i);
 				visit_url("pandamonium.php?action=mourn&preaction="+preaction); 
@@ -1501,9 +1531,9 @@ boolean bcascFriarsSteel() {
 		//Adventure in Belilafs Comedy Club until you encounter Larry of the Field of Signs. Equip the observational glasses and Talk to Mourn. 
 		print("BCC: Getting Azazel's lollipop", "purple");
 		while (item_amount($item[observational glasses]) == 0) bumAdv($location[Belilafs Comedy Club], "", "items", "1 observational glasses", "Getting the Observational Glasses");
-		try($item[Victor, the Insult Comic Hellhound Puppet], "insult");
-		try($item[observational glasses], "observe");
-		try($item[hilarious comedy prop], "prop");
+		tryThis($item[Victor, the Insult Comic Hellhound Puppet], "insult");
+		tryThis($item[observational glasses], "observe");
+		tryThis($item[hilarious comedy prop], "prop");
 	}
 	
 	while (item_amount($item[Azazel's tutu]) == 0) {
@@ -2156,6 +2186,7 @@ boolean bcascMacguffinPrelim() {
 	if (checkStage("macguffinprelim")) return true;
 	
 	while (!black_market_available()) {
+		if (i_a("sunken eyes") > 0 && i_a("broken wings") > 0) cli_execute("use reassembled blackbird");
 		if (have_familiar($familiar[reassembled blackbird])) {
 			bumAdv($location[Black Forest], "", "items", "1 black market map", "Finding the black market");
 		} else {
@@ -3255,7 +3286,7 @@ void bcs12() {
 				visit_yossarian();
 				visit_yossarian();
 				while (get_property("currentJunkyardTool") != "") {
-					bumAdv(to_location(get_property("currentJunkyardLocation")), "mox +DA +10DR -melee", "", "1 "+get_property("currentJunkyardTool"), "Getting "+get_property("currentJunkyardTool")+"...", "", "consultJunkyard");
+					bumAdv(to_location(get_property("currentJunkyardLocation")), "mox +DA +10DR -melee", "nothing", "1 "+get_property("currentJunkyardTool"), "Getting "+get_property("currentJunkyardTool")+"...", "", "consultJunkyard");
 					visit_yossarian();
 				}
 				return (get_property("sidequestJunkyardCompleted") != "none");
