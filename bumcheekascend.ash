@@ -1520,7 +1520,6 @@ boolean bcascFriarsSteel() {
 	}
 	
 	while (item_amount($item[Azazel's lollipop]) == 0) {
-		cli_execute("unequip weapon");
 		void tryThis(item i, string preaction) {
 			if (item_amount(i) > 0) { 
 				equip(i);
@@ -1531,6 +1530,7 @@ boolean bcascFriarsSteel() {
 		//Adventure in Belilafs Comedy Club until you encounter Larry of the Field of Signs. Equip the observational glasses and Talk to Mourn. 
 		print("BCC: Getting Azazel's lollipop", "purple");
 		while (item_amount($item[observational glasses]) == 0) bumAdv($location[Belilafs Comedy Club], "", "items", "1 observational glasses", "Getting the Observational Glasses");
+		cli_execute("unequip weapon");
 		tryThis($item[Victor, the Insult Comic Hellhound Puppet], "insult");
 		tryThis($item[observational glasses], "observe");
 		tryThis($item[hilarious comedy prop], "prop");
