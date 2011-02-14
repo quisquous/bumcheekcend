@@ -1,6 +1,10 @@
 import <makemeat.ash>
 import <bumcheekascend.ash>
 
+String propBatTurns = "_picklishBatTurns";
+String propOrganTurns = "_piePartsCount";
+String propPieCount = "_pieDrops";
+
 void debug(String s) {
 	print("PCKLSH: " + s, "green");
 }
@@ -136,6 +140,17 @@ void firstTurn() {
 
 	if (visit_url("clan_viplounge.php").contains_text("a present under it"))
 		visit_url("clan_viplounge.php?action=crimbotree");
+
+	set_property(propOrganTurns, 0);
+	set_property(propBatTurns, 0);
+	set_property(propPieCount, 0);
+}
+
+void checkOrgan() {
+	int organ = get_property(propOrganTurns).to_int();
+	int pie = get_property(propPieCount).to_int();
+	if (organ > 0 && pie == 0)
+		use_familiar($familiar[organ grinder]);
 }
 
 void checkFamiliar() {
@@ -144,6 +159,21 @@ void checkFamiliar() {
 		// If we're using the He-Bo, it's likely that there was only one set of
 		// items that we care about.  So, switch to a stat familiar.
 		setFamiliar("");
+	}
+
+	if (my_location() == $location[boss bat's lair]) {
+		int bat = get_property(propBatTurns).to_int();
+		// This delay is arbitrary, but there are at least 4 bodyguard turns.
+		// We want to be using the knob grinder for five turns that includes
+		// the boss bat to get the stat pie.  So, wait a few turns before
+		// pulling out the grinder.
+		if (bat > 2) {
+			use_familiar($familiar[organ grinder]);
+		} else {
+			use_familiar($familiar[hobo monkey]);
+		}
+		bat = bat + 1;
+	    set_property(propBatTurns, bat);
 	}
 
 	if (my_spleen_use() >= 12 && my_familiar() == $familiar[sandworm] && my_level() < 9)
@@ -221,5 +251,6 @@ void main() {
 	process_inventory();
 	checkFamiliar();
 	olfactionPreparation();
+	checkOrgan();
 	useFriars();
 }
