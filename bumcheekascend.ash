@@ -1096,7 +1096,7 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 		case $stat[moxie]: b = 4; k = 7; break;
 	}
 	if (canMCD() && loc == $location[Boss Bat's Lair]) { cli_execute("mcd "+b); }
-	if (canMCD() && loc == $location[King's Chamber]) { cli_execute("mcd "+k); }
+	if (canMCD() && loc == $location[Throne Room]) { cli_execute("mcd "+k); }
 	
 	if (consultScript != "") {
 		if (adventure(my_adventures(), loc, consultScript)) {}
@@ -1711,7 +1711,7 @@ boolean bcascKnobKing() {
 	
 	if (!contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King")) {
 		while (i_a($item[Knob Goblin harem veil]) == 0 || i_a($item[Knob Goblin harem pants]) == 0 || i_a($item[Knob Goblin perfume]) == 0) {
-			bumAdv($location[Knob Goblin Harem], "", "hebo", "1 Knob Goblin harem veil, 1 Knob Goblin harem pants, 1 Knob Goblin perfume", "Getting the Harem Stuff", "", "consultHeBo");
+			bumAdv($location[Cobb's Knob Harem], "", "hebo", "1 Knob Goblin harem veil, 1 Knob Goblin harem pants, 1 Knob Goblin perfume", "Getting the Harem Stuff", "", "consultHeBo");
 		}
 	
 		//Now the Knob Goblin King has 55 Attack, and we'll be fighting him with the MCD set to 7. So that's 55+7+7=69 Moxie we need. 
@@ -1719,7 +1719,7 @@ boolean bcascKnobKing() {
 		buMax();
 		if (my_buffedstat(my_primestat()) >= 75) {
 			if (canMCD()) cli_execute("mcd 7");
-			bumAdv($location[King's Chamber], "+outfit harem", "", "", "Killing the Knob King");
+			bumAdv($location[Throne Room], "+outfit harem", "", "", "Killing the Knob King");
 			checkStage("knobking", true);
 			return true;
 		}
@@ -2148,7 +2148,7 @@ boolean bcascMacguffinPalindome() {
 			bumAdv($location[Palindome], "+equip talisman o' nam", "hebo", "1 stunt nuts, 1 I Love Me Vol I", "Getting the 'I Love Me' from the Palindome", "", "consultHeBo"); 
 		
 		while (my_adventures() > 0 && contains_text(visit_url("questlog.php?which=1"), "Fats, but then you lost it"))
-			bumAdv($location[Knob Goblin Lab], "", "", "1 choiceadv", "Meeting Mr. Alarm", "-");
+			bumAdv($location[Cobb's Knob Laboratory], "", "", "1 choiceadv", "Meeting Mr. Alarm", "-");
 		
 		while(contains_text(visit_url("questlog.php?which=1"), "lion oil, a bird rib, and some stunt nuts")) {
 			while (item_amount($item[wet stunt nut stew]) < 1) {
