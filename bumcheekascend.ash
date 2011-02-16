@@ -2123,7 +2123,6 @@ boolean bcascMacguffinHiddenCity() {
 			
 			case $stat[Moxie] :
 				print("BCC: Off to fight the final protector spirit!", "purple");
-				abort("Due to the Noodles attack, it is hard to automate this fight. You must do this manually.");
 			break;
 		}
 		visit_url("hiddencity.php?which=" + i);
