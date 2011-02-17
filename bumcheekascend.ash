@@ -3285,7 +3285,7 @@ void bcs12() {
 				visit_yossarian();
 				visit_yossarian();
 				while (get_property("currentJunkyardTool") != "") {
-					bumAdv(to_location(get_property("currentJunkyardLocation")), "mox +DA +10DR -melee", "nothing", "1 "+get_property("currentJunkyardTool"), "Getting "+get_property("currentJunkyardTool")+"...", "", "consultJunkyard");
+					bumAdv(to_location(get_property("currentJunkyardLocation")), "mox +DA +10DR -melee", "", "1 "+get_property("currentJunkyardTool"), "Getting "+get_property("currentJunkyardTool")+"...", "", "consultJunkyard");
 					visit_yossarian();
 				}
 				return (get_property("sidequestJunkyardCompleted") != "none");
