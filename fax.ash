@@ -178,10 +178,7 @@ boolean get_monster_fax(monster mon) {
         print("Making faxbot request for " + request + ".", "green");
         print("(Waiting for " + wait_time + " seconds.)", "green");
 
-        // TODO(picklish) - This doesn't actually send a message.
-        // chat_private("FaxBot", request);
-        if (!contains_text(visit_url("chat.php?graf=1&pwd&graffiti=/w FaxBot " + request, true), "private to"))
-            return false;
+        chat_private("FaxBot", request);
         waitq(wait_time);
 
         if (!get_fax())
