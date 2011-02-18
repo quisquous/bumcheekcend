@@ -2815,7 +2815,7 @@ boolean bcascTavern() {
 	if (!checkStage("spookyforest")) return false;
 
 	boolean checkComplete() {
-		if (contains_text(visit_url("questlog.php?which=3"), "solved the rat problem")) {
+		if (contains_text(visit_url("questlog.php?which=2"), "solved the rat problem")) {
 			checkStage("tavern", true);
 			return true;
 		}
