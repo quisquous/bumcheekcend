@@ -2813,7 +2813,18 @@ boolean bcascSpookyForest() {
 boolean bcascTavern() {
     if (checkStage("tavern")) return true;
 	if (!checkStage("spookyforest")) return false;
-	
+
+	boolean checkComplete() {
+		if (contains_text(visit_url("questlog.php?which=3"), "solved the rat problem")) {
+			checkStage("tavern", true);
+			return true;
+		}
+		else
+			return false;
+	}
+
+	checkComplete();
+
 	setFamiliar("");
 	cli_execute("mood execute");
     levelMe(19, false);
@@ -2822,22 +2833,14 @@ boolean bcascTavern() {
     setMood("");
 	buMax();
 
-    if(get_property("lastTavernAscension").to_int() == my_ascensions()) {
-		checkStage("tavern", true);
-		return true;
-	} else {
-		int turns = tavern();
-		if(get_property("tavernLayout").contains_text("3")) {
-			visit_url("rats.php?action=faucetoff");
-			visit_url("tavern.php?place=barkeep");
-			visit_url("tavern.php?place=barkeep");
-		}
+	int turns = tavern();
+	if (get_property("tavernLayout").contains_text("3")) {
+		visit_url("rats.php?action=faucetoff");
+		visit_url("tavern.php?place=barkeep");
+		visit_url("tavern.php?place=barkeep");
 	}
-	
-	if (contains_text(visit_url("questlog.php?which=3"), "solved the rat problem")) {
-		checkStage("tavern", true);
-		return true;
-	}
+
+	checkComplete();
 }
 
 boolean bcascTeleportitisBurn() {
