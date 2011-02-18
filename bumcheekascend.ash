@@ -1133,6 +1133,10 @@ boolean bcasc8Bit() {
 	if (!maximize("1 hand " + my_primestat() == $stat[Muscle] ? " +melee" : " -melee", true)) {
 		(my_primestat() == $stat[Muscle] ? cli_execute("buy cool whip") : cli_execute("buy slingshot"));
 	}
+
+	//Guarantee that we have an equippable 1-handed ranged weapon.
+	if (my_primestat() == $stat[Moxie])
+		while (i_a("disco ball") == 0) use(1, $item[chewing gum on a string]);
 	
 	while (i_a("digital key") == 0) {
 		//First, we have to make sure we have at least one-handed moxie weapon to do this with. 	
