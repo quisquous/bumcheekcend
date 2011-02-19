@@ -2678,6 +2678,7 @@ boolean bcascPirateFledges() {
 			cli_execute("conditions clear");
 			//Have we been given the quest at all?
 			while (!contains_text(visit_url("questlog.php?which=1"), "I Rate, You Rate")) {
+				if (my_adventures() == 0) { abort("You're out of adventures."); }
 				print("BCC: Adventuring once at a time to meet the Cap'm for the first time.", "purple");
 				adventure(1, $location[Barrrney's Barrr], "consultBarrr");
 			}
