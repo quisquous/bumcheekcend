@@ -1498,7 +1498,7 @@ boolean bcascFriarsSteel() {
 	while (item_amount($item[Azazel's unicorn]) == 0) {
 		//Solve the logic puzzle in the Hey Deze Arena to receive Azazel's unicorn
 		cli_execute("mood execute");
-		levelMe(77, false);
+		levelMe(69, false);
 		print("BCC: Getting Azazel's unicorn", "purple");
 		buMax();
 		setFamiliar("itemsnc");
