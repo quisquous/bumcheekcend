@@ -252,6 +252,9 @@ void main() {
 		tryCast($skill[polka of plenty]);
 	}
 
+	if (my_level() >= 6 && my_meat() > 1000)
+		tryCast($skill[leash of linguini]);
+
 	process_inventory();
 	checkFamiliar();
 	olfactionPreparation();
