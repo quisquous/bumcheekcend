@@ -248,6 +248,10 @@ void main() {
 			cli_execute("use * reodorant");
 	}
 
+	if (my_location() == $location[defiled cranny] || my_location() == $location[defiled alcove]) {
+		tryCast($skill[polka of plenty]);
+	}
+
 	process_inventory();
 	checkFamiliar();
 	olfactionPreparation();
