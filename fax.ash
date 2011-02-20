@@ -22,6 +22,7 @@ boolean get_monster_fax(monster mon) {
             case $monster[Slime3]: return "slime";
             case $monster[Slime4]: return "slime";
             case $monster[Slime5]: return "slime";
+            case $monster[Some Bad ASCII Art]: return "bad ASCII art";
         }
 
         return mon;
