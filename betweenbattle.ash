@@ -22,6 +22,13 @@ effect skillToEffect(skill s) {
 	return $effect[none];
 }
 
+void checkOutOfAdventures() {
+	if (my_inebriety() > inebriety_limit())
+		abort("Too drunk!");
+	if (my_adventures() == 0)
+		abort("No adventures left!");
+}
+
 void checkCounters() {
 	if (get_counters(danceCardCounter, 0, 0) == danceCardCounter) {
 		if (my_location() != $location[haunted ballroom]) {
@@ -230,6 +237,7 @@ void useFriars() {
 }
 
 void main() {
+	checkOutOfAdventures();
 	checkCounters();
 
 	if (my_turncount() == 0)
