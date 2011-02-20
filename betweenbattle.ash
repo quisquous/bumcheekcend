@@ -4,6 +4,7 @@ import <bumcheekascend.ash>
 String propBatTurns = "_picklishBatTurns";
 String propOrganTurns = "_piePartsCount";
 String propPieCount = "_pieDrops";
+String danceCardCounter = "Dance Card";
 
 void debug(String s) {
 	print("PCKLSH: " + s, "green");
@@ -19,6 +20,15 @@ effect skillToEffect(skill s) {
 	}
 
 	return $effect[none];
+}
+
+void checkCounters() {
+	if (get_counters(danceCardCounter, 0, 0) == danceCardCounter) {
+		if (my_location() != $location[haunted ballroom]) {
+			debug("Detouring to the Ballroom for the dance card counter");
+			adventure(1, $location[haunted ballroom]);
+		}
+	}
 }
 
 boolean tryCast(skill s) {
@@ -220,6 +230,8 @@ void useFriars() {
 }
 
 void main() {
+	checkCounters();
+
 	if (my_turncount() == 0)
 		firstTurn();
 	equipSugar();
