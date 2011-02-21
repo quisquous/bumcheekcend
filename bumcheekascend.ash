@@ -2830,7 +2830,8 @@ boolean bcascTavern() {
 			return false;
 	}
 
-	checkComplete();
+	if (checkComplete())
+		return true;
 
 	setFamiliar("");
 	cli_execute("mood execute");
@@ -2847,7 +2848,7 @@ boolean bcascTavern() {
 		visit_url("tavern.php?place=barkeep");
 	}
 
-	checkComplete();
+	return checkComplete();
 }
 
 boolean bcascTeleportitisBurn() {
