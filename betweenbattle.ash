@@ -171,6 +171,11 @@ void checkOrgan() {
 }
 
 void checkFamiliar() {
+	if (my_location() == $location[hidden temple]) {
+		use_familiar($familiar[mini-hipster]);
+		return;
+	}
+
 	// Don't bother using the HeBo when there's no yellow ray.
 	if (my_familiar() == $familiar[He-Boulder] && have_effect($effect[Everything Looks Yellow]) > 0) {
 		// If we're using the He-Bo, it's likely that there was only one set of
