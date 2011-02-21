@@ -2157,7 +2157,7 @@ boolean bcascMacguffinPalindome() {
 		
 		while(contains_text(visit_url("questlog.php?which=1"), "lion oil, a bird rib, and some stunt nuts")) {
 			while (item_amount($item[wet stunt nut stew]) < 1) {
-				while (item_amount($item[wet stew]) + creatable_amount($item[wet stew]) == 0) {
+				while (item_amount($item[wet stew]) == 0 && (item_amount($item[bird rib]) == 0 || item_amount($item[lion oil]) == 0)) {
 					visit_url("guild.php?place=paco");
 					bumAdv($location[whitey's grove], "", "items", "1 lion oil, 1 bird rib", "Getting the wet stew items from Whitey's Grove", "+i"); 
 				}
