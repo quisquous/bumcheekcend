@@ -1602,8 +1602,10 @@ boolean bcascHoleInTheSky() {
 	while (i_a("star hat") == 0 || i_a("star crossbow") == 0 || i_a("richard's star key") == 0) {
 		adventure(1, $location[Hole in the Sky]);
 		if (item_amount($item[star chart]) > 0) {
-			(!retrieve_item(1, $item[star hat]));
-			(!retrieve_item(1, $item[star crossbow]));
+			if (equipped_item($slot[hat]) != $item[star hat])
+				(!retrieve_item(1, $item[star hat]));
+			if (equipped_item($slot[weapon]) != $item[star crossbow])
+				(!retrieve_item(1, $item[star crossbow]));
 			(!retrieve_item(1, $item[richards star key]));
 		}
 	}
