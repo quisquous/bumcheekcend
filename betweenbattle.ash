@@ -4,6 +4,7 @@ import <bumcheekascend.ash>
 String propBatTurns = "_picklishBatTurns";
 String propOrganTurns = "_piePartsCount";
 String propPieCount = "_pieDrops";
+String propPrevFamiliar = "_picklishPrevFamiliar";
 String danceCardCounter = "Dance Card";
 String fortuneCounter = "Fortune Cookie";
 
@@ -174,8 +175,25 @@ void firstTurn() {
 void checkOrgan() {
 	int organ = get_property(propOrganTurns).to_int();
 	int pie = get_property(propPieCount).to_int();
-	if (organ > 0 && pie == 0)
+	// Don't switch from he-boulder if we're trying to YR something.
+	boolean needOrgan = (organ > 0 && pie == 0 && my_familiar() != $familiar[he-boulder]);
+	if (needOrgan && my_familiar() == $familiar[organ grinder])
+		return;
+	if (!needOrgan && my_familiar() != $familiar[organ grinder])
+		return;
+
+	if (needOrgan) {
+		debug("Remembering old familiar: " + my_familiar());
+		set_property(propPrevFamiliar, my_familiar());
 		use_familiar($familiar[organ grinder]);
+	} else {
+		familiar prev = get_property(propPrevFamiliar).to_familiar();
+		debug("Switching back to old familiar: " + prev);
+		if (have_familiar(prev))
+			use_familiar(prev);
+		else
+			setFamiliar("");
+	}
 }
 
 void checkFamiliar() {
