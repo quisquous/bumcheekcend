@@ -11,6 +11,10 @@ void debug(String s) {
 	print("PCKLSH: " + s, "green");
 }
 
+monster olfactTarget() {
+	return get_property("olfactedMonster").to_monster();
+}
+
 effect skillToEffect(skill s) {
 	switch (s) {
 		case $skill[fat leon's phat loot lyric]: return $effect[fat leon's phat loot lyric];
@@ -248,6 +252,12 @@ void useFriars() {
 void main() {
 	checkOutOfAdventures();
 	checkCounters();
+
+	// Override for faxed in/arrowed blooper.
+	// TODO(picklish) - do day 1 fax, arrow #1, pool after #2, olfact #3
+	if (have_effect($effect[on the trail]) > 0 && olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
+		bcasc8Bit();
+	}
 
 	if (my_turncount() == 0)
 		firstTurn();
