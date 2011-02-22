@@ -1733,8 +1733,8 @@ boolean bcascKnobKing() {
 	}
 	
 	if (!contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King")) {
-		while (i_a($item[Knob Goblin harem veil]) == 0 || i_a($item[Knob Goblin harem pants]) == 0 || i_a($item[Knob Goblin perfume]) == 0) {
-			bumAdv($location[Cobb's Knob Harem], "", "hebo", "1 Knob Goblin harem veil, 1 Knob Goblin harem pants, 1 Knob Goblin perfume", "Getting the Harem Stuff", "", "consultHeBo");
+		while (i_a($item[Knob Goblin harem veil]) == 0 || i_a($item[Knob Goblin harem pants]) == 0) {
+			bumAdv($location[Cobb's Knob Harem], "", "hebo", "1 Knob Goblin harem veil, 1 Knob Goblin harem pants", "Getting the Harem Stuff", "", "consultHeBo");
 		}
 	
 		//Now the Knob Goblin King has 55 Attack, and we'll be fighting him with the MCD set to 7. So that's 55+7+7=69 Moxie we need. 
@@ -1742,6 +1742,13 @@ boolean bcascKnobKing() {
 		buMax();
 		if (my_buffedstat(my_primestat()) >= 75) {
 			if (canMCD()) cli_execute("mcd 7");
+			if (item_amount($item[Knob Goblin perfume]) == 0) {
+				while (have_effect($effect[Knob Goblin perfume]) == 0 && item_amount($item[Knob Goblin perfume]) == 0) {
+					print("BCC: Getting perfume effect", "purple");
+					buMax("+outfit harem");
+					adventure(1, $location[Cobb's Knob Harem]);
+				}
+			}
 			bumAdv($location[Throne Room], "+outfit harem", "", "", "Killing the Knob King");
 			checkStage("knobking", true);
 			return true;
