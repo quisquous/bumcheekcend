@@ -1168,24 +1168,41 @@ boolean bcascBats1() {
 	if (checkStage("bats1")) return true;
 	//Guano
 	if (!contains_text(visit_url("questlog.php?which=2"), "slain the Boss Bat")) {
+		boolean haveStenchSkill() {
+			return (have_skill($skill[Diminished Gag Reflex]) || have_skill($skill[Astral Shell]) || have_skill($skill[Elemental Saucesphere]));
+		}
+
 		//There's no need to get the air freshener if you have the Stench Resist Skill
 		if (elemental_resistance($element[stench]) == 0) {
 			buMax("+1000 stench res");
 			//Check it NOW (i.e. see if we have stench resistance at all, and get an air freshener if you don't.
-			if (elemental_resistance($element[stench]) == 0) {
-				while (!have_skill($skill[Diminished Gag Reflex]) && (i_a("Pine-Fresh air freshener") == 0))
+			if (elemental_resistance($element[stench]) == 0 && !haveStenchSkill()) {
+				while (i_a("Pine-Fresh air freshener") == 0)
 					bumAdv($location[Entryway], "", "items", "1 Pine-Fresh air freshener", "Getting a pine-fresh air freshener.");
 			}
 			buMax("+1000 stench res");
-			if (elemental_resistance($element[stench]) == 0) abort("There is some error getting stench resist - perhaps you don't have enough Myst to equip the air freshener? Please manually sort this out.");
+			if (elemental_resistance($element[stench]) == 0 && !haveStenchSkill()) abort("There is some error getting stench resist - perhaps you don't have enough Myst to equip the air freshener? Please manually sort this out.");
 		}
-		
+	
+		print("BCC: Getting Sonars", "purple");
 		while (item_amount($item[sonar-in-a-biscuit]) < 1 && contains_text(visit_url("bathole.php"), "action=rubble")) {
+			if (elemental_resistance($element[stench]) == 0) {
+				if (have_skill($skill[Astral Shell])) {
+					while (i_a("turtle totem") == 0) use(1, $item[chewing gum on a string]);
+				    use_skill(1, $skill[Astral Shell]);	
+				} else if (have_skill($skill[Elemental Saucesphere])) {
+					while (i_a("saucepan") == 0) use(1, $item[chewing gum on a string]);
+				    use_skill(1, $skill[Elemental Saucesphere]);	
+				}
+			}
 			//Let's use a clover if we can.
 			if (i_a("sonar-in-a-biscuit") == 0 && cloversAvailable(true) > 0) {
 				visit_url("adventure.php?snarfblat=31&confirm=on");
 			} else {
-				bumAdv($location[Guano Junction], "+10stench res", "items", "1 sonar-in-a-biscuit", "Getting a Sonars");
+				// Adventure 1 turn at a time in case of screambats.
+				buMax("+10 stench res");
+				setFamiliar("items");
+				adventure(1, $location[Guano Junction]);
 			}
 			if (cli_execute("use * sonar-in-a-biscuit")) {}
 		}
