@@ -3015,6 +3015,8 @@ boolean bcascToot() {
 	//KoLMafia doesn't clear these on ascension.
 	set_property("mineLayout1", "");
 	set_property("trapperOre", "");
+	set_property("bcasc_lastHermitCloverGet", "");
+	set_property("bcasc_lastShieldCheck", "");
 
 	checkStage("toot", true);
     return true;
