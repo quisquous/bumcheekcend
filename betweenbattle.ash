@@ -5,6 +5,7 @@ String propBatTurns = "_picklishBatTurns";
 String propOrganTurns = "_piePartsCount";
 String propPieCount = "_pieDrops";
 String danceCardCounter = "Dance Card";
+String fortuneCounter = "Fortune Cookie";
 
 void debug(String s) {
 	print("PCKLSH: " + s, "green");
@@ -35,6 +36,9 @@ void checkCounters() {
 			debug("Detouring to the Ballroom for the dance card counter");
 			adventure(1, $location[haunted ballroom]);
 		}
+	}
+	if (get_counters(fortuneCounter, 0, 0) == fortuneCounter) {
+		abort("Fortune cookie!");
 	}
 }
 
