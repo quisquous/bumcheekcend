@@ -579,6 +579,8 @@ void defaultMood() { defaultMood(true); }
 
 //Returns true if we have the elite guard outfit. 
 boolean haveElite() {
+	if (get_property("lastDispensaryOpen") != my_ascensions())
+		return false;
 	int a,b,c;
 	if (i_a("Knob Goblin elite helm") > 0) { a = 1; }
 	if (i_a("Knob Goblin elite polearm") > 0) { b = 1; }
