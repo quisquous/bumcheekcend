@@ -2988,6 +2988,8 @@ boolean bcascTrapper() {
 	visit_url("trapper.php");
 	
 	while (index_of(visit_url("trapper.php"), "reckon 3 chunks of") > 0) {
+		if (have_effect($effect[Everything Looks Yellow]) > 0)
+			return false;
 		if (i_a("miner's helmet") == 0 || i_a("7-Foot Dwarven mattock") == 0 || i_a("miner's pants") == 0) {
 			bumAdv($location[Itznotyerzitz Mine], "", "hebo", "1 miner's helmet, 1 7-Foot Dwarven mattock, 1 miner's pants", "Getting the Mining Outfit", "", "consultHeBo");
 			visit_url("trapper.php");
@@ -3181,7 +3183,9 @@ void bcs8() {
 	bcCouncil();
 	bcascTrapper();
 	bcascWand();
+	bcascTrapper();
 	bcascPirateFledges();
+	bcascTrapper();
 	
 	levelMe(68, true);
 }
