@@ -1,5 +1,5 @@
 /*
-	bumcheekascend.ash v0.18.1
+	bumcheekascend.ash v0.19
 	A script to ascend a character from start to finish.
 	
 	0.1 - Spun initial release. Gets up to about level 10, haphazardly. 
@@ -66,7 +66,7 @@
 		- Do GMoB instead of Cyrus. Figuring out the Cyrus logic is too hard. 
 	0.10- Open ballroom by going through bedroom. NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE 
 		- Check for the He-Boulder BEFORE making the pumpkin bomb. Not after. That would be a stupid idea. 
-		- Force MCD=0 in Junkyard. Maximize DR/DA as well. Force MCD=4,7 in Boss Bat, King's Chamber.
+		- Force MCD=0 in Junkyard. Maximize DR/DA as well. Force MCD=4,7 in Boss Bat, Throne Room.
 		- Fix bug where it'd continue to get the steel items. 
 		- Made a slight change to the way the script checks for clovers. 
 		- Set the library choice adventures. 
@@ -130,6 +130,15 @@
 		- Don't switch to the hipster if you're on a 100% run. 
 		- Fix "try" now being a reserved word. 
 		- Dont cast Mojo if you can't. 
+	0.19- Change for Cobb's Knob changes. 
+		- Don't go to the chasm if you already have the scroll. Important now with faxbot.
+		- Remove the eyedrops from use.
+		- Option to NOT get your stuff from Hagnks
+		- Only get the 1-handed weapon if you're moxie. And get a disco ball.
+		- Get the AT epic weapon last. 
+		- Major tavern fix from picklish. 
+		- Revamped Level 5 quest. 
+		- 
 */
 
 script "bumcheekascend.ash";
@@ -150,7 +159,7 @@ if (bcasc_doWarAs == "frat") {
 	abort("Please specify whether you would like to do the war as a frat or hippy by downloading the relay script at http://kolmafia.us/showthread.php?t=5470 and setting the settings for the script.");
 }
 
-if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.18.1</b>") == -1) {
+if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.19</b>") == -1) {
 	print("There is a new version available - go download the next version of bumcheekascend.ash at http://kolmafia.us/showthread.php?t=4963!", "red");
 }
 
@@ -338,11 +347,21 @@ boolean buMax(string maxme) {
 		cli_execute("maximize mainstat "+maxme+" +melee -ml -tie"); 
 		return true;
 	}
+	if (contains_text(maxme, "knob goblin elite") && my_primestat() == $stat[Muscle]) {
+		cli_execute("maximize mainstat "+maxme+" +melee -ml -tie"); 
+		return true;
+	}
+	if (maxme.contains_text("item") && have_familiar($familiar[Mad Hatrack])) {
+		maxme += " -equip spangly sombrero";
+	}
+	if (!(i_a("spangly sombrero") > 0 && have_familiar($familiar[Mad Hatrack]))) {
+		maxme += " -equip sugar shield";
+	}
 	
 	//Basically, we ALWAYS want -tie and -ml, for ALL classes. Otherwise we let an override happen. 
 	switch (my_primestat()) {
 		case $stat[Muscle] : 		cli_execute("maximize mainstat "+maxme+" +melee +shield -ml -tie"); break;
-		case $stat[Mysticality] : 	abort("ZOMG NO MYST"); break;
+		case $stat[Mysticality] : 	abort("This script does not support Mysticality classes."); break;
 		case $stat[Moxie] : 		cli_execute("maximize mainstat "+maxme+" -melee -ml -tie"); break;
 	}
 	return true;
@@ -579,8 +598,7 @@ void defaultMood() { defaultMood(true); }
 
 //Returns true if we have the elite guard outfit. 
 boolean haveElite() {
-	if (get_property("lastDispensaryOpen") != my_ascensions())
-		return false;
+	if (get_property("lastDispensaryOpen") != my_ascensions()) return false;
 	int a,b,c;
 	if (i_a("Knob Goblin elite helm") > 0) { a = 1; }
 	if (i_a("Knob Goblin elite polearm") > 0) { b = 1; }
@@ -821,14 +839,14 @@ boolean setFamiliar(string famtype) {
 
 boolean setMCD(int moxie, int sMox) {
 	//Can't be bothered to deal with this for other classes. 
-	if (!(my_primestat() == $stat[Moxie])) return false;
+	//if (!(my_primestat() == $stat[Moxie])) return false;
 	
 	
 	if (canMCD()) {
 		print("BCC: We CAN set the MCD.", "purple");
 		//We do. Check maxMCD value
 		int maxmcd = 10 + to_int(in_mysticality_sign());
-		int mcdval = my_buffedstat($stat[Moxie]) - sMox;
+		int mcdval = my_buffedstat(my_primestat()) - sMox;
 		
 		if (mcdval > maxmcd) {
 			mcdval = maxmcd;
@@ -898,12 +916,17 @@ void setMood(string combat) {
 			print("BCC: Need items!", "purple");
 			if (have_skill($skill[Fat Leon's Phat Loot Lyric])) cli_execute("trigger lose_effect, Fat Leon's Phat Loot Lyric, cast 1 Fat Leon's Phat Loot Lyric");
 			if (have_skill($skill[Leash of Linguini])) cli_execute("trigger lose_effect, Leash of Linguini, cast 1 Leash of Linguini");
-			if (haveElite() && my_meat() > 3000) cli_execute("trigger lose_effect, Peeled Eyeballs, use 1 Knob Goblin eyedrops");
+			//if (haveElite() && my_meat() > 3000) cli_execute("trigger lose_effect, Peeled Eyeballs, use 1 Knob Goblin eyedrops");
 		}
 	}
 }
 
 boolean levelMe(int sMox, boolean needBaseStat) {
+	if (have_effect($effect[Beaten Up]) > 0) {
+		cli_execute("uneffect beaten up");
+	}
+	if (have_effect($effect[Beaten Up]) > 0) { abort("Please cure beaten up"); }
+	
 	if (needBaseStat) {
 		if (my_basestat(my_primestat()) >= sMox) return true;
 		print("Need to Level up a bit to get at least "+sMox+" base Primestat", "fuchsia");
@@ -919,10 +942,6 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 	}
 	cli_execute("goal clear; goal set "+sMox+" "+to_string(my_primestat()));
 	
-	if (have_effect($effect[Beaten Up]) > 0) {
-		cli_execute("uneffect beaten up");
-	}
-	
 	switch (my_primestat()) {
 		case $stat[Muscle] :
 			if (my_buffedstat($stat[Muscle]) < 120) {
@@ -931,6 +950,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 				if (my_level() >= 2) {
 					//Check for temple.gif, or we're not getting in. 
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
+						setFamiliar("hipster");
 						adventure(my_adventures(), $location[Hidden Temple]);
 					} else {
 						adventure(my_adventures(), $location[Haunted Pantry]);
@@ -972,7 +992,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 				if (my_level() >= 2) {
 					//Check for temple.gif, or we're not getting in. 
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
-						if (have_familiar($familiar[Mini-Hipster]) && bcasc_100familiar == "") use_familiar($familiar[Mini-Hipster]);
+						setFamiliar("hipster");
 						adventure(my_adventures(), $location[Hidden Temple]);
 					} else {
 						adventure(my_adventures(), $location[Haunted Pantry]);
@@ -1016,13 +1036,12 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 				setFamiliar("itemsnc");
 				while (my_basestat($stat[Moxie]) < sMox) {
 					if (my_adventures() == 0) abort("No Adventures to level :(");
+					if ((my_buffedstat($stat[Moxie]) < 130) && canMCD()) cli_execute("mcd 0");
 					if (item_amount($item[dance card]) > 0) {
 						use(1, $item[dance card]);
 						adventure(4, $location[Haunted Ballroom]);
 					} else {
-						//We can't use bumAdv here as we'd get into an infinite loop. And that would be bad. 
-						if ((my_buffedstat($stat[Moxie]) < 130) && canMCD()) cli_execute("mcd 0");
-						if (adventure(1, $location[Haunted Ballroom])) {}
+						adventure(1, $location[Haunted Ballroom]);
 					}
 				}
 			}
@@ -1131,14 +1150,17 @@ boolean bcasc8Bit() {
 		return true;
 	}
 	
-	//Crude check for a one-handed weapon. 
+	//Crude check for a one-handed weapon. Removed in 0.19 as muscle classes will almost certainly have a 1-handed weapon anyway, and the slingshot is 2-handed. 
+	/*
 	if (!maximize("1 hand " + my_primestat() == $stat[Muscle] ? " +melee" : " -melee", true)) {
 		(my_primestat() == $stat[Muscle] ? cli_execute("buy cool whip") : cli_execute("buy slingshot"));
 	}
-
+	*/
+	
 	//Guarantee that we have an equippable 1-handed ranged weapon.
-	if (my_primestat() == $stat[Moxie])
-		while (i_a("disco ball") == 0) use(1, $item[chewing gum on a string]);
+	if (my_primestat() == $stat[Moxie]) {
+		while (i_a("disco ball") == 0) use(1, $item[chewing gum on a string]); 
+	}
 	
 	while (i_a("digital key") == 0) {
 		//First, we have to make sure we have at least one-handed moxie weapon to do this with. 	
@@ -1187,6 +1209,8 @@ boolean bcascBats1() {
 		}
 	
 		print("BCC: Getting Sonars", "purple");
+		
+		buMax("+10stench res");
 		while (item_amount($item[sonar-in-a-biscuit]) < 1 && contains_text(visit_url("bathole.php"), "action=rubble")) {
 			if (elemental_resistance($element[stench]) == 0) {
 				if (have_skill($skill[Astral Shell])) {
@@ -1209,11 +1233,11 @@ boolean bcascBats1() {
 			if (cli_execute("use * sonar-in-a-biscuit")) {}
 		}
 		if (cli_execute("use * sonar-in-a-biscuit")) {}
+	}
 		
-		if (!contains_text(visit_url("bathole.php"), "action=rubble")) {
-			checkStage("bats1", true);
-			return true;
-		}
+	if (!contains_text(visit_url("bathole.php"), "action=rubble")) {
+		checkStage("bats1", true);
+		return true;
 	}
 }
 
@@ -1273,7 +1297,7 @@ boolean bcascChasm() {
 	while (contains_text(visit_url("questlog.php?which=1"), "A Quest, LOL")) {
 		if (index_of(visit_url("questlog.php?which=1"), "to the Valley beyond the Orc Chasm") > 0) {
 			cli_execute("set addingScrolls = 1");
-			bumAdv($location[Orc Chasm], "", "items", "1 64735 scroll, 1 lowercase N", "Get me the 64735 Scroll", "i");
+			if (i_a("64735 scroll") == 0 || i_a("lowercase N") == 0) bumAdv($location[Orc Chasm], "", "items", "1 64735 scroll, 1 lowercase N", "Get me the 64735 Scroll", "i");
 			if (cli_execute("use 64735 scroll")) {}
 		} else {
 			abort("For some reason we haven't bridged the chasm.");
@@ -1419,10 +1443,6 @@ boolean bcascEpicWeapons() {
 		return (n >= 1.0);
 	}
 	
-	if (my_basestat(my_primestat()) > 10 && i_a("Rock and Roll Legend") == 0 && i_a("Squeezebox of the Ages") == 0 && i_a("The Trickster's Trikitixa") == 0 && requireRNR()) {
-		getEpic("AT", "stolen accordion", "hot buttered roll", "rock and roll legend");
-	}
-	
 	if (my_class() == $class[Disco Bandit] && my_basestat(my_primestat()) > 10 && i_a("Disco Banjo") == 0 && i_a("Shagadelic Disco Banjo") == 0 && i_a("Seeger's Unstoppable Banjo") == 0) {
 		getEpic("DB", "disco ball", "banjo strings", "disco banjo");
 	}
@@ -1433,6 +1453,10 @@ boolean bcascEpicWeapons() {
 	
 	if (my_class() == $class[Seal Clubber] && my_basestat(my_primestat()) > 10 && i_a("Bjorn's Hammer") == 0 && i_a("Hammer of Smiting") == 0 && i_a("Sledgehammer of the Vælkyr") == 0) {
 		getEpic("SC", "seal-clubbing club", "seal tooth", "Bjorn's Hammer");
+	}
+	
+	if (my_basestat(my_primestat()) > 10 && i_a("Rock and Roll Legend") == 0 && i_a("Squeezebox of the Ages") == 0 && i_a("The Trickster's Trikitixa") == 0 && requireRNR()) {
+		getEpic("AT", "stolen accordion", "hot buttered roll", "rock and roll legend");
 	}
 }
 
@@ -1467,10 +1491,11 @@ boolean bcascFriarsSteel() {
 		if (item_amount($item[sponge cake]) + item_amount($item[comfy pillow]) + item_amount($item[gin-soaked blotter paper]) + item_amount($item[giant marshmallow]) + item_amount($item[booze-soaked cherry]) + item_amount($item[beer-scented teddy bear]) == 0) return false;
 		
 		int j = 0, f = 0, b = 0, s = 0, jf, bs;
-		if (contains_text(visit_url("pandamonium.php?action=sven"), "<option>Bognort")) b = 1;
-		if (contains_text(visit_url("pandamonium.php?action=sven"), "<option>Flargwurm")) f = 1;
-		if (contains_text(visit_url("pandamonium.php?action=sven"), "<option>Jim")) j = 1;
-		if (contains_text(visit_url("pandamonium.php?action=sven"), "<option>Stinkface")) s = 1;
+		string sven = visit_url("pandamonium.php?action=sven");
+		if (contains_text(sven, "<option>Bognort")) b = 1;
+		if (contains_text(sven, "<option>Flargwurm")) f = 1;
+		if (contains_text(sven, "<option>Jim")) j = 1;
+		if (contains_text(sven, "<option>Stinkface")) s = 1;
 		jf = j+f;
 		bs = b+s;
 		
@@ -1517,7 +1542,7 @@ boolean bcascFriarsSteel() {
 	while (item_amount($item[Azazel's unicorn]) == 0) {
 		//Solve the logic puzzle in the Hey Deze Arena to receive Azazel's unicorn
 		cli_execute("mood execute");
-		levelMe(69, false);
+		levelMe(70, false);
 		print("BCC: Getting Azazel's unicorn", "purple");
 		buMax();
 		setFamiliar("itemsnc");
@@ -1543,6 +1568,7 @@ boolean bcascFriarsSteel() {
 	}
 	
 	while (item_amount($item[Azazel's lollipop]) == 0) {
+		levelMe(77, false);
 		void tryThis(item i, string preaction) {
 			if (item_amount(i) > 0) { 
 				equip(i);
@@ -1580,7 +1606,7 @@ boolean bcascFriarsSteel() {
 
 boolean bcascGuild1() {
 	if (checkStage("guild1")) return true;
-	if (index_of(visit_url("guild.php?place=challenge"), "game of 11-Card Monte") > 0) {
+	if (index_of(visit_url("guild.php?place=challenge"), "game of 11-Card Monte") + index_of(visit_url("guild.php?place=challenge"), "pot of baked beans over there") > 0) {
 		if (my_buffedstat(my_primestat()) > 10) {
 			print("BCC: Doing the First Challenge...", "purple");
 			if (my_adventures() == 0) abort("You are out of adventures.");
@@ -1621,10 +1647,8 @@ boolean bcascHoleInTheSky() {
 	while (i_a("star hat") == 0 || i_a("star crossbow") == 0 || i_a("richard's star key") == 0) {
 		adventure(1, $location[Hole in the Sky]);
 		if (item_amount($item[star chart]) > 0) {
-			if (equipped_item($slot[hat]) != $item[star hat])
-				(!retrieve_item(1, $item[star hat]));
-			if (equipped_item($slot[weapon]) != $item[star crossbow])
-				(!retrieve_item(1, $item[star crossbow]));
+			if (equipped_item($slot[hat]) != $item[star hat]) { (!retrieve_item(1, $item[star hat])); }
+			if (equipped_item($slot[weapon]) != $item[star crossbow]) { (!retrieve_item(1, $item[star crossbow])); }
 			(!retrieve_item(1, $item[richards star key]));
 		}
 	}
@@ -1735,25 +1759,35 @@ boolean bcascKnobKing() {
 	}
 	
 	if (!contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King")) {
-		while (i_a($item[Knob Goblin harem veil]) == 0 || i_a($item[Knob Goblin harem pants]) == 0) {
-			bumAdv($location[Cobb's Knob Harem], "", "hebo", "1 Knob Goblin harem veil, 1 Knob Goblin harem pants", "Getting the Harem Stuff", "", "consultHeBo");
+		//First we need the KGE outfit. 
+		while (i_a($item[Knob Goblin elite pants]) == 0 || i_a($item[Knob Goblin elite polearm]) == 0 || i_a($item[Knob Goblin elite helm]) == 0) {
+			bumAdv($location[Cobb's Knob Barracks], "", "items", "1 Knob Goblin elite pants, 1 Knob Goblin elite polearm, 1 Knob Goblin elite helm", "Getting the KGE Outfit");
+		}
+		
+		//Then we need the cake. 
+		while (available_amount($item[Knob cake]) + creatable_amount($item[Knob cake]) == 0) {
+			while (item_amount($item[Knob frosting]) == 0) {
+				bumAdv($location[Cobb's Knob Kitchens], "+outfit knob goblin elite", "", "1 knob frosting", "Getting the Knob Frosting");
+			}
+			
+			while (available_amount($item[unfrosted Knob cake]) + creatable_amount($item[unfrosted Knob cake]) == 0) {
+				bumAdv($location[Cobb's Knob Kitchens], "+outfit knob goblin elite", "", "1 Knob cake pan, 1 knob batter", "Getting the Knob Pan and Batter");
+			}
+		}
+		if (item_amount($item[Knob cake]) == 0) {
+			if (cli_execute("make knob cake")) {}
 		}
 	
 		//Now the Knob Goblin King has 55 Attack, and we'll be fighting him with the MCD set to 7. So that's 55+7+7=69 Moxie we need. 
 		//Arbitrarily using 75 because will need the harem outfit equipped. 
-		buMax();
-		if (my_buffedstat(my_primestat()) >= 75) {
-			if (canMCD()) cli_execute("mcd 7");
-			if (item_amount($item[Knob Goblin perfume]) == 0) {
-				while (have_effect($effect[Knob Goblin perfume]) == 0 && item_amount($item[Knob Goblin perfume]) == 0) {
-					print("BCC: Getting perfume effect", "purple");
-					buMax("+outfit harem");
-					adventure(1, $location[Cobb's Knob Harem]);
-				}
+		if (item_amount($item[Knob cake]) == 0) {
+			buMax();
+			if (my_buffedstat(my_primestat()) >= 75) {
+				if (canMCD()) cli_execute("mcd 7");
+				bumAdv($location[Throne Room], "+outfit kge", "", "", "Killing the Knob King");
+				checkStage("knobking", true);
+				return true;
 			}
-			bumAdv($location[Throne Room], "+outfit harem", "", "", "Killing the Knob King");
-			checkStage("knobking", true);
-			return true;
 		}
 	}
 }
@@ -1780,6 +1814,10 @@ boolean bcascLairFightNS() {
 		if (!contains_text(visit_url("trophy.php"), "not currently entitled to")) abort("You're entitled to some trophies!");
 		print("BCC: Hi-keeba!", "purple");
 		visit_url("lair6.php?place=6");
+		if (get_property("bcasc_getItemsFromStorage") == "true") {
+			print("BCC: Getting all your items out of Storage. Not all bankers are evil, eh?", "purple");
+			visit_url("storage.php?action=takeall&pwd");
+		}
 		abort("Tada! Thankyou for using bumcheekascend.ash.");
 	} else {
 		abort("Bring it on.");
@@ -1826,6 +1864,7 @@ boolean bcascLairFirstGate() {
 						setMood("i+");
 						while (!identifyBangPotions() && (bangPotionWeNeed() == "")) {
 							adventure(1, $location[Dungeons of Doom]);
+							betweenBattle();
 							cli_execute("use * dead mimic; use * large box; use * small box");
 						}
 							
@@ -2240,7 +2279,7 @@ boolean bcascMacguffinPrelim() {
 	
 	while (!contains_text(visit_url("woods.php"),"hiddencity.gif")) {
 		if (have_familiar($familiar[Mini-Hipster])) use_familiar($familiar[Mini-Hipster]);
-		bumAdv($location[hidden temple], "", "", "1 choiceadv", "Getting another ChoiceAdv to open the Temple");
+		bumAdv($location[hidden temple], "", "hipster", "1 choiceadv", "Getting another ChoiceAdv to open the Temple");
 	}
 	
 	//At this point, Zarqon opens up the bedroom. But I'd like to do this earlier. 
@@ -2405,7 +2444,7 @@ boolean bcascManorBilliards() {
 	//Billiards Room
 	while (item_amount($item[Spookyraven library key]) == 0) {
 		while (i_a("pool cue") == 0) {
-			bumAdv($location[Haunted Billiards Room], "", "", "1 pool cue", "Getting the Pool Cue");
+			bumAdv($location[Haunted Billiards Room], "+100000 elemental dmg", "", "1 pool cue", "Getting the Pool Cue");
 		}
 		
 		print("BCC: Getting the Key", "purple");
@@ -2431,9 +2470,22 @@ boolean bcascManorBilliards() {
 
 boolean bcascManorLibrary() {
 	if (checkStage("manorlibrary")) return true;
+	set_property("choiceAdventure80", "2"); //(Rise) - this always needs to be set. It's Fall that has the conservatory adventure.
+	set_property("choiceAdventure87", "2");  //(Read Fall) - May as well always set this to read Chapter 2.
+	
+	if (my_primestat() == $stat[Muscle]) {
+		//If you're a muscle class, then you'll need to open the conservatory. It's an auto-stop.
+		while (get_property("lastGalleryUnlock") != my_ascensions()) {
+			set_property("choiceAdventure81", "1"); //(Fall) Get the Gallery adventure.
+			bumAdv($location[Haunted Library], "", "", "1 choiceadv", "Unlocking the Gallery Adventure thingymajig", "-");
+		}
+		while (contains_text(visit_url("manor.php"), "place=gallery")) {
+			bumAdv($location[Haunted Conservatory], "", "", "1 Spookyraven Gallery Key", "Getting the Gallery Key", "-");
+		}
+	}
+	
 	//Open up the second floor of the manor. 
-	set_property("choiceAdventure80", "99");
-	set_property("choiceAdventure81", "99");
+	set_property("choiceAdventure81", "99"); //(Fall)
 	while (index_of(visit_url("manor.php"), "place=stairs") + index_of(visit_url("manor.php"), "sm2b.gif") > 0) {
 		bumAdv($location[Haunted Library], "", "", "1 choiceadv", "Opening Second floor of the Manor", "-");
 	}
@@ -2709,6 +2761,7 @@ boolean bcascPirateFledges() {
 				if (my_adventures() == 0) { abort("You're out of adventures."); }
 				print("BCC: Adventuring once at a time to meet the Cap'm for the first time.", "purple");
 				adventure(1, $location[Barrrney's Barrr], "consultBarrr");
+				betweenBattle();
 			}
 			
 			//Check whether we've completed the beer pong quest.
@@ -2842,29 +2895,29 @@ boolean bcascSpookyForest() {
 	return true;
 }
 
-//Thanks, picklish! (For the original version)
+//Thanks, picklish!
 boolean bcascTavern() {
     if (checkStage("tavern")) return true;
 	if (!checkStage("spookyforest")) return false;
-
+	
+	
 	boolean checkComplete() {
 		if (contains_text(visit_url("questlog.php?which=2"), "solved the rat problem")) {
 			checkStage("tavern", true);
 			return true;
-		}
-		else
+		} else {
 			return false;
+		}
 	}
 
-	if (checkComplete())
-		return true;
+	if (checkComplete()) return true;
 
 	setFamiliar("");
 	cli_execute("mood execute");
-    levelMe(19, false);
+	levelMe(19, false);
 	if (canMCD()) cli_execute("mcd 0");
-    visit_url("tavern.php?place=barkeep");
-    setMood("");
+	visit_url("tavern.php?place=barkeep");
+	setMood("");
 	buMax();
 
 	int turns = tavern();
@@ -2874,7 +2927,7 @@ boolean bcascTavern() {
 		visit_url("tavern.php?place=barkeep");
 	}
 
-	return checkComplete();
+	return checkComplete(); 
 }
 
 boolean bcascTeleportitisBurn() {
@@ -3039,6 +3092,10 @@ boolean bcascToot() {
 	if (get_property("bcasc_sellgems") == "true") {
 		foreach stone in $items[hamethyst, baconstone, porquoise] autosell(item_amount(stone), stone);
 	}
+	if (i_a("stolen accordion") == 0) {
+		print("BCC: Getting an Accordion before we start.", "purple");
+		while (i_a("stolen accordion") == 0) use(1, $item[chewing gum on a string]);
+	}
 	
 	//KoLMafia doesn't clear these on ascension.
 	set_property("mineLayout1", "");
@@ -3140,7 +3197,7 @@ void bcs4() {
 	bcascBats1();
 	bcascMeatcar();
 	bcascBats2();
-	bcasc8Bit();
+	if (my_buffedstat($stat[Moxie]) > 35) bcasc8Bit();
 	levelMe(20, true);
 }
 
@@ -3158,6 +3215,8 @@ void bcs6() {
 	bcCouncil();
 	
 	bcascFriars();
+	//Setting a second call to this as we want the equipment before the steel definitely. 
+	bcascKnobKing();
 	bcascFriarsSteel();
 	
 	//Get the Swashbuckling Kit. The extra moxie boost will be incredibly helpful for the Cyrpt
