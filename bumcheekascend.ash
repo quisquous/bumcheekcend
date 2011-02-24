@@ -3278,7 +3278,6 @@ void bcs10() {
 	
 	bcascAirship();
 	bcascCastle();
-	bcascHoleInTheSky();
 	
 	levelMe(104, true);
 }
@@ -3287,6 +3286,8 @@ void bcs11() {
 	bcCouncil();
 	
 	bcascMacguffinPrelim();
+	//Hole in the sky requires 108 moxie, so defer until level 11.
+	bcascHoleInTheSky();
 	bcascMacguffinPalindome();
 	bcascMacguffinSpooky();
 	bcascMacguffinPyramid();
