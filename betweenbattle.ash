@@ -77,8 +77,6 @@ void olfactionPreparation() {
 	if (!needOlfaction(my_location()))
 		return;
 
-	// If we need olfaction, we probably should be using an item familiar.
-	setFamiliar("items");
 	tryCast($skill[fat leon's phat loot lyric]);
 
 	if (!have_skill(o) || have_effect($effect[on the trail]) > 0)
@@ -207,6 +205,19 @@ void checkFamiliar() {
 		// If we're using the He-Bo, it's likely that there was only one set of
 		// items that we care about.  So, switch to a stat familiar.
 		setFamiliar("");
+		return;
+	}
+
+	// If we need olfaction, we probably should be using an item familiar.
+	if (needOlfaction(my_location())) {
+		// There are some times when we lots of levelling in the ballroom is
+		// needed.  In these cases, filling spleen becomes more important.
+		if (my_location() == $location[haunted ballroom] && my_spleen_use() < 12) {
+			use_familiar($familiar[sandworm]);
+		} else {
+			setFamiliar("items");
+		}
+		return;
 	}
 
 	if (my_location() == $location[boss bat's lair]) {
@@ -221,7 +232,8 @@ void checkFamiliar() {
 			use_familiar($familiar[hobo monkey]);
 		}
 		bat = bat + 1;
-	    set_property(propBatTurns, bat);
+		set_property(propBatTurns, bat);
+		return;
 	}
 
 	if (my_spleen_use() >= 12 && my_familiar() == $familiar[sandworm] && my_level() < 9)
