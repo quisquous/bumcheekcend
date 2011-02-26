@@ -3597,7 +3597,7 @@ void bcs12() {
 		//Now deal with getting the moxie we need.
 		switch (my_primestat()) {
 			case $stat[Moxie] :
-				if (get_property("telescopeUpgrades") > 0) cli_execute("telescope look high");
+				if (get_property("telescopeUpgrades") > 0) (!cli_execute("telescope look high"));
 				if (my_buffedstat($stat[Moxie]) < bossMoxie && have_skill($skill[Advanced Saucecrafting])) cli_execute("cast * advanced saucecraft");
 				if (my_buffedstat($stat[Moxie]) < bossMoxie && item_amount($item[scrumptious reagent]) > 0) cli_execute("use 1 serum of sarcasm");
 				if (my_buffedstat($stat[Moxie]) < bossMoxie && item_amount($item[scrumptious reagent]) > 0) cli_execute("use 1 tomato juice of power");
