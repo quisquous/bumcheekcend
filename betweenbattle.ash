@@ -1,3 +1,4 @@
+import <fax.ash>
 import <makemeat.ash>
 import <bumcheekascend.ash>
 
@@ -5,8 +6,17 @@ String propBatTurns = "_picklishBatTurns";
 String propOrganTurns = "_piePartsCount";
 String propPieCount = "_pieDrops";
 String propPrevFamiliar = "_picklishPrevFamiliar";
+String propArrows = "_badlyRomanticArrows";
+String propCookware = "_picklishBoughtCookware";
+String propPoolGames = "_poolGames";
+String propFaxUsed = "_photocopyUsed";
+String propSoak = "_hotTubSoaks";
+
 String danceCardCounter = "Dance Card";
 String fortuneCounter = "Fortune Cookie";
+String firstRomanticCounter = "Last romantic begin";
+String lastRomanticCounter = "Last romantic end";
+String semirareCounter = "semirareCounter";
 
 void debug(String s) {
 	print("PCKLSH: " + s, "green");
@@ -14,6 +24,10 @@ void debug(String s) {
 
 monster olfactTarget() {
 	return get_property("olfactedMonster").to_monster();
+}
+
+monster romanticTarget() {
+	return get_property("romanticTarget").to_monster();
 }
 
 effect skillToEffect(skill s) {
@@ -35,14 +49,24 @@ void checkOutOfAdventures() {
 		abort("No adventures left!");
 }
 
+boolean counterThisTurn(string counter) {
+	return get_counters(counter, 0, 0) == counter;
+}
+
+boolean counterActive(string counter) {
+	// If multiple, they'll all be returned as one string, so use
+	// contains_text instead of equality.
+	return contains_text(get_counters(counter, 0, 1000), counter);
+}
+
 void checkCounters() {
-	if (get_counters(danceCardCounter, 0, 0) == danceCardCounter) {
+	if (counterThisTurn(danceCardCounter)) {
 		if (my_location() != $location[haunted ballroom]) {
 			debug("Detouring to the Ballroom for the dance card counter");
 			adventure(1, $location[haunted ballroom]);
 		}
 	}
-	if (get_counters(fortuneCounter, 0, 0) == fortuneCounter) {
+	if (counterThisTurn(fortuneCounter)) {
 		abort("Fortune cookie!");
 	}
 }
@@ -74,8 +98,6 @@ boolean needOlfaction(location loc) {
 
 void olfactionPreparation() {
 	skill o = $skill[transcendent olfaction];
-	if (!needOlfaction(my_location()))
-		return;
 
 	tryCast($skill[fat leon's phat loot lyric]);
 
@@ -125,6 +147,13 @@ string consultRedRay(int round, string opp, string text) {
 	return "attack";
 }
 
+boolean poolTable(string type) {
+	if (get_property(propPoolGames).to_int() >= 3) {
+		return false;
+	}
+	return cli_execute("pool " + type);
+}
+
 void useRedRay() {
 	if (have_effect($effect[everything looks red]) > 0)
 		return;
@@ -142,8 +171,9 @@ void useRedRay() {
 	}
 	if (have_skill($skill[leash of linguini]) && have_effect($effect[leash of linguini]) == 0)
 		use_skill(1, $skill[leash of linguini]);
-	if (item_amount($item[clan vip lounge key]) > 0 && get_property("_poolGames") < 3 && have_effect($effect[billiards belligerence]) == 0)
-		cli_execute("pool agg");
+	if (item_amount($item[clan vip lounge key]) > 0 && get_property("_poolGames") < 3 && have_effect($effect[billiards belligerence]) == 0) {
+		poolTable("agg");
+	}
 
 	// Since the he-boulder restores a lot of MP, try to capture it.
 	if (have_skill($skill[mojomuscular melody]) && have_effect($effect[mojomuscular melody]) == 0)
@@ -157,33 +187,46 @@ void useRedRay() {
 	use_familiar(oldFamiliar);
 }
 
+void getPresent() {
+	if (visit_url("clan_viplounge.php").contains_text("a present under it"))
+		visit_url("clan_viplounge.php?action=crimbotree");
+}
+
 void firstTurn() {
+	debug("First turn of the run");
+
 	if (item_amount($item[newbiesport tent]) == 0)
 		retrieve_item(1, $item[newbiesport tent]);
 	use(1, $item[newbiesport tent]);
 
-	if (visit_url("clan_viplounge.php").contains_text("a present under it"))
-		visit_url("clan_viplounge.php?action=crimbotree");
+	getPresent();
+
+	cli_execute("ccs defaultattack");
 
 	set_property(propOrganTurns, 0);
 	set_property(propBatTurns, 0);
 	set_property(propPieCount, 0);
+	set_property(propArrows, 0);
+	set_property(propCookware, false);
+	set_property(propPoolGames, 0);
 }
 
-void checkOrgan() {
+// Returns true if this function has set the familiar.
+boolean checkOrgan() {
 	int organ = get_property(propOrganTurns).to_int();
 	int pie = get_property(propPieCount).to_int();
 	// Don't switch from he-boulder if we're trying to YR something.
 	boolean needOrgan = (organ > 0 && pie == 0 && my_familiar() != $familiar[he-boulder]);
 	if (needOrgan && my_familiar() == $familiar[organ grinder])
-		return;
+		return true;
 	if (!needOrgan && my_familiar() != $familiar[organ grinder])
-		return;
+		return false;
 
 	if (needOrgan) {
 		debug("Remembering old familiar: " + my_familiar());
 		set_property(propPrevFamiliar, my_familiar());
 		use_familiar($familiar[organ grinder]);
+		return true;
 	} else {
 		familiar prev = get_property(propPrevFamiliar).to_familiar();
 		debug("Switching back to old familiar: " + prev);
@@ -191,7 +234,9 @@ void checkOrgan() {
 			use_familiar(prev);
 		else
 			setFamiliar("");
+		return true;
 	}
+	return false;
 }
 
 void checkFamiliar() {
@@ -208,18 +253,6 @@ void checkFamiliar() {
 		return;
 	}
 
-	// If we need olfaction, we probably should be using an item familiar.
-	if (needOlfaction(my_location())) {
-		// There are some times when we lots of levelling in the ballroom is
-		// needed.  In these cases, filling spleen becomes more important.
-		if (my_location() == $location[haunted ballroom] && my_spleen_use() < 12) {
-			use_familiar($familiar[sandworm]);
-		} else {
-			setFamiliar("items");
-		}
-		return;
-	}
-
 	if (my_location() == $location[boss bat's lair]) {
 		int bat = get_property(propBatTurns).to_int();
 		// This delay is arbitrary, but there are at least 4 bodyguard turns.
@@ -233,6 +266,20 @@ void checkFamiliar() {
 		}
 		bat = bat + 1;
 		set_property(propBatTurns, bat);
+		return;
+	}
+	if (checkOrgan())
+		return;
+
+	// If we need olfaction, we probably should be using an item familiar.
+	if (needOlfaction(my_location())) {
+		// There are some times when we lots of levelling in the ballroom is
+		// needed.  In these cases, filling spleen becomes more important.
+		if (my_location() == $location[haunted ballroom] && my_spleen_use() < 12) {
+			use_familiar($familiar[sandworm]);
+		} else {
+			setFamiliar("items");
+		}
 		return;
 	}
 
@@ -279,25 +326,90 @@ void useFriars() {
 		cli_execute("friars " + bless);
 }
 
-void main() {
-	checkOutOfAdventures();
-	checkCounters();
+boolean stillAvailable() {
+	return visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still");
+}
 
-	// Override for faxed in/arrowed blooper.
-	// TODO(picklish) - do day 1 fax, arrow #1, pool after #2, olfact #3
-	if (have_effect($effect[on the trail]) > 0 && olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
-		bcasc8Bit();
+void faxAndArrow(monster mon) {
+	if (get_property(propFaxUsed).to_boolean()) {
+		abort("Can't fight " + mon + " fax today.");
+	}
+	get_monster_fax(mon);
+	familiar prevFamiliar = my_familiar();
+	use_familiar($familiar[obtuse angel]);
+	cli_execute("ccs obtuse");
+	use(1, $item[photocopied monster]);
+
+	cli_execute("ccs defaultattack");
+	use_familiar(prevFamiliar);
+}
+
+void day1() {
+	if (my_turncount() == 0) {
+		firstTurn();
 	}
 
-	if (my_turncount() == 0)
-		firstTurn();
-	equipSugar();
-	if (my_daycount() == 1 && have_effect($effect[everything looks red]) == 0) {
+	if (have_effect($effect[everything looks red]) == 0) {
 		tryCast($skill[moxious madrigal]);
 		useRedRay();
 	}
-	if (my_daycount() == 1 && my_inebriety() == 0) {
-		if (my_primestat() == $stat[moxie] && visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still")) {
+
+	if (!get_property(propCookware).to_boolean() && checkStage("tavern") && my_meat() >= 2500) {
+		retrieve_item(1, $item[dramatic range]);
+		use(1, $item[dramatic range]);
+		retrieve_item(1, $item[queue du coq]);
+		use(1, $item[queue du coq]);
+		set_property(propCookware, true);
+	}
+
+	if (my_turncount() > 5 && !counterActive(fortuneCounter) && get_property(semirareCounter).to_int() != my_turncount()) {
+		if (my_fullness() < fullness_limit()) {
+			eat(1, $item[fortune cookie]);
+		}
+	}
+
+	if (get_property(propCookware).to_boolean() && my_level() >= 3) {
+		// TODO save room for boss pie
+		while (fullness_limit() - my_fullness() >= 3 && my_meat() >= 500) {
+			if (item_amount($item[dry noodles]) == 0) {
+				if (my_mp() < mp_cost($skill[pastamastery]) && retrieve_item(1, $item[tonic water])) {
+					use(1, $item[tonic water]);
+				}
+				use_skill(1, $skill[pastamastery]);
+			}
+			if (item_amount($item[dry noodles]) == 0) {
+				abort("No noodles");
+			}
+
+			hermit(1, $item[jabanero pepper]);
+			create(1, $item[painful penne pasta]);
+			eat(1, $item[painful penne pasta]);
+		}
+
+		boolean trySoak() {
+			if (item_amount($item[clan vip lounge key]) == 0 || get_property(propSoak).to_int() >= 5) {
+				return false;
+			}
+			return cli_execute("soak");
+		}
+
+		if (have_effect($effect[beaten up]) > 0) {
+			trySoak();
+		}
+	}
+
+	if (get_property(propCookware).to_boolean() && my_level() >= 4 && checkStage("tavern")) {
+		// TODO picklish make 2-3 tavern drinks
+		// TODO picklish call EatDrink.ash for the rest
+	}
+
+	if (my_inebriety() == 0 && my_primestat() == $stat[moxie] && my_level() >= 2) {
+		// Open the guild as soon as possible for tonic water.
+		if (my_buffedstat(my_primestat()) > 10) {
+			bcascGuild1();
+		}
+
+		if (stillAvailable()) {
 			tryCast($skill[mojomuscular melody]);
 			retrieve_item(1, $item[tonic water]);
 			use(1, $item[tonic water]);
@@ -307,6 +419,37 @@ void main() {
 		}
 	}
 
+	boolean mosquitoQuestDone() {
+		return my_level() >= 2 && !contains_text(visit_url("questlog.php?which=1"), "bring them a mosquito larva");
+	}
+
+	if (!get_property(propFaxUsed).to_boolean() && get_property(propArrows).to_int() == 0 && romanticTarget() == $monster[none] && item_amount($item[digital key]) == 0 && mosquitoQuestDone()) {
+		abort("fax blooper");
+		faxAndArrow($monster[blooper]);
+		poolTable("mys");
+		poolTable("mys");
+		if (romanticTarget() == $monster[blooper]) {
+			string img = "obtuseangel.gif";
+			cli_execute("counters add 25 " + firstRomanticCounter + " " + img);
+			cli_execute("counters add 50 " + lastRomanticCounter + " " + img);
+			cli_execute("ccs defaultattack");
+		}
+	}
+
+	boolean romanticWindow() {
+		return !counterActive(firstRomanticCounter) && counterActive(lastRomanticCounter);
+	}
+
+	if (have_effect($effect[on the trail]) > 0 && olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
+		bcasc8Bit();
+	} else if (romanticWindow() && romanticTarget() == $monster[blooper]) {
+		abort("romantic prep");
+		olfactionPreparation();
+		cli_execute("ccs hardcore");
+	}
+}
+
+void locationSkills() {
 	if (my_location() == $location[boss bat's lair]) {
 		tryCast($skill[polka of plenty]);
 		tryCast($skill[leash of linguini]);
@@ -323,10 +466,22 @@ void main() {
 
 	if (my_level() >= 6 && my_meat() > 1000)
 		tryCast($skill[leash of linguini]);
+}
 
+void main() {
+	checkOutOfAdventures();
+	checkCounters();
+
+	equipSugar();
+
+	if (my_daycount() == 1)
+		day1();
+
+	locationSkills();
 	process_inventory();
 	checkFamiliar();
-	olfactionPreparation();
-	checkOrgan();
+	if (needOlfaction(my_location())) {
+		olfactionPreparation();
+	}
 	useFriars();
 }
