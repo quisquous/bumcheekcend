@@ -18,8 +18,25 @@ String firstRomanticCounter = "Last romantic begin";
 String lastRomanticCounter = "Last romantic end";
 String semirareCounter = "semirareCounter";
 
+boolean[item] combatItems = $items[
+	love song of vague ambiguity,
+	love song of sugary cuteness,
+	divine noisemaker,
+	love song of smoldering passion,
+	love song of disturbing obsession,
+	divine silly string,
+	love song of icy revenge,
+	love song of naughty innuendo,
+	divine blowout,
+];
+
 void debug(String s) {
 	print("PCKLSH: " + s, "green");
+}
+
+boolean bcascStage(string stage) {
+	// checkStage is spammy.  This is a silent non-setting version.
+	return get_property("bcasc_stage_" + stage) == my_ascensions();
 }
 
 monster olfactTarget() {
@@ -330,6 +347,161 @@ boolean stillAvailable() {
 	return visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still");
 }
 
+stat combatItemToStat(item thing) {
+	switch (thing) {
+	case $item[love song of vague ambiguity]:
+	case $item[love song of sugary cuteness]:
+	case $item[divine noisemaker]:
+		return $stat[muscle];
+	case $item[love song of smoldering passion]:
+	case $item[love song of disturbing obsession]:
+	case $item[divine silly string]:
+		return $stat[mysticality];
+	case $item[love song of icy revenge]:
+	case $item[love song of naughty innuendo]:
+	case $item[divine blowout]:
+		return $stat[moxie];
+	}
+
+	abort("Unknown item in itemToStat");
+	return $stat[none];
+}
+
+int getSafeMCD(location loc) {
+	int maxMCD = 10 + to_int(in_mysticality_sign());
+	int set = my_buffedstat(my_primestat()) - safeMox(loc);
+	return (set > maxMCD) ? maxMCD : set;
+}
+
+int getMCD(location loc) {
+	switch (loc) {
+	case $location[boss bat's lair]:
+		switch (my_primestat()) {
+			case $stat[muscle]:
+				return 8;
+			case $stat[mysticality]:
+				return 4;
+			case $stat[moxie]:
+				return 4;
+		}
+	case $location[throne room]:
+		switch (my_primestat()) {
+			case $stat[muscle]:
+				return 0;
+			case $stat[mysticality]:
+				return 3;
+			case $stat[moxie]:
+				return 7;
+		}
+	case $location[haert of the cyrpt]:
+		switch (my_primestat()) {
+			case $stat[muscle]:
+				return 0;
+			case $stat[mysticality]:
+				return 5;
+			case $stat[moxie]:
+				return 0;
+		}
+	}
+
+	return getSafeMCD(loc);
+}
+
+void optimizeMCD(location loc) {
+	if (canMCD()) {
+		cli_execute("mcd " + getMCD(loc));
+	}
+}
+
+string combatOffstatItems(int round, string opp, string text) {
+	if (round == 1 && have_skill($skill[entangling noodles]))
+		return "skill entangling noodles";
+
+	item hand1;
+	item hand2;
+	foreach thing in combatItems {
+		if (combatItemToStat(thing) == my_primestat())
+			continue;
+		if (item_amount(thing) >= 2) {
+			hand1 = thing;
+			hand2 = thing;
+			break;
+		} else if (item_amount(thing) == 1) {
+			if (hand1 == $item[none]) {
+				hand1 = thing;
+			} else {
+				hand2 = thing;
+				break;
+			}
+		}
+	}
+
+	if (hand1 == $item[none])
+		abort("You're on your own!");
+
+	if (hand2 == $item[none]) {
+		return "item " + hand1;
+	}
+	return "item " + hand1 + "," + hand2;
+}
+
+void killKing() {
+	if (bcascStage("knobking")) {
+		return;
+	}
+
+	if (my_primestat() == $stat[moxie] || my_primestat() == $stat[mysticality]) {
+		if (!have_skill($skill[entangling noodles]) || !have_skill($skill[ambidextrous funkslinging])) {
+			return;
+		}
+
+		int damage = 0;
+		foreach thing in combatItems {
+			stat st = combatItemToStat(thing);
+			if (st == my_primestat())
+				continue;
+			damage += item_amount(thing) * my_buffedstat(st);
+		}
+		// 7 is the max MCD we'll ever set at the knob goblin king
+		if (damage < monster_hp($monster[knob goblin king]) + 7)
+			return;
+	} else {
+		abort("Implement shieldbutting for muscle.");
+	}
+
+	boolean haveElite = i_a($item[knob goblin elite pants]) > 0 && i_a($item[knob goblin elite polearm]) > 0 && i_a($item[knob goblin elite helm]) > 0;
+	boolean haveCake = item_amount($item[knob cake]) > 0;
+	boolean haveHarem = i_a($item[knob goblin harem veil]) > 0 && i_a($item[knob goblin harem pants]) > 0;
+
+	if ((!haveElite || !haveCake) && !haveHarem) {
+		return;
+	}
+
+	if (haveHarem) {
+		cli_execute("maximize mainstat +outfit harem -melee -ml -tie");
+
+		if (item_amount($item[knob goblin perfume]) > 0) {
+			use(1, $item[knob goblin perfume]);
+		}
+		while (have_effect($effect[knob goblin perfume]) == 0) {
+			adventure(1, $location[cobb's knob harem]);
+		}
+	} else {
+		cli_execute("maximize mainstat +outfit elite -ml -tie");
+	}
+
+	use_familiar($familiar[organ grinder]);
+	restore_mp(mp_cost($skill[entangling noodles]));
+	optimizeMCD($location[throne room]);
+	adventure(1, $location[throne room], "combatOffstatItems");
+
+	if (contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King")) {
+		checkStage("knobking", true);
+	} else {
+		abort("Tried to kill the Goblin King, but unexpectedly failed.");
+	}
+}
+
 void faxAndArrow(monster mon) {
 	if (get_property(propFaxUsed).to_boolean()) {
 		abort("Can't fight " + mon + " fax today.");
@@ -354,7 +526,7 @@ void day1() {
 		useRedRay();
 	}
 
-	if (!get_property(propCookware).to_boolean() && checkStage("tavern") && my_meat() >= 2500) {
+	if (!get_property(propCookware).to_boolean() && bcascStage("tavern") && my_meat() >= 2500) {
 		retrieve_item(1, $item[dramatic range]);
 		use(1, $item[dramatic range]);
 		retrieve_item(1, $item[queue du coq]);
@@ -398,7 +570,7 @@ void day1() {
 		}
 	}
 
-	if (get_property(propCookware).to_boolean() && my_level() >= 4 && checkStage("tavern")) {
+	if (get_property(propCookware).to_boolean() && my_level() >= 4 && bcascStage("tavern")) {
 		// TODO picklish make 2-3 tavern drinks
 		// TODO picklish call EatDrink.ash for the rest
 	}
@@ -477,6 +649,8 @@ void main() {
 	if (my_daycount() == 1)
 		day1();
 
+	killKing();
+
 	locationSkills();
 	process_inventory();
 	checkFamiliar();
@@ -484,4 +658,6 @@ void main() {
 		olfactionPreparation();
 	}
 	useFriars();
+
+	optimizeMCD(my_location());
 }
