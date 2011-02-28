@@ -919,6 +919,15 @@ void setMood(string combat) {
 			//if (haveElite() && my_meat() > 3000) cli_execute("trigger lose_effect, Peeled Eyeballs, use 1 Knob Goblin eyedrops");
 		}
 	}
+	if (contains_text(combat,"s") && !have_skill($skill[Diminished Gag Reflex])) {
+		if (have_skill($skill[Astral Shell])) {
+			while (i_a("turtle totem") == 0) use(1, $item[chewing gum on a string]);
+			cli_execute("trigger lose_effect, Astral Shell, cast 1 astral shell");
+		} else if (have_skill($skill[Elemental Saucesphere])) {
+			while (i_a("saucepan") == 0) use(1, $item[chewing gum on a string]);
+			cli_execute("trigger lose_effect, Elemental Saucesphere, cast 1 elemental saucesphere");
+		}
+	}
 }
 
 boolean levelMe(int sMox, boolean needBaseStat) {
@@ -1211,16 +1220,8 @@ boolean bcascBats1() {
 		print("BCC: Getting Sonars", "purple");
 		
 		buMax("+10stench res");
+		setMood("si");
 		while (item_amount($item[sonar-in-a-biscuit]) < 1 && contains_text(visit_url("bathole.php"), "action=rubble")) {
-			if (elemental_resistance($element[stench]) == 0) {
-				if (have_skill($skill[Astral Shell])) {
-					while (i_a("turtle totem") == 0) use(1, $item[chewing gum on a string]);
-				    use_skill(1, $skill[Astral Shell]);	
-				} else if (have_skill($skill[Elemental Saucesphere])) {
-					while (i_a("saucepan") == 0) use(1, $item[chewing gum on a string]);
-				    use_skill(1, $skill[Elemental Saucesphere]);	
-				}
-			}
 			//Let's use a clover if we can.
 			if (i_a("sonar-in-a-biscuit") == 0 && cloversAvailable(true) > 0) {
 				visit_url("adventure.php?snarfblat=31&confirm=on");
