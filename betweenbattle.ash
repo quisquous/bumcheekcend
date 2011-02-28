@@ -413,7 +413,9 @@ int getMCD(location loc) {
 
 void optimizeMCD(location loc) {
 	if (canMCD()) {
-		change_mcd(getMCD(loc));
+		int mcd = getMCD(loc);
+		if (mcd != current_mcd())
+			change_mcd(mcd);
 	}
 }
 
