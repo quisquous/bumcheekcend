@@ -370,7 +370,11 @@ stat combatItemToStat(item thing) {
 int getSafeMCD(location loc) {
 	int maxMCD = 10 + to_int(in_mysticality_sign());
 	int set = my_buffedstat(my_primestat()) - safeMox(loc) + current_mcd();
-	return (set > maxMCD) ? maxMCD : set;
+	if (set < 0)
+		return 0;
+	if (set > maxMCD)
+		return maxMCD;
+	return set;
 }
 
 int getMCD(location loc) {
