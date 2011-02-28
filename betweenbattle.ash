@@ -11,7 +11,7 @@ String propCookware = "_picklishBoughtCookware";
 String propPoolGames = "_poolGames";
 String propFaxUsed = "_photocopyUsed";
 String propSoak = "_hotTubSoaks";
-
+String propMineUnaccOnly = "bcasc_MineUnaccOnly";
 String danceCardCounter = "Dance Card";
 String fortuneCounter = "Fortune Cookie";
 String firstRomanticCounter = "Last romantic begin";
@@ -220,6 +220,7 @@ void firstTurn() {
 
 	cli_execute("ccs defaultattack");
 
+	set_property(propMineUnaccOnly, true);
 	set_property(propOrganTurns, 0);
 	set_property(propBatTurns, 0);
 	set_property(propPieCount, 0);
@@ -451,6 +452,13 @@ string combatOffstatItems(int round, string opp, string text) {
 	return "item " + hand1 + "," + hand2;
 }
 
+void allowMining() {
+	// Mining is an excellent use of burning teleportitis turns.
+	// Once we've had teleportitis, no need to delay mining further.
+	if (have_effect($effect[Teleportitis]) > 0)
+		set_property(propMineUnaccOnly, false);
+}
+
 void killKing() {
 	if (bcascStage("knobking")) {
 		return;
@@ -655,6 +663,7 @@ void main() {
 	if (my_daycount() == 1)
 		day1();
 
+	allowMining();
 	killKing();
 
 	locationSkills();
