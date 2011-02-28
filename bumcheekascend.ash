@@ -1358,6 +1358,7 @@ void bcascDailyDungeon() {
 		}
 		cli_execute("make "+amountKeys+" skeleton key");
 	}
+	setFamiliar("");
 	if (!contains_text(visit_url("dungeon.php"), "reached the bottom")) cli_execute("adv " + my_adventures() + " daily dungeon");
 	zapKeys();
 }
