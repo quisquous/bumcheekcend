@@ -452,6 +452,19 @@ string combatOffstatItems(int round, string opp, string text) {
 	return "item " + hand1 + "," + hand2;
 }
 
+void buyHammer() {
+	if (item_amount($item[tenderizing hammer]) != 0)
+		return;
+
+	// Drywall axe is the first thing worth pulverizing for a moxie class.
+	if (item_amount($item[facsimile dictionary]) > 0) {
+		autosell(1, $item[facsimile dictionary]);
+	}
+	if (my_level() >= 9 && my_meat() >= 3000) {
+		retrieve_item(1, $item[tenderizing hammer]);
+	}
+}
+
 void allowMining() {
 	// Mining is an excellent use of burning teleportitis turns.
 	// Once we've had teleportitis, no need to delay mining further.
@@ -663,6 +676,7 @@ void main() {
 	if (my_daycount() == 1)
 		day1();
 
+	buyHammer();
 	allowMining();
 	killKing();
 
