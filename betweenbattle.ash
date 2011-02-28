@@ -171,6 +171,13 @@ boolean poolTable(string type) {
 	return cli_execute("pool " + type);
 }
 
+boolean trySoak() {
+	if (item_amount($item[clan vip lounge key]) == 0 || get_property(propSoak).to_int() >= 5) {
+		return false;
+	}
+	return cli_execute("soak");
+}
+
 void useRedRay() {
 	if (have_effect($effect[everything looks red]) > 0)
 		return;
@@ -452,6 +459,30 @@ string combatOffstatItems(int round, string opp, string text) {
 	return "item " + hand1 + "," + hand2;
 }
 
+void endOfDay() {
+	// overdrink
+	// finish eating and spleening, just in case
+
+	// zap keys
+	// zap telescope items (black pepper)
+	// zap other items (garnishes?)
+
+	cli_execute("maximize adv");
+	useFriars();
+
+	for i from 1 to 3 {
+		poolTable("mys");
+	}
+	trySoak();
+
+	// tea party
+	// 	snorkel - +10 moxie
+	//  dread sack - +40% meat
+	//  reinforced beaded headband - +5 weight
+	//  ravioli hat - +10 myst
+	//  pail - +20 ML
+}
+
 void buyHammer() {
 	if (item_amount($item[tenderizing hammer]) != 0)
 		return;
@@ -583,13 +614,6 @@ void day1() {
 			hermit(1, $item[jabanero pepper]);
 			create(1, $item[painful penne pasta]);
 			eat(1, $item[painful penne pasta]);
-		}
-
-		boolean trySoak() {
-			if (item_amount($item[clan vip lounge key]) == 0 || get_property(propSoak).to_int() >= 5) {
-				return false;
-			}
-			return cli_execute("soak");
 		}
 
 		if (have_effect($effect[beaten up]) > 0) {
