@@ -1890,10 +1890,10 @@ boolean bcascLairFirstGate() {
 								use(1, $item[pile of candy]);
 							}
 						break;
-						
-						case "Meleegra pills2" :
+					
+						case "Meleegra pills" :
 							while (item_amount($item[Meleegra pills]) == 0) {
-								bumAdv($location[South of the Border], "1 Meleegra&trade; pills", "", "", "Getting some Meelegra pills", "-");
+								bumAdv($location[South of the Border], "", "items", "1 Meleegra pills", "Getting some Meelegra pills", "-i");
 							}
 						break;
 						
