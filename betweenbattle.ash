@@ -680,7 +680,7 @@ void locationSkills() {
 
 	if (my_location() == $location[wartime sonofa beach]) {
 		if (have_effect($effect[hippy stench]) == 0 && item_amount($item[reodorant]) > 0)
-			cli_execute("use * reodorant");
+			use(1, $item[reodorant]);
 	}
 
 	if (my_location() == $location[defiled cranny] || my_location() == $location[defiled alcove]) {
@@ -689,6 +689,26 @@ void locationSkills() {
 
 	if (my_level() >= 6 && my_meat() > 1000)
 		tryCast($skill[leash of linguini]);
+
+
+
+	if (my_location() == $location[hatching chamber] || my_location() == $location[feeding chamber] || my_location() == $location[guard chamber]) {
+		if (have_effect($effect[one very clear eye]) == 0) {
+			if (item_amount($item[cyclops eyedrops]) > 0) {
+				use(1, $item[cyclops eyedrops]);
+			}
+		}
+
+		boolean canSparePoolGame() {
+			// Save last pool game for giant familiars, unless KGE.
+			int maxGames = dispensary_available() ? 3 : 2;
+			return get_property(propPoolGames).to_int() < maxGames;
+		}
+
+		if (canSparePoolGame() && have_effect($effect[hustlin']) == 0) {
+			poolTable("sty");
+		}
+	}
 }
 
 void main() {
