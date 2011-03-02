@@ -3288,9 +3288,10 @@ void bcs11() {
 	bcCouncil();
 	
 	bcascMacguffinPrelim();
-	//Hole in the sky requires 108 moxie, so defer until level 11.
-	bcascHoleInTheSky();
 	bcascMacguffinPalindome();
+	//Hole in the sky requires 108 moxie, so defer until level 11.
+	//Also defer until after Palindome to try to give more yellow ray space.
+	bcascHoleInTheSky();
 	bcascMacguffinSpooky();
 	bcascMacguffinPyramid();
 	bcascMacguffinHiddenCity();
