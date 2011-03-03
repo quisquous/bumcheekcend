@@ -567,11 +567,14 @@ void killKing() {
 		cli_execute("maximize mainstat +outfit elite -ml -tie");
 	}
 
-	betweenBattleInternal($location[throne room]);
-	use_familiar($familiar[organ grinder]);
-	restore_mp(mp_cost($skill[entangling noodles]));
-	optimizeMCD($location[throne room]);
-	adventure(1, $location[throne room], "combatOffstatItems");
+	while (haveHarem && have_effect($effect[knob goblin perfume]) > 0 || haveElite && haveCake && have_effect($effect[beaten up]) == 0) {
+		betweenBattleInternal($location[throne room]);
+		use_familiar($familiar[organ grinder]);
+		restore_mp(mp_cost($skill[entangling noodles]));
+		optimizeMCD($location[throne room]);
+
+		adventure(1, $location[throne room], "combatOffstatItems");
+	}
 
 	if (contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King")) {
 		checkStage("knobking", true);
