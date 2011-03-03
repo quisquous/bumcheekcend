@@ -729,6 +729,16 @@ void getHellionCubes() {
 		performRitual();
 }
 
+void openDispensary() {
+	if (dispensary_available() || !haveKGEOutfit())
+		return;
+
+	cli_execute("outfit save picklish");
+	cli_execute("maximize mainstat +outfit elite -ml -tie");
+	preppedAdventure(1, $location[cobb's knob barracks]);
+	cli_execute("outfit picklish");
+}
+
 void faxAndArrow(monster mon) {
 	if (get_property(propFaxUsed).to_boolean()) {
 		abort("Can't fight " + mon + " fax today.");
@@ -887,6 +897,7 @@ void main() {
 	if (my_level() < 6)
 		useRedRay(my_location());
 	getHellionCubes();
+	openDispensary();
 
 	betweenBattleInternal(my_location());
 }
