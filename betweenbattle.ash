@@ -19,11 +19,18 @@ String propMineUnaccOnly = "bcasc_MineUnaccOnly";
 String propHipsterAdv = "_hipsterAdv";
 String propOrganFinishPie = "picklishOrganFinishPie";
 String propSemirareCounter = "semirareCounter";
+String propSemirareKGE = "picklishSemirareKGE";
+String propSemirareLast = "semirareLocation";
 
 String danceCardCounter = "Dance Card";
 String fortuneCounter = "Fortune Cookie";
 String firstRomanticCounter = "Last romantic begin";
 String lastRomanticCounter = "Last romantic end";
+
+String propDoSideQuestNuns = "bcasc_doSideQuestNuns";
+String propSideQuestNunsCompleted = "sidequestNunsCompleted";
+String propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
+String propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 
 boolean[item] combatItems = $items[
 	love song of vague ambiguity,
@@ -95,6 +102,119 @@ boolean counterActive(string counter) {
 	return contains_text(get_counters(counter, 0, 1000), counter);
 }
 
+stat combatItemToStat(item thing) {
+	switch (thing) {
+	case $item[love song of vague ambiguity]:
+	case $item[love song of sugary cuteness]:
+	case $item[divine noisemaker]:
+		return $stat[muscle];
+	case $item[love song of smoldering passion]:
+	case $item[love song of disturbing obsession]:
+	case $item[divine silly string]:
+		return $stat[mysticality];
+	case $item[love song of icy revenge]:
+	case $item[love song of naughty innuendo]:
+	case $item[divine blowout]:
+		return $stat[moxie];
+	}
+
+	abort("Unknown item in itemToStat");
+	return $stat[none];
+}
+
+string combatOffstatItems(int round, string opp, string text) {
+	if (round == 1 && have_skill($skill[entangling noodles]))
+		return "skill entangling noodles";
+
+	item hand1;
+	item hand2;
+	foreach thing in combatItems {
+		if (combatItemToStat(thing) == my_primestat())
+			continue;
+		if (item_amount(thing) >= 2) {
+			hand1 = thing;
+			hand2 = thing;
+			break;
+		} else if (item_amount(thing) == 1) {
+			if (hand1 == $item[none]) {
+				hand1 = thing;
+			} else {
+				hand2 = thing;
+				break;
+			}
+		}
+	}
+
+	if (hand1 == $item[none])
+		return "attack";
+
+	if (hand2 == $item[none]) {
+		return "item " + hand1;
+	}
+	return "item " + hand1 + "," + hand2;
+}
+
+boolean haveKGEOutfit() {
+	return i_a($item[Knob Goblin elite pants]) == 0 || i_a($item[Knob Goblin elite polearm]) == 0 || i_a($item[Knob Goblin elite helm]) == 0;
+}
+
+void getFortune() {
+	location last = get_property(propSemirareLast).to_location();
+
+	if (my_level() >= 9 && !bcascStage("chasm") && last != $location[orc chasm]) {
+		// FIXME: Don't get this if we have all the scroll components.
+		if (!contains_text(visit_url("mountains.php"), "chasm.gif")) {
+			adventure(1, $location[orc chasm]);
+			return;
+		}
+	}
+
+	if (my_level() >= 5 && !haveKGEOutfit()) {
+		if (item_amount($item[Cobb's Knob map]) > 0) {
+			visit_url("council.php");
+			use(1, $item[Cobb's Knob map]);
+		}
+
+		// There are two semirares.  Pick one in case the battle was lost.
+		location loc = (last == $location[cobb's knob barracks]) ? $location[cobb's knob kitchens] : $location[cobb's knob barracks];
+
+		// FIXME: find some better way to ensure victory
+		setFamiliar("");
+		restore_mp(mp_cost($skill[entangling noodles]));
+		preppedAdventure(1, loc, "combatOffstatItems");
+		return;
+	}
+
+	if (my_level() < 5 && last != $location[outskirts of the knob]) {
+		adventure(1, $location[outskirts of the knob]);
+		return;
+	}
+
+	if (my_buffedstat(my_primestat()) >= 21) {
+		boolean needEyedrops = get_property(propDoSideQuestOrchard).to_boolean() && get_property(propSideQuestOrchardCompleted) == "none";
+		boolean haveEyedrops = item_amount($item[cyclops eyedrops]) > 0 || have_effect($effect[one very clear eye]) > 0;
+		if (needEyedrops && !haveEyedrops && last != $location[limerick dungeon]) {
+			adventure(1, $location[limerick dungeon]);
+			return;
+		}
+	}
+
+	if (bcascStage("airship")) {
+		boolean needInhaler = get_property(propDoSideQuestNuns).to_boolean() && get_property(propSideQuestNunsCompleted) == "none";
+		boolean haveInhaler = item_amount($item[mick's icyvapohotness inhaler]) > 0 || have_effect($effect[sinuses for miles]) > 0;
+		if (needInhaler && !haveInhaler && last != $location[giant's castle]) {
+			adventure(1, $location[giant's castle]);
+			return;
+		}
+	}
+
+	if (last != $location[outskirts of the knob]) {
+		adventure(1, $location[outskirts of the knob]);
+	} else {
+		adventure(1, $location[haunted pantry]);
+	}
+}
+
 void checkCounters(location loc) {
 	if (counterThisTurn(danceCardCounter)) {
 		if (loc != $location[haunted ballroom]) {
@@ -103,7 +223,7 @@ void checkCounters(location loc) {
 		}
 	}
 	if (counterThisTurn(fortuneCounter)) {
-		abort("Fortune cookie!");
+		getFortune();
 	}
 }
 
@@ -265,6 +385,7 @@ void firstTurn() {
 	set_property(propCookware, false);
 	set_property(propPoolGames, 0);
 	set_property(propOrganFinishPie, false);
+	set_property(propSemirareKGE, true);
 }
 
 // Returns true if this function has set the familiar.
@@ -427,26 +548,6 @@ boolean stillAvailable() {
 	return visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still");
 }
 
-stat combatItemToStat(item thing) {
-	switch (thing) {
-	case $item[love song of vague ambiguity]:
-	case $item[love song of sugary cuteness]:
-	case $item[divine noisemaker]:
-		return $stat[muscle];
-	case $item[love song of smoldering passion]:
-	case $item[love song of disturbing obsession]:
-	case $item[divine silly string]:
-		return $stat[mysticality];
-	case $item[love song of icy revenge]:
-	case $item[love song of naughty innuendo]:
-	case $item[divine blowout]:
-		return $stat[moxie];
-	}
-
-	abort("Unknown item in itemToStat");
-	return $stat[none];
-}
-
 int getSafeMCD(location loc) {
 	int maxMCD = 10 + to_int(in_mysticality_sign());
 	int set = my_buffedstat(my_primestat()) - safeMox(loc) + current_mcd();
@@ -497,38 +598,6 @@ void optimizeMCD(location loc) {
 		if (mcd != current_mcd())
 			change_mcd(mcd);
 	}
-}
-
-string combatOffstatItems(int round, string opp, string text) {
-	if (round == 1 && have_skill($skill[entangling noodles]))
-		return "skill entangling noodles";
-
-	item hand1;
-	item hand2;
-	foreach thing in combatItems {
-		if (combatItemToStat(thing) == my_primestat())
-			continue;
-		if (item_amount(thing) >= 2) {
-			hand1 = thing;
-			hand2 = thing;
-			break;
-		} else if (item_amount(thing) == 1) {
-			if (hand1 == $item[none]) {
-				hand1 = thing;
-			} else {
-				hand2 = thing;
-				break;
-			}
-		}
-	}
-
-	if (hand1 == $item[none])
-		abort("You're on your own!");
-
-	if (hand2 == $item[none]) {
-		return "item " + hand1;
-	}
-	return "item " + hand1 + "," + hand2;
 }
 
 void endOfDay() {
@@ -601,7 +670,7 @@ void killKing() {
 		abort("Implement shieldbutting for muscle.");
 	}
 
-	boolean haveElite = i_a($item[knob goblin elite pants]) > 0 && i_a($item[knob goblin elite polearm]) > 0 && i_a($item[knob goblin elite helm]) > 0;
+	boolean haveElite = haveKGEOutfit();
 	boolean haveCake = item_amount($item[knob cake]) > 0;
 	boolean haveHarem = i_a($item[knob goblin harem veil]) > 0 && i_a($item[knob goblin harem pants]) > 0;
 

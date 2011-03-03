@@ -1759,6 +1759,12 @@ boolean bcascKnobKing() {
 	if (item_amount($item[Cobb's Knob map]) > 0) {
 		use(1, $item[Cobb's Knob map]);
 	}
+
+	if (get_property("picklishSemirareKGE").to_boolean()) {
+		if (i_a($item[Knob Goblin elite pants]) == 0 || i_a($item[Knob Goblin elite polearm]) == 0 || i_a($item[Knob Goblin elite helm]) == 0) {
+			print("PCKLSH: Skipping KGE until semi-rare.", "purple");
+		}
+	}
 	
 	if (!contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King")) {
 		//First we need the KGE outfit. 
