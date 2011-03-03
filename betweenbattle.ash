@@ -539,6 +539,8 @@ void endOfDay() {
 	// zap telescope items (black pepper)
 	// zap other items (garnishes?)
 
+	// still uses
+
 	cli_execute("maximize adv");
 	useFriars($location[none]);
 
