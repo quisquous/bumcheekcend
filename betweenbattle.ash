@@ -18,12 +18,12 @@ String propSoak = "_hotTubSoaks";
 String propMineUnaccOnly = "bcasc_MineUnaccOnly";
 String propHipsterAdv = "_hipsterAdv";
 String propOrganFinishPie = "picklishOrganFinishPie";
+String propSemirareCounter = "semirareCounter";
 
 String danceCardCounter = "Dance Card";
 String fortuneCounter = "Fortune Cookie";
 String firstRomanticCounter = "Last romantic begin";
 String lastRomanticCounter = "Last romantic end";
-String semirareCounter = "semirareCounter";
 
 boolean[item] combatItems = $items[
 	love song of vague ambiguity,
@@ -690,7 +690,7 @@ void day1() {
 		set_property(propCookware, true);
 	}
 
-	if (my_turncount() > 5 && !counterActive(fortuneCounter) && get_property(semirareCounter).to_int() != my_turncount()) {
+	if (my_turncount() > 5 && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount()) {
 		if (my_fullness() < fullness_limit()) {
 			eat(1, $item[fortune cookie]);
 		}
