@@ -5,6 +5,7 @@ import <bumcheekascend.ash>
 // Forward declarations
 void betweenBattleInternal(location loc);
 
+int estimatedRunDays = 5;
 String propBatTurns = "_picklishBatTurns";
 String propOrganTurns = "_piePartsCount";
 String propPieCount = "_pieDrops";
@@ -579,6 +580,28 @@ void killKing() {
 	}
 }
 
+void getHellionCubes() {
+	if (bcascStage("friars") || olfactTarget() != $monster[hellion])
+		return;
+
+	int cubesNeeded = (estimatedRunDays - my_daycount()) * 2;
+	while (olfactTarget() == $monster[hellion] && item_amount($item[hellion cube]) < cubesNeeded) {
+		debug("Getting hellion cubes: " + item_amount($item[hellion cube]) + " / " + cubesNeeded);
+		preppedAdventure(1, $location[dark neck of the woods]);
+	}
+
+	boolean canPerformRitual() {
+		return item_amount($item[eldritch butterknife]) > 0 && item_amount($item[box of birthday candles]) > 0 && item_amount($item[dodecagram]) > 0;
+	}
+
+	void performRitual() {
+		visit_url("friars.php?action=ritual&pwd");
+	}
+
+	if (canPerformRitual())
+		performRitual();
+}
+
 void faxAndArrow(monster mon) {
 	if (get_property(propFaxUsed).to_boolean()) {
 		abort("Can't fight " + mon + " fax today.");
@@ -734,6 +757,7 @@ void main() {
 	killKing();
 	if (my_level() < 6)
 		useRedRay(my_location());
+	getHellionCubes();
 
 	betweenBattleInternal(my_location());
 }
