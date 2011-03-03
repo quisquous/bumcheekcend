@@ -1472,7 +1472,7 @@ boolean bcascFriars() {
 		while (item_amount($item[box of birthday candles]) == 0)
 			bumAdv($location[Dark Heart of the Woods], "", "", "1 box of birthday candles", "Getting candles from the Heart (2/3)");
 			
-		while (item_amount($item[dodecagram]) == 0)
+		while (item_amount($item[dodecagram]) == 0 && !checkStage("friars"))
 			bumAdv($location[Dark Neck of the Woods], "", "", "1 dodecagram", "Getting dodecagram from the Neck (3/3)");
 			
 		print("BCC: Yay, we have all three items. I'm off to perform the ritual!", "purple");
