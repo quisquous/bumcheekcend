@@ -2,6 +2,9 @@ import <fax.ash>
 import <makemeat.ash>
 import <bumcheekascend.ash>
 
+// Forward declarations
+void betweenBattleInternal(location loc);
+
 String propBatTurns = "_picklishBatTurns";
 String propOrganTurns = "_piePartsCount";
 String propPieCount = "_pieDrops";
@@ -37,6 +40,18 @@ void debug(String s) {
 boolean bcascStage(string stage) {
 	// checkStage is spammy.  This is a silent non-setting version.
 	return get_property("bcasc_stage_" + stage) == my_ascensions();
+}
+
+boolean preppedAdventure(int count, location loc) {
+	// Due to the fact that this script itself is a between battle script,
+	// it doesn't call between battle for adventures.  Call it ourselves.
+	betweenBattleInternal(loc);
+	return adventure(count, loc);
+}
+
+boolean preppedAdventure(int count, location loc, string combat) {
+	betweenBattleInternal(loc);
+	return adventure(count, loc, combat);
 }
 
 monster olfactTarget() {
@@ -76,11 +91,11 @@ boolean counterActive(string counter) {
 	return contains_text(get_counters(counter, 0, 1000), counter);
 }
 
-void checkCounters() {
+void checkCounters(location loc) {
 	if (counterThisTurn(danceCardCounter)) {
-		if (my_location() != $location[haunted ballroom]) {
+		if (loc != $location[haunted ballroom]) {
 			debug("Detouring to the Ballroom for the dance card counter");
-			adventure(1, $location[haunted ballroom]);
+			preppedAdventure(1, $location[haunted ballroom]);
 		}
 	}
 	if (counterThisTurn(fortuneCounter)) {
@@ -178,7 +193,7 @@ boolean trySoak() {
 	return cli_execute("soak");
 }
 
-void useRedRay() {
+void useRedRay(location loc) {
 	if (have_effect($effect[everything looks red]) > 0)
 		return;
 	if (!have_familiar($familiar[he-boulder]))
@@ -206,7 +221,7 @@ void useRedRay() {
 	if (canMCD())
 		cli_execute("mcd 10");
 
-	adv1(my_location(), 0, "consultRedRay");
+	preppedAdventure(1, loc, "consultRedRay");
 
 	use_familiar(oldFamiliar);
 
@@ -267,8 +282,8 @@ boolean checkOrgan() {
 	return false;
 }
 
-void checkFamiliar() {
-	if (my_location() == $location[hidden temple]) {
+void checkFamiliar(location loc) {
+	if (loc == $location[hidden temple]) {
 		use_familiar($familiar[mini-hipster]);
 		return;
 	}
@@ -281,7 +296,7 @@ void checkFamiliar() {
 		return;
 	}
 
-	if (my_location() == $location[boss bat's lair]) {
+	if (loc == $location[boss bat's lair]) {
 		int bat = get_property(propBatTurns).to_int();
 		// This delay is arbitrary, but there are at least 4 bodyguard turns.
 		// We want to be using the knob grinder for five turns that includes
@@ -300,10 +315,10 @@ void checkFamiliar() {
 		return;
 
 	// If we need olfaction, we probably should be using an item familiar.
-	if (needOlfaction(my_location())) {
+	if (needOlfaction(loc)) {
 		// There are some times when we lots of levelling in the ballroom is
 		// needed.  In these cases, filling spleen becomes more important.
-		if (my_location() == $location[haunted ballroom] && my_spleen_use() < 12) {
+		if (loc == $location[haunted ballroom] && my_spleen_use() < 12) {
 			use_familiar($familiar[sandworm]);
 		} else {
 			setFamiliar("items");
@@ -331,12 +346,12 @@ void equipSugar() {
 	equip($slot[shirt], $item[sugar shirt]);
 }
 
-void useFriars() {
+void useFriars(location loc) {
 	if (get_property("friarsBlessingReceived").to_boolean())
 		return;
 
 	String bless = "";
-	switch (my_location()) {
+	switch (loc) {
 	case $location[pandamonium slums]:
 	case $location[goatlet]:
 		bless = "food";
@@ -471,7 +486,7 @@ void endOfDay() {
 	// zap other items (garnishes?)
 
 	cli_execute("maximize adv");
-	useFriars();
+	useFriars($location[none]);
 
 	for i from 1 to 3 {
 		poolTable("mys");
@@ -545,12 +560,13 @@ void killKing() {
 			use(1, $item[knob goblin perfume]);
 		}
 		while (have_effect($effect[knob goblin perfume]) == 0) {
-			adventure(1, $location[cobb's knob harem]);
+			preppedAdventure(1, $location[cobb's knob harem]);
 		}
 	} else {
 		cli_execute("maximize mainstat +outfit elite -ml -tie");
 	}
 
+	betweenBattleInternal($location[throne room]);
 	use_familiar($familiar[organ grinder]);
 	restore_mp(mp_cost($skill[entangling noodles]));
 	optimizeMCD($location[throne room]);
@@ -585,11 +601,6 @@ void faxAndArrow(monster mon) {
 void day1() {
 	if (my_turncount() == 0) {
 		firstTurn();
-	}
-
-	if (have_effect($effect[everything looks red]) == 0) {
-		tryCast($skill[moxious madrigal]);
-		useRedRay();
 	}
 
 	if (!get_property(propCookware).to_boolean() && bcascStage("tavern") && my_meat() >= 2500) {
@@ -681,27 +692,25 @@ void day1() {
 	}
 }
 
-void locationSkills() {
-	if (my_location() == $location[boss bat's lair]) {
+void locationSkills(location loc) {
+	if (loc == $location[boss bat's lair]) {
 		tryCast($skill[polka of plenty]);
 		tryCast($skill[leash of linguini]);
 	}
 
-	if (my_location() == $location[wartime sonofa beach]) {
+	if (loc == $location[wartime sonofa beach]) {
 		if (have_effect($effect[hippy stench]) == 0 && item_amount($item[reodorant]) > 0)
 			use(1, $item[reodorant]);
 	}
 
-	if (my_location() == $location[defiled cranny] || my_location() == $location[defiled alcove]) {
+	if (loc == $location[defiled cranny] || loc == $location[defiled alcove]) {
 		tryCast($skill[polka of plenty]);
 	}
 
 	if (my_level() >= 6 && my_meat() > 1000)
 		tryCast($skill[leash of linguini]);
 
-
-
-	if (my_location() == $location[hatching chamber] || my_location() == $location[feeding chamber] || my_location() == $location[guard chamber]) {
+	if (loc == $location[hatching chamber] || loc == $location[feeding chamber] || loc == $location[guard chamber]) {
 		if (have_effect($effect[one very clear eye]) == 0) {
 			if (item_amount($item[cyclops eyedrops]) > 0) {
 				use(1, $item[cyclops eyedrops]);
@@ -721,8 +730,17 @@ void locationSkills() {
 }
 
 void main() {
+	// Any functions that may do adventuring should go first.
+	killKing();
+	if (my_level() < 6)
+		useRedRay(my_location());
+
+	betweenBattleInternal(my_location());
+}
+
+void betweenBattleInternal(location loc) {
 	checkOutOfAdventures();
-	checkCounters();
+	checkCounters(loc);
 
 	equipSugar();
 
@@ -731,15 +749,13 @@ void main() {
 
 	buyHammer();
 	allowMining();
-	killKing();
 
-	locationSkills();
+	locationSkills(loc);
 	process_inventory();
-	checkFamiliar();
-	if (needOlfaction(my_location())) {
+	checkFamiliar(loc);
+	if (needOlfaction(loc)) {
 		olfactionPreparation();
 	}
-	useFriars();
-
-	optimizeMCD(my_location());
+	useFriars(loc);
+	optimizeMCD(loc);
 }
