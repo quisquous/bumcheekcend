@@ -104,6 +104,14 @@ void checkCounters(location loc) {
 	}
 }
 
+boolean tryShrug(skill s) {
+	effect e = skillToEffect(s);
+	if (e == $effect[none] || have_effect(e) == 0)
+		return true;
+
+	return cli_execute("uneffect " + e);
+}
+
 boolean tryCast(skill s) {
 	effect e = skillToEffect(s);
 	if (e == $effect[none] || !have_skill(s) || have_effect(e) > 0)
@@ -720,6 +728,7 @@ void day1() {
 
 void locationSkills(location loc) {
 	if (loc == $location[boss bat's lair]) {
+		tryShrug($skill[fat leon's phat loot lyric]);
 		tryCast($skill[polka of plenty]);
 		tryCast($skill[leash of linguini]);
 	}
@@ -730,6 +739,7 @@ void locationSkills(location loc) {
 	}
 
 	if (loc == $location[defiled cranny] || loc == $location[defiled alcove]) {
+		tryShrug($skill[fat leon's phat loot lyric]);
 		tryCast($skill[polka of plenty]);
 	}
 
