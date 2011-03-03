@@ -328,6 +328,31 @@ boolean trySoak() {
 	return cli_execute("soak");
 }
 
+void restoreSelf(location loc) {
+	if (loc == $location[hidden temple]) {
+		restore_hp(1);
+		return;
+	}
+
+	if (have_effect($effect[beaten up]) > 0) {
+		trySoak();
+	}
+	if (have_effect($effect[beaten up]) > 0) {
+		cli_execute("uneffect beaten up");
+	}
+
+	switch (loc) {
+	case $location[haert of the cyrpt]:
+	case $location[throne room]:
+		restore_hp(my_maxhp());
+		cli_execute("mood execute; restore mp;");
+		break;
+	default:
+		cli_execute("mood execute; restore hp; restore mp;");
+		break;
+	}
+}
+
 void useRedRay(location loc) {
 	if (have_effect($effect[everything looks red]) > 0)
 		return;
@@ -936,4 +961,5 @@ void betweenBattleInternal(location loc) {
 	}
 	useFriars(loc);
 	optimizeMCD(loc);
+	restoreSelf(loc);
 }
