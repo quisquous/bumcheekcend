@@ -16,6 +16,8 @@ String propPoolGames = "_poolGames";
 String propFaxUsed = "_photocopyUsed";
 String propSoak = "_hotTubSoaks";
 String propMineUnaccOnly = "bcasc_MineUnaccOnly";
+String propHipsterAdv = "_hipsterAdv";
+
 String danceCardCounter = "Dance Card";
 String fortuneCounter = "Fortune Cookie";
 String firstRomanticCounter = "Last romantic begin";
@@ -292,9 +294,18 @@ boolean checkOrgan() {
 }
 
 void checkFamiliar(location loc) {
-	if (loc == $location[hidden temple]) {
-		use_familiar($familiar[mini-hipster]);
-		return;
+	if (have_familiar($familiar[mini-hipster])) {
+		int hipster = get_property(propHipsterAdv).to_int();
+		boolean inCrypt = (
+			loc == $location[defiled alcove] ||
+			loc == $location[defiled cranny] ||
+			loc == $location[defiled niche] ||
+			loc == $location[defiled nook]);
+		if (loc == $location[hidden temple] || loc == $location[spooky forest] && hipster <= 4 || inCrypt && hipster <= 6) {
+			use_familiar($familiar[mini-hipster]);
+			restore_mp(mp_cost($skill[entangling noodles]));
+			return;
+		}
 	}
 
 	// Don't bother using the HeBo when there's no yellow ray.
