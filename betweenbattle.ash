@@ -21,6 +21,11 @@ String propOrganFinishPie = "picklishOrganFinishPie";
 String propSemirareCounter = "semirareCounter";
 String propSemirareKGE = "picklishSemirareKGE";
 String propSemirareLast = "semirareLocation";
+String propAutoHpMin = "hpAutoRecovery";
+String propAutoHpTarget = "hpAutoRecoveryTarget";
+String propAutoMpMin = "mpAutoRecovery";
+String propAutoMpTarget = "mpAutoRecoveryTarget";
+float noRecover = -0.05;
 
 String danceCardCounter = "Dance Card";
 String fortuneCounter = "Fortune Cookie";
@@ -326,6 +331,34 @@ boolean trySoak() {
 		return false;
 	}
 	return cli_execute("soak");
+}
+
+void setAutoRestoreLevels() {
+	if (my_primestat() != $stat[moxie])
+		abort("FIXME for muscle classes");
+
+	float restoreMp = 0;
+
+	if (my_level() < 9) {
+		set_property(propAutoHpMin, 0.8);
+		set_property(propAutoHpTarget, 0.9);
+	} else {
+		set_property(propAutoHpMin, 0.9);
+		set_property(propAutoHpTarget, 1.0);
+
+		if (have_skill($skill[saucegeyser]))
+			restoreMp = mp_cost($skill[saucegeyser]) * 2;
+	}
+		
+	if (have_skill($skill[entangling noodles]))
+		restoreMp += mp_cost($skill[entangling noodles]);
+
+	float maxMp = my_maxmp();
+	float restorePercent = restoreMp / maxMp;
+	float restoreTarget = (restoreMp + 2.0) / maxMp;
+
+	set_property(propAutoMpMin, restorePercent);
+	set_property(propAutoMpTarget, restoreTarget);
 }
 
 void restoreSelf(location loc) {
@@ -961,5 +994,6 @@ void betweenBattleInternal(location loc) {
 	}
 	useFriars(loc);
 	optimizeMCD(loc);
+	setAutoRestoreLevels();
 	restoreSelf(loc);
 }
