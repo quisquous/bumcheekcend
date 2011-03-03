@@ -245,6 +245,9 @@ boolean tryCast(skill s) {
 }
 
 boolean needOlfaction(location loc) {
+	if (!have_skill($skill[transcendent olfaction]))
+		return false;
+
 	// TODO(picklish) - don't depend on CSS settings here.
 	switch (loc) {
 	case $location[8-bit realm]:
@@ -347,8 +350,7 @@ void useRedRay(location loc) {
 	}
 
 	// Since the he-boulder restores a lot of MP, try to capture it.
-	if (have_skill($skill[mojomuscular melody]) && have_effect($effect[mojomuscular melody]) == 0)
-		use_skill(1, $skill[mojomuscular melody]);
+	tryCast($skill[mojomuscular melody]);
 
 	if (canMCD())
 		cli_execute("mcd 10");
@@ -392,6 +394,9 @@ void firstTurn() {
 boolean checkOrgan() {
 	// Don't switch from he-boulder if we're trying to YR something.
 	if (my_familiar() == $familiar[he-boulder])
+		return false;
+
+	if (!have_familiar($familiar[organ grinder]))
 		return false;
 
 	int organ = get_property(propOrganTurns).to_int();
@@ -442,69 +447,75 @@ void checkFamiliar(location loc) {
 		return;
 	}
 
-	// FIXME: This could be smarter by killing mini-bosses and making pies,
-	// but there's no easy way to track if a boss made it into the pie.
-	if (loc == $location[defiled cranny] || loc == $location[defiled alcove]) {
-		int parts = get_property(propOrganTurns).to_int();
-		int pie = get_property(propPieCount).to_int();
-		if (parts < 4 && pie == 0) {
-			set_property(propOrganFinishPie, false);
-			use_familiar($familiar[organ grinder]);
-			return;
-		} else {
-			setFamiliar("");
-			return;
+	if (have_familiar($familiar[organ grinder])) {
+		// FIXME: This could be smarter by killing mini-bosses and making pies,
+		// but there's no easy way to track if a boss made it into the pie.
+		if (loc == $location[defiled cranny] || loc == $location[defiled alcove]) {
+			int parts = get_property(propOrganTurns).to_int();
+			int pie = get_property(propPieCount).to_int();
+			if (parts < 4 && pie == 0) {
+				set_property(propOrganFinishPie, false);
+				use_familiar($familiar[organ grinder]);
+				return;
+			} else {
+				setFamiliar("");
+				return;
+			}
+		}
+
+		// Kill bonerdagon and make a badass pie.
+		if (loc == $location[haert of the cyrpt]) {
+			int parts = get_property(propOrganTurns).to_int();
+			int pie = get_property(propPieCount).to_int();
+			if (parts == 4 && pie == 0) {
+				use_familiar($familiar[organ grinder]);
+				return;
+			} else {
+				setFamiliar("");
+				return;
+			}
 		}
 	}
 
-	// Kill bonerdagon and make a badass pie.
-	if (loc == $location[haert of the cyrpt]) {
-		int parts = get_property(propOrganTurns).to_int();
-		int pie = get_property(propPieCount).to_int();
-		if (parts == 4 && pie == 0) {
-			use_familiar($familiar[organ grinder]);
-			return;
-		} else {
-			setFamiliar("");
+	if (have_familiar($familiar[organ grinder]) && have_familiar($familiar[hobo monkey])) {
+		if (loc == $location[boss bat's lair]) {
+			int bat = get_property(propBatTurns).to_int();
+			// This delay is arbitrary, but there are at least 4 bodyguard turns.
+			// We want to be using the knob grinder for five turns that includes
+			// the boss bat to get the stat pie.  So, wait a few turns before
+			// pulling out the grinder.
+			if (bat > 2) {
+				use_familiar($familiar[organ grinder]);
+			} else {
+				use_familiar($familiar[hobo monkey]);
+			}
+			bat = bat + 1;
+			set_property(propBatTurns, bat);
+			set_property(propOrganFinishPie, true);
 			return;
 		}
+		if (checkOrgan())
+			return;
 	}
-
-	if (loc == $location[boss bat's lair]) {
-		int bat = get_property(propBatTurns).to_int();
-		// This delay is arbitrary, but there are at least 4 bodyguard turns.
-		// We want to be using the knob grinder for five turns that includes
-		// the boss bat to get the stat pie.  So, wait a few turns before
-		// pulling out the grinder.
-		if (bat > 2) {
-			use_familiar($familiar[organ grinder]);
-		} else {
-			use_familiar($familiar[hobo monkey]);
-		}
-		bat = bat + 1;
-		set_property(propBatTurns, bat);
-		set_property(propOrganFinishPie, true);
-		return;
-	}
-	if (checkOrgan())
-		return;
 
 	// If we need olfaction, we probably should be using an item familiar.
 	if (needOlfaction(loc)) {
 		// There are some times when we lots of levelling in the ballroom is
 		// needed.  In these cases, filling spleen becomes more important.
 		if (loc == $location[haunted ballroom] && my_spleen_use() < 12) {
-			use_familiar($familiar[sandworm]);
+			setFamiliar("");
 		} else {
 			setFamiliar("items");
 		}
 		return;
 	}
 
-	if (my_spleen_use() >= 12 && my_familiar() == $familiar[sandworm] && my_level() < 9)
-		use_familiar($familiar[Frumious Bandersnatch]);
-	if (my_level() <= 2)
-		use_familiar($familiar[Frumious Bandersnatch]);
+	if (have_familiar($familiar[frumious bandersnatch])) {
+		if (my_spleen_use() >= 12 && my_familiar() == $familiar[sandworm] && my_level() < 9)
+			use_familiar($familiar[Frumious Bandersnatch]);
+		if (my_level() <= 2)
+			use_familiar($familiar[Frumious Bandersnatch]);
+	}
 }
 
 void equipSugar() {
@@ -627,6 +638,9 @@ void endOfDay() {
 }
 
 void buyHammer() {
+	if (!have_skill($skill[pulverize]))
+		return;
+
 	if (item_amount($item[tenderizing hammer]) != 0)
 		return;
 
