@@ -17,6 +17,7 @@ String propFaxUsed = "_photocopyUsed";
 String propSoak = "_hotTubSoaks";
 String propMineUnaccOnly = "bcasc_MineUnaccOnly";
 String propHipsterAdv = "_hipsterAdv";
+String propOrganFinishPie = "picklishOrganFinishPie";
 
 String danceCardCounter = "Dance Card";
 String fortuneCounter = "Fortune Cookie";
@@ -263,14 +264,18 @@ void firstTurn() {
 	set_property(propArrows, 0);
 	set_property(propCookware, false);
 	set_property(propPoolGames, 0);
+	set_property(propOrganFinishPie, false);
 }
 
 // Returns true if this function has set the familiar.
 boolean checkOrgan() {
+	// Don't switch from he-boulder if we're trying to YR something.
+	if (my_familiar() == $familiar[he-boulder])
+		return false;
+
 	int organ = get_property(propOrganTurns).to_int();
 	int pie = get_property(propPieCount).to_int();
-	// Don't switch from he-boulder if we're trying to YR something.
-	boolean needOrgan = (organ > 0 && pie == 0 && my_familiar() != $familiar[he-boulder]);
+	boolean needOrgan = organ > 0 && pie == 0 && get_property(propOrganFinishPie).to_boolean();
 	if (needOrgan && my_familiar() == $familiar[organ grinder])
 		return true;
 	if (!needOrgan && my_familiar() != $familiar[organ grinder])
@@ -316,6 +321,34 @@ void checkFamiliar(location loc) {
 		return;
 	}
 
+	// FIXME: This could be smarter by killing mini-bosses and making pies,
+	// but there's no easy way to track if a boss made it into the pie.
+	if (loc == $location[defiled cranny] || loc == $location[defiled alcove]) {
+		int parts = get_property(propOrganTurns).to_int();
+		int pie = get_property(propPieCount).to_int();
+		if (parts < 4 && pie == 0) {
+			set_property(propOrganFinishPie, false);
+			use_familiar($familiar[organ grinder]);
+			return;
+		} else {
+			setFamiliar("");
+			return;
+		}
+	}
+
+	// Kill bonerdagon and make a badass pie.
+	if (loc == $location[haert of the cyrpt]) {
+		int parts = get_property(propOrganTurns).to_int();
+		int pie = get_property(propPieCount).to_int();
+		if (parts == 4 && pie == 0) {
+			use_familiar($familiar[organ grinder]);
+			return;
+		} else {
+			setFamiliar("");
+			return;
+		}
+	}
+
 	if (loc == $location[boss bat's lair]) {
 		int bat = get_property(propBatTurns).to_int();
 		// This delay is arbitrary, but there are at least 4 bodyguard turns.
@@ -329,6 +362,7 @@ void checkFamiliar(location loc) {
 		}
 		bat = bat + 1;
 		set_property(propBatTurns, bat);
+		set_property(propOrganFinishPie, true);
 		return;
 	}
 	if (checkOrgan())
