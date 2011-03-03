@@ -40,7 +40,7 @@ boolean bcascStage(string stage) {
 }
 
 monster olfactTarget() {
-	return get_property("olfactedMonster").to_monster();
+	return have_effect($effect[on the trail]) > 0 ? get_property("olfactedMonster").to_monster() : $monster[none];
 }
 
 monster romanticTarget() {
@@ -209,6 +209,9 @@ void useRedRay() {
 	adv1(my_location(), 0, "consultRedRay");
 
 	use_familiar(oldFamiliar);
+
+	// Hack: in case we levelled up, refresh current quests.
+	cli_execute("council");
 }
 
 void getPresent() {
@@ -225,7 +228,7 @@ void firstTurn() {
 
 	getPresent();
 
-	cli_execute("ccs defaultattack");
+	cli_execute("ccs hardcore");
 
 	set_property(propMineUnaccOnly, true);
 	set_property(propOrganTurns, 0);
@@ -568,9 +571,14 @@ void faxAndArrow(monster mon) {
 	familiar prevFamiliar = my_familiar();
 	use_familiar($familiar[obtuse angel]);
 	cli_execute("ccs obtuse");
+
+	// FIXME: the ccs has a 'use entangling noodles' call first
+	// http://kolmafia.us/showthread.php?6142-CCS-for-photocopied-monster-fights
+	restore_mp(mp_cost($skill[entangling noodles]));
+
 	use(1, $item[photocopied monster]);
 
-	cli_execute("ccs defaultattack");
+	cli_execute("ccs hardcore");
 	use_familiar(prevFamiliar);
 }
 
@@ -639,6 +647,9 @@ void day1() {
 			use_skill(1, $skill[ode to booze]);
 			cli_execute("garden pick");
 			cli_execute("drink 3 pumpkin beer");
+
+			// Hack: in case we levelled up, refresh current quests.
+			cli_execute("council");
 		}
 	}
 
@@ -647,7 +658,6 @@ void day1() {
 	}
 
 	if (!get_property(propFaxUsed).to_boolean() && get_property(propArrows).to_int() == 0 && romanticTarget() == $monster[none] && item_amount($item[digital key]) == 0 && mosquitoQuestDone()) {
-		abort("fax blooper");
 		faxAndArrow($monster[blooper]);
 		poolTable("mys");
 		poolTable("mys");
@@ -663,10 +673,9 @@ void day1() {
 		return !counterActive(firstRomanticCounter) && counterActive(lastRomanticCounter);
 	}
 
-	if (have_effect($effect[on the trail]) > 0 && olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
+	if (olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
 		bcasc8Bit();
 	} else if (romanticWindow() && romanticTarget() == $monster[blooper]) {
-		abort("romantic prep");
 		olfactionPreparation();
 		cli_execute("ccs hardcore");
 	}
