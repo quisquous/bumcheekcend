@@ -2612,7 +2612,7 @@ boolean bcascMining() {
 
 		boolean willCostAdventure = contains_text(mine, "takes one Adventure.");
 		if (have_skill($skill[Unaccompanied Miner]) && willCostAdventure && have_effect($effect[Teleportitis]) == 0 && my_level() < 12) {
-			if (bcasc_MineUnaccOnly) {
+			if (get_property("bcasc_MineUnaccOnly").to_boolean()) {
 				print("BCC: No more mining today. I'll come back later.", "purple");
 				return false;
 			}
