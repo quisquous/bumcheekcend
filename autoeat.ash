@@ -7,13 +7,16 @@ void initAutoEat() {
 void autoEat(location loc) {
 
 	if (!get_property(propCookware).to_boolean() && bcascStage("tavern") && my_meat() >= 2500) {
-		retrieve_item(1, $item[dramatic range]);
-		use(1, $item[dramatic range]);
-		retrieve_item(1, $item[queue du coq]);
-		use(1, $item[queue du coq]);
+		string kitchen = visit_url("campground.php?action=inspectkitchen");
+		if (!contains_text(kitchen, "/oven.gif")) {
+			retrieve_item(1, $item[dramatic range]);
+			use(1, $item[dramatic range]);
+		}
+		if (!contains_text(kitchen, "/cocktailkit.gif")) {
+			retrieve_item(1, $item[queue du coq]);
+			use(1, $item[queue du coq]);
+		}
 		set_property(propCookware, true);
-
-		// FIXME: Verify that this is true before and after purchasing
 	}
 
 	if (my_daycount() == 1 && my_inebriety() == 0 && stills_available() > 0) {
