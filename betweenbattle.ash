@@ -202,7 +202,7 @@ void setAutoRestoreLevels() {
 		set_property(propAutoHpTarget, 0.9);
 	} else {
 		set_property(propAutoHpMin, 0.9);
-		set_property(propAutoHpTarget, 1.0);
+		set_property(propAutoHpTarget, 0.95);
 
 		if (have_skill($skill[saucegeyser]))
 			restoreMp = mp_cost($skill[saucegeyser]) * 2;
@@ -213,7 +213,7 @@ void setAutoRestoreLevels() {
 
 	float maxMp = my_maxmp();
 	float restorePercent = restoreMp / maxMp;
-	float restoreTarget = (restoreMp + 2.0) / maxMp;
+	float restoreTarget = restorePercent + 0.05;
 
 	set_property(propAutoMpMin, restorePercent);
 	set_property(propAutoMpTarget, restoreTarget);
@@ -236,10 +236,13 @@ void restoreSelf(location loc) {
 	case $location[haert of the cyrpt]:
 	case $location[throne room]:
 		restore_hp(my_maxhp());
-		cli_execute("mood execute; restore mp;");
+		restore_mp(my_maxmp() * get_property(propAutoMpMin).to_float());
+		cli_execute("mood execute");
 		break;
 	default:
-		cli_execute("mood execute; restore hp; restore mp;");
+		restore_hp(my_maxhp() * get_property(propAutoHpMin).to_float());
+		restore_mp(my_maxmp() * get_property(propAutoMpMin).to_float());
+		cli_execute("mood execute");
 		break;
 	}
 }
