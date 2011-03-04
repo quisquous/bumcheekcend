@@ -1,6 +1,34 @@
 // Named KoLmafia properties 
+
+string propArrows = "_badlyRomanticArrows";
+string propAutoHpMin = "hpAutoRecovery";
+string propAutoHpTarget = "hpAutoRecoveryTarget";
+string propAutoMpMin = "mpAutoRecovery";
+string propAutoMpTarget = "mpAutoRecoveryTarget";
+string propBatTurns = "_picklishBatTurns";
+string propDoSideQuestNuns = "bcasc_doSideQuestNuns";
+string propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
+string propFaxUsed = "_photocopyUsed";
+string propHipsterAdv = "_hipsterAdv";
+string propMineUnaccOnly = "bcasc_MineUnaccOnly";
+string propOrganFinishPie = "picklishOrganFinishPie";
+string propOrganTurns = "_piePartsCount";
+string propPieCount = "_pieDrops";
 string propPoolGames = "_poolGames";
+string propPrevFamiliar = "_picklishPrevFamiliar";
+string propSemirareCounter = "semirareCounter";
+string propSemirareKGE = "picklishSemirareKGE";
+string propSemirareLast = "semirareLocation";
+string propSideQuestNunsCompleted = "sidequestNunsCompleted";
+string propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 string propSoak = "_hotTubSoaks";
+
+// Named KoLmafia counters
+
+string danceCardCounter = "Dance Card";
+string firstRomanticCounter = "Last romantic begin";
+string fortuneCounter = "Fortune Cookie";
+string lastRomanticCounter = "Last romantic end";
 
 // General
 

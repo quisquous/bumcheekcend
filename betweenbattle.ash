@@ -1,3 +1,4 @@
+import <autoeat.ash>
 import <fax.ash>
 import <makemeat.ash>
 import <pcklutil.ash>
@@ -7,34 +8,6 @@ import <bumcheekascend.ash>
 void betweenBattleInternal(location loc);
 
 int estimatedRunDays = 5;
-String propBatTurns = "_picklishBatTurns";
-String propOrganTurns = "_piePartsCount";
-String propPieCount = "_pieDrops";
-String propPrevFamiliar = "_picklishPrevFamiliar";
-String propArrows = "_badlyRomanticArrows";
-String propCookware = "_picklishBoughtCookware";
-String propFaxUsed = "_photocopyUsed";
-String propMineUnaccOnly = "bcasc_MineUnaccOnly";
-String propHipsterAdv = "_hipsterAdv";
-String propOrganFinishPie = "picklishOrganFinishPie";
-String propSemirareCounter = "semirareCounter";
-String propSemirareKGE = "picklishSemirareKGE";
-String propSemirareLast = "semirareLocation";
-String propAutoHpMin = "hpAutoRecovery";
-String propAutoHpTarget = "hpAutoRecoveryTarget";
-String propAutoMpMin = "mpAutoRecovery";
-String propAutoMpTarget = "mpAutoRecoveryTarget";
-float noRecover = -0.05;
-
-String danceCardCounter = "Dance Card";
-String fortuneCounter = "Fortune Cookie";
-String firstRomanticCounter = "Last romantic begin";
-String lastRomanticCounter = "Last romantic end";
-
-String propDoSideQuestNuns = "bcasc_doSideQuestNuns";
-String propSideQuestNunsCompleted = "sidequestNunsCompleted";
-String propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
-String propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 
 boolean preppedAdventure(int count, location loc) {
 	// Due to the fact that this script itself is a between battle script,
@@ -322,10 +295,11 @@ void firstTurn() {
 	set_property(propBatTurns, 0);
 	set_property(propPieCount, 0);
 	set_property(propArrows, 0);
-	set_property(propCookware, false);
 	set_property(propPoolGames, 0);
 	set_property(propOrganFinishPie, false);
 	set_property(propSemirareKGE, true);
+
+	initAutoEat();
 }
 
 // Returns true if this function has set the familiar.
@@ -711,64 +685,10 @@ void day1() {
 		firstTurn();
 	}
 
-	if (!get_property(propCookware).to_boolean() && bcascStage("tavern") && my_meat() >= 2500) {
-		retrieve_item(1, $item[dramatic range]);
-		use(1, $item[dramatic range]);
-		retrieve_item(1, $item[queue du coq]);
-		use(1, $item[queue du coq]);
-		set_property(propCookware, true);
-	}
-
-	if (my_turncount() > 5 && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount()) {
-		if (my_fullness() < fullness_limit()) {
-			eat(1, $item[fortune cookie]);
-		}
-	}
-
-	if (get_property(propCookware).to_boolean() && my_level() >= 3) {
-		// TODO save room for boss pie
-		while (fullness_limit() - my_fullness() >= 3 && my_meat() >= 500) {
-			if (item_amount($item[dry noodles]) == 0) {
-				if (my_mp() < mp_cost($skill[pastamastery]) && retrieve_item(1, $item[tonic water])) {
-					use(1, $item[tonic water]);
-				}
-				use_skill(1, $skill[pastamastery]);
-			}
-			if (item_amount($item[dry noodles]) == 0) {
-				abort("No noodles");
-			}
-
-			hermit(1, $item[jabanero pepper]);
-			create(1, $item[painful penne pasta]);
-			eat(1, $item[painful penne pasta]);
-		}
-
-		if (have_effect($effect[beaten up]) > 0) {
-			trySoak();
-		}
-	}
-
-	if (get_property(propCookware).to_boolean() && my_level() >= 4 && bcascStage("tavern")) {
-		// TODO picklish make 2-3 tavern drinks
-		// TODO picklish call EatDrink.ash for the rest
-	}
-
 	if (my_inebriety() == 0 && my_primestat() == $stat[moxie] && my_level() >= 2) {
 		// Open the guild as soon as possible for tonic water.
 		if (my_buffedstat(my_primestat()) > 10) {
 			bcascGuild1();
-		}
-
-		if (stillAvailable()) {
-			tryCast($skill[mojomuscular melody]);
-			retrieve_item(1, $item[tonic water]);
-			use(1, $item[tonic water]);
-			use_skill(1, $skill[ode to booze]);
-			cli_execute("garden pick");
-			cli_execute("drink 3 pumpkin beer");
-
-			// Hack: in case we levelled up, refresh current quests.
-			cli_execute("council");
 		}
 	}
 
@@ -853,6 +773,7 @@ void main() {
 void betweenBattleInternal(location loc) {
 	if (!canAdventure())
 		abort("Out of adventures!");
+	autoEat(loc);
 	checkCounters(loc);
 
 	equipSugar();
