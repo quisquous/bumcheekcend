@@ -167,8 +167,3 @@ boolean trySoak() {
 	}
 	return cli_execute("soak");
 }
-
-boolean stillAvailable() {
-	return visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still");
-}
-

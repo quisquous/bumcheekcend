@@ -16,7 +16,7 @@ void autoEat(location loc) {
 		// FIXME: Verify that this is true before and after purchasing
 	}
 
-	if (my_daycount() == 1 && my_inebriety() == 0 && stillAvailable()) {
+	if (my_daycount() == 1 && my_inebriety() == 0 && stills_available() > 0) {
 		tryCast($skill[mojomuscular melody]);
 		retrieve_item(1, $item[tonic water]);
 		use(1, $item[tonic water]);
