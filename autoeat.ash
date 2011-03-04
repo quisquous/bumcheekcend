@@ -29,7 +29,7 @@ void autoEat(location loc) {
 	}
 
 	// FIXME: Be smarter about when to eat fortune cookies.  No need to eat until the window is up, which may roll over.
-	if (my_turncount() > 5 && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount()) {
+	if (my_daycount() == 1 && my_turncount() > 5 && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount()) {
 		if (my_fullness() == 0) {
 			eat(1, $item[fortune cookie]);
 		}
