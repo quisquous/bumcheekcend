@@ -1,7 +1,5 @@
 import <pcklutil.ash>
 
-String propCookware = "_picklishBoughtCookware";
-
 void initAutoEat() {
 	set_property(propCookware, false);
 }

@@ -6,6 +6,7 @@ string propAutoHpTarget = "hpAutoRecoveryTarget";
 string propAutoMpMin = "mpAutoRecovery";
 string propAutoMpTarget = "mpAutoRecoveryTarget";
 string propBatTurns = "_picklishBatTurns";
+string propCookware = "_picklishBoughtCookware";
 string propDoSideQuestNuns = "bcasc_doSideQuestNuns";
 string propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
 string propFaxUsed = "_photocopyUsed";
