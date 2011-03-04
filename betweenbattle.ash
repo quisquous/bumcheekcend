@@ -1,5 +1,6 @@
 import <fax.ash>
 import <makemeat.ash>
+import <pcklutil.ash>
 import <bumcheekascend.ash>
 
 // Forward declarations
@@ -12,9 +13,7 @@ String propPieCount = "_pieDrops";
 String propPrevFamiliar = "_picklishPrevFamiliar";
 String propArrows = "_badlyRomanticArrows";
 String propCookware = "_picklishBoughtCookware";
-String propPoolGames = "_poolGames";
 String propFaxUsed = "_photocopyUsed";
-String propSoak = "_hotTubSoaks";
 String propMineUnaccOnly = "bcasc_MineUnaccOnly";
 String propHipsterAdv = "_hipsterAdv";
 String propOrganFinishPie = "picklishOrganFinishPie";
@@ -37,27 +36,6 @@ String propSideQuestNunsCompleted = "sidequestNunsCompleted";
 String propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
 String propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 
-boolean[item] combatItems = $items[
-	love song of vague ambiguity,
-	love song of sugary cuteness,
-	divine noisemaker,
-	love song of smoldering passion,
-	love song of disturbing obsession,
-	divine silly string,
-	love song of icy revenge,
-	love song of naughty innuendo,
-	divine blowout,
-];
-
-void debug(String s) {
-	print("PCKLSH: " + s, "green");
-}
-
-boolean bcascStage(string stage) {
-	// checkStage is spammy.  This is a silent non-setting version.
-	return get_property("bcasc_stage_" + stage) == my_ascensions();
-}
-
 boolean preppedAdventure(int count, location loc) {
 	// Due to the fact that this script itself is a between battle script,
 	// it doesn't call between battle for adventures.  Call it ourselves.
@@ -69,64 +47,6 @@ boolean preppedAdventure(int count, location loc, string combat) {
 	betweenBattleInternal(loc);
 	return adventure(count, loc, combat);
 }
-
-monster olfactTarget() {
-	return have_effect($effect[on the trail]) > 0 ? get_property("olfactedMonster").to_monster() : $monster[none];
-}
-
-monster romanticTarget() {
-	return get_property("romanticTarget").to_monster();
-}
-
-effect skillToEffect(skill s) {
-	switch (s) {
-		case $skill[fat leon's phat loot lyric]: return $effect[fat leon's phat loot lyric];
-		case $skill[leash of linguini]: return $effect[leash of linguini];
-		case $skill[mojomuscular melody]: return $effect[mojomuscular melody];
-		case $skill[moxious madrigal]: return $effect[moxious madrigal];
-		case $skill[polka of plenty]: return $effect[polka of plenty];
-	}
-
-	return $effect[none];
-}
-
-void checkOutOfAdventures() {
-	if (my_inebriety() > inebriety_limit())
-		abort("Too drunk!");
-	if (my_adventures() == 0)
-		abort("No adventures left!");
-}
-
-boolean counterThisTurn(string counter) {
-	return get_counters(counter, 0, 0) == counter;
-}
-
-boolean counterActive(string counter) {
-	// If multiple, they'll all be returned as one string, so use
-	// contains_text instead of equality.
-	return contains_text(get_counters(counter, 0, 1000), counter);
-}
-
-stat combatItemToStat(item thing) {
-	switch (thing) {
-	case $item[love song of vague ambiguity]:
-	case $item[love song of sugary cuteness]:
-	case $item[divine noisemaker]:
-		return $stat[muscle];
-	case $item[love song of smoldering passion]:
-	case $item[love song of disturbing obsession]:
-	case $item[divine silly string]:
-		return $stat[mysticality];
-	case $item[love song of icy revenge]:
-	case $item[love song of naughty innuendo]:
-	case $item[divine blowout]:
-		return $stat[moxie];
-	}
-
-	abort("Unknown item in itemToStat");
-	return $stat[none];
-}
-
 string combatOffstatItems(int round, string opp, string text) {
 	if (round == 1 && have_skill($skill[entangling noodles]))
 		return "skill entangling noodles";
@@ -157,10 +77,6 @@ string combatOffstatItems(int round, string opp, string text) {
 		return "item " + hand1;
 	}
 	return "item " + hand1 + "," + hand2;
-}
-
-boolean haveKGEOutfit() {
-	return i_a($item[Knob Goblin elite pants]) == 0 || i_a($item[Knob Goblin elite polearm]) == 0 || i_a($item[Knob Goblin elite helm]) == 0;
 }
 
 void getFortune() {
@@ -232,23 +148,6 @@ void checkCounters(location loc) {
 	}
 }
 
-boolean tryShrug(skill s) {
-	effect e = skillToEffect(s);
-	if (e == $effect[none] || have_effect(e) == 0)
-		return true;
-
-	return cli_execute("uneffect " + e);
-}
-
-boolean tryCast(skill s) {
-	effect e = skillToEffect(s);
-	if (e == $effect[none] || !have_skill(s) || have_effect(e) > 0)
-		return false;
-
-	use_skill(1, s);
-	return have_effect(e) > 0;
-}
-
 boolean needOlfaction(location loc) {
 	if (!have_skill($skill[transcendent olfaction]))
 		return false;
@@ -317,20 +216,6 @@ string consultRedRay(int round, string opp, string text) {
 		}
 	}
 	return "attack";
-}
-
-boolean poolTable(string type) {
-	if (get_property(propPoolGames).to_int() >= 3) {
-		return false;
-	}
-	return cli_execute("pool " + type);
-}
-
-boolean trySoak() {
-	if (item_amount($item[clan vip lounge key]) == 0 || get_property(propSoak).to_int() >= 5) {
-		return false;
-	}
-	return cli_execute("soak");
 }
 
 void setAutoRestoreLevels() {
@@ -419,11 +304,6 @@ void useRedRay(location loc) {
 
 	// Hack: in case we levelled up, refresh current quests.
 	cli_execute("council");
-}
-
-void getPresent() {
-	if (visit_url("clan_viplounge.php").contains_text("a present under it"))
-		visit_url("clan_viplounge.php?action=crimbotree");
 }
 
 void firstTurn() {
@@ -611,10 +491,6 @@ void useFriars(location loc) {
 
 	if (bless != "")
 		cli_execute("friars " + bless);
-}
-
-boolean stillAvailable() {
-	return visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still");
 }
 
 int getSafeMCD(location loc) {
@@ -975,7 +851,8 @@ void main() {
 }
 
 void betweenBattleInternal(location loc) {
-	checkOutOfAdventures();
+	if (!canAdventure())
+		abort("Out of adventures!");
 	checkCounters(loc);
 
 	equipSugar();
