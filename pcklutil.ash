@@ -79,9 +79,7 @@ stat combatItemToStat(item thing) {
 }
 
 boolean haveItem(item thing) {
-	return item_amount(thing) > 0 ||
-		closet_amount(thing) > 0 ||
-		equipped_amount(thing) > 0;
+	return available_amount(thing) > 0;
 }
 
 boolean haveKGEOutfit() {
