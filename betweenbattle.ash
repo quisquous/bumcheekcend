@@ -340,8 +340,8 @@ boolean checkOrgan() {
 }
 
 void checkFamiliar(location loc) {
-	if (have_familiar($familiar[mini-hipster])) {
-		int hipster = get_property(propHipsterAdv).to_int();
+	int hipster = get_property(propHipsterAdv).to_int();
+	if (have_familiar($familiar[mini-hipster]) && hipster < 7) {
 		boolean inCrypt = (
 			loc == $location[defiled alcove] ||
 			loc == $location[defiled cranny] ||
@@ -349,8 +349,8 @@ void checkFamiliar(location loc) {
 			loc == $location[defiled nook]);
 		if (loc == $location[hidden temple] ||
 			loc == $location[spooky forest] && hipster <= 4 ||
-			inCrypt && hipster <= 6 ||
-			loc == $location[palindome] && hipster <= 6 && have_effect($effect[everything looks yellow]) > 0) {
+			inCrypt ||
+			loc == $location[palindome] && have_effect($effect[everything looks yellow]) > 0) {
 			use_familiar($familiar[mini-hipster]);
 			restore_mp(mp_cost($skill[entangling noodles]));
 			return;
@@ -672,7 +672,6 @@ void faxAndArrow(monster mon) {
 		abort("Can't fight " + mon + " fax today.");
 	}
 	get_monster_fax(mon);
-	familiar prevFamiliar = my_familiar();
 	use_familiar($familiar[obtuse angel]);
 	cli_execute("ccs obtuse");
 
@@ -683,7 +682,7 @@ void faxAndArrow(monster mon) {
 	use(1, $item[photocopied monster]);
 
 	cli_execute("ccs hardcore");
-	use_familiar(prevFamiliar);
+	use_familiar(get_property(propPrevFamiliar).to_familiar());
 }
 
 void day1() {

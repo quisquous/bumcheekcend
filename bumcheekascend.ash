@@ -336,6 +336,13 @@ boolean betweenBattle() {
 	if (my_adventures() == 0) abort("No adventures left");
 }
 
+boolean bumFamiliar(familiar fam) {
+	if (fam != $familiar[none] && !have_familiar(fam)) return false;
+	//Record desired familiar so between battle script can use that info.
+	set_property("bcasc_familiar", fam);
+	return use_familiar(fam);
+}
+
 boolean buMax(string maxme) {
 	//We should sell these to avoid hassle when muscle classes.
 	foreach i in $items[antique helmet, antique shield, antique greaves, antique spear] {
@@ -750,7 +757,7 @@ boolean setFamiliar(string famtype) {
 	}
 	
 	if (famtype == "nothing") {
-		use_familiar($familiar[none]);
+		bumFamiliar($familiar[none]);
 		return true;
 	}
 	
@@ -761,7 +768,7 @@ boolean setFamiliar(string famtype) {
 	if (i_a("spangly sombrero") > 0 && have_familiar($familiar[Mad Hatrack]) && (contains_text(famtype, "item") || contains_text(famtype, "equipment"))) {
 		print("BCC: We are going to be using a spanglerack for items. Yay Items!", "purple");
 		
-		use_familiar($familiar[Mad Hatrack]);
+		bumFamiliar($familiar[Mad Hatrack]);
 		if (equipped_item($slot[familiar]) != $item[spangly sombrero]) equip($slot[familiar], $item[spangly sombrero]);
 		if (equipped_item($slot[familiar]) == $item[spangly sombrero]) return true;
 		print("BCC: There seemed to be a problem and you don't have a spangly sombrero equipped. I'll use a 'normal' item drop familiar.", "purple");
@@ -774,7 +781,7 @@ boolean setFamiliar(string famtype) {
 		foreach x in famlist {
 			print("Checking for familiar '"+famlist[x]+"' where x="+x, "purple");
 			if (have_familiar(famlist[x].to_familiar())) {
-				use_familiar(famlist[x].to_familiar());
+				bumFamiliar(famlist[x].to_familiar());
 				return true;
 			}
 		}
@@ -811,17 +818,17 @@ boolean setFamiliar(string famtype) {
 			if (have_familiar($familiar[Rogue Program]) && have_familiar($familiar[Baby Sandworm])) {
 				//Then randomly pick between the two.
 				if (random(2) == 0) {
-					use_familiar($familiar[Rogue Program]);
+					bumFamiliar($familiar[Rogue Program]);
 					return true;
 				} else {
-					use_familiar($familiar[Baby Sandworm]);
+					bumFamiliar($familiar[Baby Sandworm]);
 					return true;
 				}
 			} else if (have_familiar($familiar[Rogue Program])) {
-				use_familiar($familiar[Rogue Program]);
+				bumFamiliar($familiar[Rogue Program]);
 				return true;
 			} else {
-				use_familiar($familiar[Baby Sandworm]);
+				bumFamiliar($familiar[Baby Sandworm]);
 				return true;
 			}
 		}
@@ -829,10 +836,10 @@ boolean setFamiliar(string famtype) {
 	
 	//Now either we have neither of the above, or we have enough spleen today.
 	if (have_familiar($familiar[Frumious Bandersnatch])) {
-		use_familiar($familiar[Frumious Bandersnatch]);
+		bumFamiliar($familiar[Frumious Bandersnatch]);
 		return true;
 	} else {
-		use_familiar($familiar[Blood-Faced Volleyball]);
+		bumFamiliar($familiar[Blood-Faced Volleyball]);
 		return true;
 	}
 }
@@ -2197,7 +2204,7 @@ boolean bcascMacguffinHiddenCity() {
 		//Visit the smallish temple and kill the protector spirit. 
 		switch (my_primestat()) {
 			case $stat[Muscle] :
-				if (have_familiar($familiar[Frumious Bandersnatch])) use_familiar($familiar[Frumious Bandersnatch]);
+				if (have_familiar($familiar[Frumious Bandersnatch])) bumFamiliar($familiar[Frumious Bandersnatch]);
 			break;
 			
 			case $stat[Moxie] :
@@ -2286,7 +2293,7 @@ boolean bcascMacguffinPrelim() {
 	}
 	
 	while (!contains_text(visit_url("woods.php"),"hiddencity.gif")) {
-		if (have_familiar($familiar[Mini-Hipster])) use_familiar($familiar[Mini-Hipster]);
+		if (have_familiar($familiar[Mini-Hipster])) bumFamiliar($familiar[Mini-Hipster]);
 		bumAdv($location[hidden temple], "", "hipster", "1 choiceadv", "Getting another ChoiceAdv to open the Temple");
 	}
 	
