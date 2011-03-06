@@ -2998,12 +2998,14 @@ boolean bcascTavern() {
 	setMood("");
 	buMax();
 
-	int turns = tavern();
-	if (get_property("tavernLayout").contains_text("3")) {
-		visit_url("rats.php?action=faucetoff");
-		visit_url("tavern.php?place=barkeep");
-		visit_url("tavern.php?place=barkeep");
+	while (!get_property("tavernLayout").contains_text("3")) {
+		if (my_adventures() == 0) abort("No adventures.");
+		tavern();
 	}
+
+	visit_url("rats.php?action=faucetoff");
+	visit_url("tavern.php?place=barkeep");
+	visit_url("tavern.php?place=barkeep");
 
 	return checkComplete(); 
 }
