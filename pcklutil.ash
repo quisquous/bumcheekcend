@@ -24,6 +24,7 @@ string propSemirareLast = "semirareLocation";
 string propSideQuestNunsCompleted = "sidequestNunsCompleted";
 string propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 string propSoak = "_hotTubSoaks";
+string propTelescopeUpgrades = "telescopeUpgrades";
 string propWarFratDefeated = "hippiesDefeated";
 string propWarFratMoney = "availableQuarters";
 string propWarHippyDefeated = "fratboysDefeated";

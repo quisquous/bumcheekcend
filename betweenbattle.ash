@@ -343,15 +343,23 @@ void useRedRay(location loc) {
 }
 
 void firstTurn() {
+	if (bcascStage("firstturn"))
+		return;
 	debug("First turn of the run");
 
-	if (item_amount($item[newbiesport tent]) == 0)
-		retrieve_item(1, $item[newbiesport tent]);
-	use(1, $item[newbiesport tent]);
+	string campground = visit_url("campground.php");
+
+	if (!contains_text(campground, "rest1.gif") && !contains_text(campground, "rest1_free.gif")) {
+		if (item_amount($item[newbiesport tent]) == 0)
+			retrieve_item(1, $item[newbiesport tent]);
+		use(1, $item[newbiesport tent]);
+	}
 
 	getPresent();
 
 	cli_execute("ccs hardcore");
+	if (get_property(propTelescopeUpgrades).to_int() > 0)
+		cli_execute("telescope");
 
 	set_property(propMineUnaccOnly, true);
 	set_property(propOrganTurns, 0);
@@ -366,6 +374,8 @@ void firstTurn() {
 	setBcascStageComplete("prewarboss");
 
 	initAutoEat();
+
+	setBcascStageComplete("firstturn");
 }
 
 // Returns true if this function has set the familiar.
@@ -751,10 +761,6 @@ void faxAndArrow(monster mon) {
 }
 
 void day1() {
-	if (my_turncount() == 0) {
-		firstTurn();
-	}
-
 	if (my_inebriety() == 0 && my_primestat() == $stat[moxie] && my_level() >= 2) {
 		// Open the guild as soon as possible for tonic water.
 		if (my_buffedstat(my_primestat()) > 10) {
@@ -819,6 +825,10 @@ void locationSkills(location loc) {
 }
 
 void main() {
+	if (my_daycount() == 1 && my_turncount() == 0) {
+		firstTurn();
+	}
+
 	// Any functions that may do adventuring should go first.
 	killKing();
 	if (my_level() < 6)
