@@ -502,8 +502,10 @@ string consultHeBo(int round, string opp, string text) {
 		return "attack";
 	}
 
+	boolean isGremlin = contains_text(text, "A.M.C. gremlin") || contains_text(text, "batwinged gremlin") || contains_text(text, "erudite gremlin") || contains_text(text, "spider gremlin") || contains_text(text, "vegetable gremlin");
+
 	//Let's check that the monster IS the correct one
-	if (contains_text(text, "Harem Girl") || contains_text(text, "y hippy") || contains_text(text, "War Hippy") || contains_text(text, "Foot Dwarf") || contains_text(text, "bobrace.gif") || contains_text(text, "Frat Warrior") || contains_text(text, "War Pledge")) {
+	if (contains_text(text, "Harem Girl") || contains_text(text, "y hippy") || contains_text(text, "War Hippy") || contains_text(text, "Foot Dwarf") || contains_text(text, "bobrace.gif") || contains_text(text, "Frat Warrior") || contains_text(text, "War Pledge") || isGremlin) {
 		if (my_familiar() == $familiar[He-Boulder]) {
 			print("BCC: We are using the hebo against the right monster.", "purple");
 			if (contains_text(text, "yellow eye")) {
@@ -1926,6 +1928,11 @@ boolean bcascLairFirstGate() {
 							}
 						break;
 						*/
+
+						//FIXME: this item contains a space in its name.
+						case " gremlin juice" :
+							bumAdv($location[post-war junkyard], "", "hebo", "1 gremlin juice", "Getting gremlin juice", "", "consultHeBo");
+						break;
 						
 						default :
 							abort("We need a "+lairitems[x].a+", but the script cannot yet get that item!");
