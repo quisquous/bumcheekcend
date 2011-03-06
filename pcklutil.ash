@@ -17,6 +17,7 @@ string propOrganTurns = "_piePartsCount";
 string propPieCount = "_pieDrops";
 string propPoolGames = "_poolGames";
 string propPrevFamiliar = "bcasc_familiar";
+string propRomanticEncounters = "picklishRomanticEncounters";
 string propSemirareCounter = "semirareCounter";
 string propSemirareKGE = "picklishSemirareKGE";
 string propSemirareLast = "semirareLocation";
@@ -32,9 +33,7 @@ string propWarSide = "bcasc_doWarAs";
 // Named KoLmafia counters
 
 string danceCardCounter = "Dance Card";
-string firstRomanticCounter = "Last romantic begin";
 string fortuneCounter = "Fortune Cookie";
-string lastRomanticCounter = "Last romantic end";
 
 // General
 

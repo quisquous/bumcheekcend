@@ -748,6 +748,8 @@ void faxAndArrow(monster mon) {
 
 	cli_execute("ccs hardcore");
 	use_familiar(get_property(propPrevFamiliar).to_familiar());
+
+	set_property(propRomanticEncounters, 0);
 }
 
 void day1() {
@@ -770,23 +772,12 @@ void day1() {
 		faxAndArrow($monster[blooper]);
 		poolTable("mys");
 		poolTable("mys");
-		if (romanticTarget() == $monster[blooper]) {
-			string img = "obtuseangel.gif";
-			cli_execute("counters add 25 " + firstRomanticCounter + " " + img);
-			cli_execute("counters add 50 " + lastRomanticCounter + " " + img);
-			cli_execute("ccs defaultattack");
-		}
-	}
-
-	boolean romanticWindow() {
-		return !counterActive(firstRomanticCounter) && counterActive(lastRomanticCounter);
 	}
 
 	if (olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
 		bcasc8Bit();
-	} else if (romanticWindow() && romanticTarget() == $monster[blooper]) {
+	} else if (get_property(propRomanticEncounters) == 1 && romanticTarget() == $monster[blooper]) {
 		olfactionPreparation();
-		cli_execute("ccs hardcore");
 	}
 }
 
