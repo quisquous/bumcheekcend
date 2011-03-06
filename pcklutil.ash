@@ -168,6 +168,10 @@ boolean poolTable(string type) {
 	return cli_execute("pool " + type);
 }
 
+boolean stillAvailable() {
+	return visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still");
+}
+
 boolean trySoak() {
 	if (item_amount($item[clan vip lounge key]) == 0 || get_property(propSoak).to_int() >= 5) {
 		return false;

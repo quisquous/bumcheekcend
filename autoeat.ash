@@ -95,7 +95,7 @@ void autoEat(location loc) {
 		set_property(propCookware, true);
 	}
 
-	if (my_daycount() == 1 && my_inebriety() == 0 && stills_available() > 0) {
+	if (my_daycount() == 1 && my_inebriety() == 0 && stillAvailable()) {
 		tryCast($skill[mojomuscular melody]);
 		retrieve_item(1, $item[tonic water]);
 		use(1, $item[tonic water]);
