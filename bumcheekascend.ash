@@ -1230,6 +1230,7 @@ boolean bcascBats1() {
 		
 		buMax("+10stench res");
 		setMood("si");
+		cli_execute("mood execute");
 		while (item_amount($item[sonar-in-a-biscuit]) < 1 && contains_text(visit_url("bathole.php"), "action=rubble")) {
 			//Let's use a clover if we can.
 			if (i_a("sonar-in-a-biscuit") == 0 && cloversAvailable(true) > 0) {
