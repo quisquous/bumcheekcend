@@ -287,7 +287,7 @@ boolean buyWarItem(int count, item thing) {
 }
 
 boolean turnInWarItem(int count, item thing) {
-	if (item_amount(thing) < count)
+	if (item_amount(thing) < count || bcascStage("warboss"))
 		return false;
 	int campId;
 	if (canSellToFratItems[thing]) {

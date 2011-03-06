@@ -3638,6 +3638,7 @@ void bcs12() {
 		visit_url("bigisland.php?action=bossfight&pwd");
 		if (index_of(run_combat(), "WINWINWIN") == -1) abort("Failed to kill the boss!\n");
 		visit_url("council.php");
+		checkStage("warboss", true);
 	}
 	
 	levelMe(148, true);
