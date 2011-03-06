@@ -3340,10 +3340,12 @@ void bcs9() {
 		}
 	}
 	
-	//Yes, this check isn't perfect, but if we have the giant pinky ring, we've definitely completed the quest.
-	if (i_a("giant pinky ring") == 0) { 
-		cli_execute("leaflet");
-		if (cli_execute("use 1 instant house")) {}
+	if (!checkStage("leaflet")) {
+		if (cli_execute("leaflet")) {}
+		if (item_amount($item[instant house]) > 0)
+			use(1, $item[instant house]);
+		if (i_a("giant pinky ring") > 0)
+			checkStage("leaflet", true);
 	}
 	
 	bcascChasm();
