@@ -436,6 +436,9 @@ void checkFamiliar(location loc) {
 		// items that we care about.  So, switch to a stat familiar.
 		setFamiliar("");
 		return;
+	} else if (my_familiar() == $familiar[He-Boulder]) {
+		// If we're using a hebo, there's probably a good reason.
+		return;
 	}
 
 	if (have_familiar($familiar[organ grinder])) {
