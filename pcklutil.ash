@@ -23,6 +23,7 @@ string propSemirareLast = "semirareLocation";
 string propSideQuestNunsCompleted = "sidequestNunsCompleted";
 string propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 string propSoak = "_hotTubSoaks";
+string propWarSide = "bcasc_doWarAs";
 
 // Named KoLmafia counters
 
@@ -164,4 +165,64 @@ boolean trySoak() {
 		return false;
 	}
 	return cli_execute("soak");
+}
+
+boolean[item] canSellToHippyItems = $items[
+	beer bong,
+	beer helmet,
+	bejeweled pledge pin,
+	blue class ring,
+	bottle opener belt buckle,
+	distressed denim pants,
+	elmley shades,
+	energy drink iv,
+	giant foam finger,
+	keg shield,
+	kick-ass kicks,
+	padl phone,
+	perforated battle paddle,
+	red class ring,
+	war tongs,
+	white class ring,
+];
+
+boolean[item] canSellToFratItems = $items[
+	bullet-proof corduroys,
+	communications windchimes,
+	didgeridooka,
+	fire poi,
+	flowing hippy skirt,
+	gaia beads,
+	green clay bead,
+	hippy medical kit,
+	hippy protest button,
+	lead pipe,
+	lockenstock sandals,
+	pink clay bead,
+	purple clay bead,
+	reinforced beaded headband,
+	round green sunglasses,
+	round purple sunglasses,
+	wicker shield,
+];
+
+boolean turnInWarItem(int count, item thing) {
+	if (item_amount(thing) < count)
+		return false;
+	int camp = 0;
+	if (canSellToFratItems[thing]) {
+		if (!outfit("frat warrior"))
+			return false;
+		camp = 2;
+	} else if (canSellToHippyItems[thing]) {
+		if (!outfit("war hippy fatigues"))
+			return false;
+		camp = 1;
+	} else {
+		return false;
+	}
+
+	string result = visit_url("bigisland.php?action=turnin&pwd&whichcamp=" + camp + "&whichitem=" + to_int(thing) + "&quantity=" + count, true);
+
+	return contains_text(result, ">Results:<");
 }

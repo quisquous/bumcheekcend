@@ -1,3 +1,5 @@
+import <pcklutil.ash>
+
 int pulverize_value(item thing) {
 	// Yes, yes, elemental wads have a 1% chance of becoming an elemental jewel.
 	// ...but by the time you find anything that can become an elemental wad
@@ -330,6 +332,20 @@ void process_inventory() {
 			sinful desires,
 		] {
 			dispose_all(thing);
+		}
+	}
+
+	if (my_level() >= 12) {
+		if (get_property(propWarSide) == "frat") {
+			foreach thing in canSellToFratItems {
+				if (item_amount(thing) > 0)
+					turnInWarItem(item_amount(thing), thing);
+			}
+		} else {
+			foreach thing in canSellToHippyItems {
+				if (item_amount(thing) > 0)
+					turnInWarItem(item_amount(thing), thing);
+			}
 		}
 	}
 
