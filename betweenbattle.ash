@@ -396,13 +396,10 @@ boolean checkOrgan() {
 		return false;
 
 	if (needOrgan) {
-		debug("Remembering old familiar: " + my_familiar());
-		set_property(propPrevFamiliar, my_familiar());
 		use_familiar($familiar[organ grinder]);
 		return true;
 	} else {
 		familiar prev = get_property(propPrevFamiliar).to_familiar();
-		debug("Switching back to old familiar: " + prev);
 		if (have_familiar(prev))
 			use_familiar(prev);
 		else
