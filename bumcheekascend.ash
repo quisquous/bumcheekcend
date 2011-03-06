@@ -1773,6 +1773,7 @@ boolean bcascKnobKing() {
 	if (get_property("picklishSemirareKGE").to_boolean()) {
 		if (i_a($item[Knob Goblin elite pants]) == 0 || i_a($item[Knob Goblin elite polearm]) == 0 || i_a($item[Knob Goblin elite helm]) == 0) {
 			print("PCKLSH: Skipping KGE until semi-rare.", "purple");
+			return false;
 		}
 	}
 	
