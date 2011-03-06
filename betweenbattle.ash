@@ -772,7 +772,7 @@ void day1() {
 	}
 
 	boolean mosquitoQuestDone() {
-		return my_level() >= 2 && !contains_text(visit_url("questlog.php?which=1"), "bring them a mosquito larva");
+		return my_level() >= 2 && bcascStage("pantry") && !contains_text(visit_url("questlog.php?which=1"), "bring them a mosquito larva");
 	}
 
 	if (!get_property(propFaxUsed).to_boolean() && get_property(propArrows).to_int() == 0 && romanticTarget() == $monster[none] && item_amount($item[digital key]) == 0 && mosquitoQuestDone()) {
