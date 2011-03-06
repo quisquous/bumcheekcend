@@ -4,6 +4,82 @@ void initAutoEat() {
 	set_property(propCookware, false);
 }
 
+boolean[item] fourSpleen = $items[
+	agua de vida,
+	coffee pixie stick,
+	glimmering roc feather,
+];
+
+boolean[item] allWads = $items[
+	cold wad,
+	hot wad,
+	sleaze wad,
+	spooky wad,
+	stench wad,
+	twinkly wad,
+];
+
+// Use spleen items.  If force is true, use at least one thing if possible.
+// Returns true if spleen item was used.
+boolean autoSpleen(boolean force) {
+	// Assumption: all pulverization has already been done.
+	// FIXME: Use malus to turn nuggets -> wads.
+	// FIXME: Consider prismatic wads.
+
+	int spleenLeft() {
+		return spleen_limit() - my_spleen_use();
+	}
+
+	// FIXME: Consider using stat-increasing spleen items (giant moxie weed)
+	// if the level is so low that wads will never be possible.
+
+	if (my_level() < 4 || spleenLeft() == 0)
+		return false;
+
+	// Prep.
+	while (item_amount($item[game grid token]) > 0) {
+		visit_url("arcade.php?action=skeeball&pwd");
+	}
+
+	// Only use a mojo filter if it will create room for another 4 spleen item.
+	boolean filterUseful = (spleenLeft() % 4 == 1 || have_skill($skill[spleen of steel]));
+	if (filterUseful && my_spleen_use() > 0 && item_amount($item[mojo filter]) > 0) {
+		use(1, $item[mojo filter]);
+	}
+
+	boolean usedSomething = false;
+
+	// If there's room for any of these spleen items, use them immediately.
+	foreach thing in fourSpleen {
+		if (spleenLeft() < 4)
+			break;
+		if (item_amount(thing) == 0)
+			continue;
+		usedSomething = true;
+		use(1, thing);
+	}
+
+	// Postpone wads if there's a remote chance we could get a mojo filter.
+	boolean waitOnFilter = my_level() >= 10 && !bcascStage("macguffinpyramid");
+	boolean useWads = force || !waitOnFilter;
+
+	// Wads require level 6.
+	if (!useWads || my_level() < 6 || spleenLeft() == 0)
+		return usedSomething;
+
+	// FIXME: Sort wads by stat relevance
+	foreach thing in allWads {
+		if (spleenLeft() == 0 || spleenLeft() % 4 == 0)
+			break;
+		if (item_amount(thing) == 0)
+			continue;
+		usedSomething = true;
+		use(1, thing);
+	}
+
+	return usedSomething;
+}
+
 void autoEat(location loc) {
 
 	if (!get_property(propCookware).to_boolean() && bcascStage("tavern") && my_meat() >= 2500) {
@@ -68,4 +144,6 @@ void autoEat(location loc) {
 		// TODO picklish make 2-3 tavern drinks
 		// TODO picklish call EatDrink.ash for the rest
 	}
+
+	autoSpleen(false);
 }

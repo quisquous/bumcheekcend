@@ -69,16 +69,6 @@ void process_inventory() {
 	if (item_amount($item[evil golden arch]) > 1)
 		cli_execute("make * golden arches");
 
-	// Spleen
-	while (my_spleen_use() > 0 && (spleen_limit() - my_spleen_use()) % 4 != 0 && item_amount($item[mojo filter]) > 0)
-		use(1, $item[mojo filter]);
-
-	if (my_level() >= 4) {
-		while (item_amount($item[agua de vida]) > 0 && my_spleen_use() + 4 <= spleen_limit()) {
-			use(1, $item[agua de vida]);
-		}
-	}
-
 	// Useable
 	foreach thing in $items[
 		ancient vinyl coin purse,
