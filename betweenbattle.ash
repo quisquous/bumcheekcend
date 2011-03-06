@@ -315,8 +315,6 @@ void useRedRay(location loc) {
 	if (!have_familiar($familiar[he-boulder]))
 		return;
 
-	familiar oldFamiliar = my_familiar();
-
 	use_familiar($familiar[he-boulder]);
 	if (item_amount($item[sugar shield]) == 0 && equipped_item($slot[familiar]) != $item[sugar shield]) {
 		if (castSugar()) {
@@ -338,7 +336,7 @@ void useRedRay(location loc) {
 
 	preppedAdventure(1, loc, "consultRedRay");
 
-	use_familiar(oldFamiliar);
+	use_familiar(get_property(propPrevFamiliar).to_familiar());
 
 	// Hack: in case we levelled up, refresh current quests.
 	cli_execute("council");
