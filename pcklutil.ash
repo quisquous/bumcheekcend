@@ -6,6 +6,7 @@ string propAutoHpTarget = "hpAutoRecoveryTarget";
 string propAutoMpMin = "mpAutoRecovery";
 string propAutoMpTarget = "mpAutoRecoveryTarget";
 string propBatTurns = "picklishBatTurns";
+string propBlessingReceived = "friarsBlessingReceived";
 string propCookware = "picklishBoughtCookware";
 string propDoSideQuestNuns = "bcasc_doSideQuestNuns";
 string propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";

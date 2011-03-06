@@ -324,7 +324,7 @@ void useRedRay(location loc) {
 	}
 	if (have_skill($skill[leash of linguini]) && have_effect($effect[leash of linguini]) == 0)
 		use_skill(1, $skill[leash of linguini]);
-	if (item_amount($item[clan vip lounge key]) > 0 && get_property("_poolGames") < 3 && have_effect($effect[billiards belligerence]) == 0) {
+	if (item_amount($item[clan vip lounge key]) > 0 && get_property(propPoolGames) < 3 && have_effect($effect[billiards belligerence]) == 0) {
 		poolTable("agg");
 	}
 
@@ -524,7 +524,7 @@ void equipSugar() {
 }
 
 void useFriars(location loc) {
-	if (get_property("friarsBlessingReceived").to_boolean())
+	if (get_property(propBlessingReceived).to_boolean())
 		return;
 
 	String bless = "";
