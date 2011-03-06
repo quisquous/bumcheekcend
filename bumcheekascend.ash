@@ -2008,12 +2008,70 @@ boolean bcascLairMariachis() {
 				abort("You don't have a wand. No Zapping for you.");
 			}
 		}
+
+		boolean armed() {
+			return contains_text(visit_url("lair2.php"), "lair3.php");
+		}
+
 		if (entryway()) {}
+		if (!armed()) {
+			print("BCC: Maybe we're missing an instrument.", "purple");
+			boolean haveAny(boolean[item] array) {
+				foreach thing in array {
+					if (i_a(thing) > 0)
+						return true;
+				}
+				return false;
+			}
+			
+			boolean[item] strings = $items[
+				acoustic guitarrr,
+				heavy metal thunderrr guitarrr,
+				stone banjo,
+				Disco Banjo,
+				Shagadelic Disco Banjo,
+				Seeger's Unstoppable Banjo,
+				Crimbo ukelele,
+				Massive sitar,
+				4-dimensional guitar,
+				plastic guitar,
+				half-sized guitar,
+				out-of-tune biwa,
+				Zim Merman's guitar,
+			];
+			boolean[item] squeezings = $items[
+				stolen accordion,
+				calavera concertina,
+				Rock and Roll Legend,
+				Squeezebox of the Ages,
+				The Trickster's Trikitixa,
+			];
+			boolean[item] drums = $items[
+				tambourine,
+				big bass drum,
+				black kettle drum,
+				bone rattle,
+				hippy bongo,
+				jungle drum,
+			];
+
+			if (!haveAny(strings))
+				bumAdv($location[Belowdecks], "+equip pirate fledges", "items", "1 acoustic guitarrr", "Getting a guitar", "i");
+			if (!haveAny(squeezings))
+				while (i_a("stolen accordion") == 0) use(1, $item[chewing gum on a string]);
+			if (!haveAny(drums))
+				abort("You need a drum, but this script can't get any");
+
+			if (entryway()) {}
+		}
+		if (armed())
+			checkStage("lair2", true);
+		else
+			abort("Failed to arm the mariachis");
 	} else {
 		abort("You don't have two distinct legend keys. This script will not attempt to zap anything.");
 	}
 	
-	checkStage("lair2", true);
 	return true;
 }
 
@@ -2704,9 +2762,7 @@ boolean bcascNaughtySorceress() {
 		}
 		
 		//Now try to get through the rest of the entryway.
-		while (!contains_text(visit_url("lair2.php"), "lair3.php")) {
-			bcascLairMariachis();
-		}
+		bcascLairMariachis();
 		
 		//Get through the hedge maze. Though we'll only ever spend one adventure at a time here, we use bumAdv for moxie maximiazation. 
 		while (!contains_text(visit_url("lair3.php"), "lair4.php")) {
