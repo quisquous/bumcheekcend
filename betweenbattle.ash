@@ -52,6 +52,68 @@ string combatOffstatItems(int round, string opp, string text) {
 	return "item " + hand1 + "," + hand2;
 }
 
+void useWarMoney() {
+	if (my_level() < 12)
+		return;
+
+	// FIXME: Use remaining money before final battle.
+
+	string propMoney;
+	string propDefeated;
+	item healingItem;
+	item foodItem;
+	item moneyItem;
+	int campId;
+	if (get_property(propWarSide) == "frat") {
+		propMoney = propWarFratMoney;
+		propDefeated = propWarFratDefeated;
+		healingItem = $item[gauze garter];
+		foodItem = $item[frat army fgf];
+		moneyItem = $item[commemorative war stein];
+		campId = 2;
+	} else if (get_property(propWarSide) == "hippy") {
+		propMoney = propWarHippyMoney;
+		propDefeated = propWarHippyDefeated;
+		healingItem = $item[filthy poultice];
+		foodItem = $item[hippy army mpe];
+		moneyItem = $item[fancy seashell necklace];
+		campId = 1;
+	} else {
+		abort("unknown side");
+	}
+
+	int money = get_property(propMoney).to_int();
+	if (money == 0)
+		return;
+
+	// Don't start buying healing items until we're halfway done.
+	// This lets food items get purchased first, which might be needed more.
+	if (get_property(propDefeated) >= 500) {
+		int numHealingItems = 0;
+		foreach thing in $items[
+			filthy poultice,
+			gauze garter,
+			red pixel potion,
+		] {
+			numHealingItems += item_amount(thing);
+		}
+
+		int desiredHealingItems = 6;
+		if (numHealingItems < desiredHealingItems) {
+			int canBuy = money / 2;
+			int num = desiredHealingItems - numHealingItems;
+			num = num < canBuy ? canBuy : num;
+			buyWarItem(num, healingItem);
+			money = get_property(propMoney).to_int();
+		}
+	}
+
+	// FIXME: Stop buying food items and buy money items instead at some point.
+	int numFood = money / 10;
+	if (numFood > 0)
+		buyWarItem(numFood, foodItem);
+}
+
 void getFortune() {
 	location last = get_property(propSemirareLast).to_location();
 
@@ -301,6 +363,9 @@ void firstTurn() {
 	set_property(propPoolGames, 0);
 	set_property(propOrganFinishPie, false);
 	set_property(propSemirareKGE, true);
+
+	// This script autosells war items, so don't abort for the war boss.
+	setBcascStageComplete("prewarboss");
 
 	initAutoEat();
 }
@@ -778,6 +843,9 @@ void main() {
 void betweenBattleInternal(location loc) {
 	if (!canAdventure())
 		abort("Out of adventures!");
+
+	useWarMoney();
+
 	autoEat(loc);
 	checkCounters(loc);
 

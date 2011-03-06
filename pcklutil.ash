@@ -23,6 +23,10 @@ string propSemirareLast = "semirareLocation";
 string propSideQuestNunsCompleted = "sidequestNunsCompleted";
 string propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 string propSoak = "_hotTubSoaks";
+string propWarFratDefeated = "hippiesDefeated";
+string propWarFratMoney = "availableQuarters";
+string propWarHippyDefeated = "fratboysDefeated";
+string propWarHippyMoney = "availableDimes";
 string propWarSide = "bcasc_doWarAs";
 
 // Named KoLmafia counters
@@ -43,6 +47,10 @@ void debug(String s) {
 boolean bcascStage(string stage) {
 	// checkStage is spammy.  This is a silent non-setting version.
 	return get_property("bcasc_stage_" + stage) == my_ascensions();
+}
+
+void setBcascStageComplete(string stage) {
+	set_property("bcasc_stage_" + stage, my_ascensions());
 }
 
 // Items
@@ -167,6 +175,8 @@ boolean trySoak() {
 	return cli_execute("soak");
 }
 
+// War
+
 boolean[item] canSellToHippyItems = $items[
 	beer bong,
 	beer helmet,
@@ -206,23 +216,93 @@ boolean[item] canSellToFratItems = $items[
 	wicker shield,
 ];
 
-boolean turnInWarItem(int count, item thing) {
-	if (item_amount(thing) < count)
-		return false;
-	int camp = 0;
-	if (canSellToFratItems[thing]) {
+int[item] canBuyFromFratItems;
+canBuyFromFratItems[$item[beer bomb]] = 1;
+canBuyFromFratItems[$item[sake bomb]] = 1;
+canBuyFromFratItems[$item[gauze garter]] = 2;
+canBuyFromFratItems[$item[monstar energy beverage]] = 3;
+canBuyFromFratItems[$item[superamplified boom box]] = 4;
+canBuyFromFratItems[$item[commemorative war stein]] = 5;
+canBuyFromFratItems[$item[frat army fgf]] = 10;
+canBuyFromFratItems[$item[giant foam finger]] = 15;
+canBuyFromFratItems[$item[kick-ass kicks]] = 15;
+canBuyFromFratItems[$item[war tongs]] = 20;
+canBuyFromFratItems[$item[energy drink iv]] = 25;
+canBuyFromFratItems[$item[keg shield]] = 30;
+canBuyFromFratItems[$item[perforated battle paddle]] = 35;
+canBuyFromFratItems[$item[beer bong]] = 40;
+canBuyFromFratItems[$item[cast-iron legacy paddle]] = 50;
+canBuyFromFratItems[$item[beer-a-pult]] = 50;
+canBuyFromFratItems[$item[tequila grenade]] = 2;
+canBuyFromFratItems[$item[molotov cocktail cocktail]] = 2;
+
+int[item] canBuyFromHippyItems;
+canBuyFromHippyItems[$item[water pipe bomb]] = 1;
+canBuyFromHippyItems[$item[ferret bait]] = 1;
+canBuyFromHippyItems[$item[filthy poultice]] = 2;
+canBuyFromHippyItems[$item[carbonated soy milk]] = 3;
+canBuyFromHippyItems[$item[macrame net]] = 4;
+canBuyFromHippyItems[$item[fancy seashell necklace]] = 5;
+canBuyFromHippyItems[$item[hippy army mpe]] = 10;
+canBuyFromHippyItems[$item[gaia beads]] = 15;
+canBuyFromHippyItems[$item[lockenstock sandals]] = 15;
+canBuyFromHippyItems[$item[lead pipe]] = 20;
+canBuyFromHippyItems[$item[hippy medical kit]] = 25;
+canBuyFromHippyItems[$item[wicker shield]] = 30;
+canBuyFromHippyItems[$item[didgeridooka]] = 35;
+canBuyFromHippyItems[$item[fire poi]] = 40;
+canBuyFromHippyItems[$item[giant driftwood sculpture]] = 50;
+canBuyFromHippyItems[$item[massive sitar]] = 50;
+canBuyFromHippyItems[$item[patchouli oil bomb]] = 2;
+canBuyFromHippyItems[$item[exploding hacky-sack]] = 2;
+
+boolean buyWarItem(int count, item thing) {
+	int campId;
+	int costPerItem;
+	string propMoney;
+	if (canBuyFromFratItems contains thing) {
 		if (!outfit("frat warrior"))
 			return false;
-		camp = 2;
-	} else if (canSellToHippyItems[thing]) {
+		campId = 2;
+		costPerItem = canBuyFromFratItems[thing];
+		propMoney = propWarFratMoney;
+	} else if (canBuyFromHippyItems contains thing) {
 		if (!outfit("war hippy fatigues"))
 			return false;
-		camp = 1;
+		campId = 1;
+		costPerItem = canBuyFromHippyItems[thing];
+		propMoney = propWarHippyMoney;
 	} else {
 		return false;
 	}
 
-	string result = visit_url("bigisland.php?action=turnin&pwd&whichcamp=" + camp + "&whichitem=" + to_int(thing) + "&quantity=" + count, true);
+	int money = get_property(propMoney).to_int();
+	if (costPerItem * count > money)
+		return false;
+
+	int originalAmount = item_amount(thing);
+	visit_url("bigisland.php?action=getgear&pwd&whichcamp=" + campId + "&whichitem=" + to_int(thing) + "&quantity=" + count, true);
+
+	return item_amount(thing) == originalAmount + count;
+}
+
+boolean turnInWarItem(int count, item thing) {
+	if (item_amount(thing) < count)
+		return false;
+	int campId;
+	if (canSellToFratItems[thing]) {
+		if (!outfit("frat warrior"))
+			return false;
+		campId = 2;
+	} else if (canSellToHippyItems[thing]) {
+		if (!outfit("war hippy fatigues"))
+			return false;
+		campId = 1;
+	} else {
+		return false;
+	}
+
+	string result = visit_url("bigisland.php?action=turnin&pwd&whichcamp=" + campId + "&whichitem=" + to_int(thing) + "&quantity=" + count, true);
 
 	return contains_text(result, ">Results:<");
 }
