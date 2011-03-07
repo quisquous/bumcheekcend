@@ -38,6 +38,7 @@ string propWarSide = "bcasc_doWarAs";
 
 string danceCardCounter = "Dance Card";
 string fortuneCounter = "Fortune Cookie";
+string semirareWindowCounter = "Semirare window begin";
 
 // General
 

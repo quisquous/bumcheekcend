@@ -114,7 +114,7 @@ boolean autoEat(boolean force) {
 
 	boolean consumed = false;
 
-	if (contains_text(get_counters(fortuneCounter, 0, 5), fortuneCounter) && couldEatFortuneCookie()) {
+	if (contains_text(get_counters(semirareWindowCounter, 0, 10), semirareWindowCounter) && couldEatFortuneCookie()) {
 		eat(1, $item[fortune cookie]);
 		consumed = true;
 	}
