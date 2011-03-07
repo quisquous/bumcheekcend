@@ -1142,7 +1142,7 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	} else {
 		if (adventure(my_adventures(), loc)) {}
 	}
-	
+
 	return true;
 }
 boolean bumAdv(location loc, string maxme, string famtype, string goals, string printme, string combat) { bumAdv(loc, maxme, famtype, goals, printme, combat, ""); }

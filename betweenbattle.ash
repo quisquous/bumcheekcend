@@ -6,6 +6,7 @@ import <bumcheekascend.ash>
 
 // Forward declarations
 void betweenBattleInternal(location loc);
+void betweenBattlePrep(location loc);
 
 int estimatedRunDays = 5;
 
@@ -20,6 +21,18 @@ boolean preppedAdventure(int count, location loc, string combat) {
 	betweenBattleInternal(loc);
 	return adventure(count, loc, combat);
 }
+
+// Ignore counters and spend the next adventure in this location.
+boolean preppedAdv1(location loc) {
+	betweenBattlePrep(loc);
+	return adv1(loc, 0, "");
+}
+
+boolean preppedAdv1(location loc, string combat) {
+	betweenBattlePrep(loc);
+	return adv1(loc, 0, combat);
+}
+
 string combatOffstatItems(int round, string opp, string text) {
 	if (round == 1 && have_skill($skill[entangling noodles]))
 		return "skill entangling noodles";
@@ -120,7 +133,7 @@ void getFortune() {
 	if (my_level() >= 9 && !bcascStage("chasm") && last != $location[orc chasm]) {
 		// FIXME: Don't get this if we have all the scroll components.
 		if (!contains_text(visit_url("mountains.php"), "chasm.gif")) {
-			adventure(1, $location[orc chasm]);
+			preppedAdv1($location[orc chasm]);
 			return;
 		}
 	}
@@ -137,12 +150,12 @@ void getFortune() {
 		// FIXME: find some better way to ensure victory
 		setFamiliar("");
 		restore_mp(mp_cost($skill[entangling noodles]));
-		preppedAdventure(1, loc, "combatOffstatItems");
+		preppedAdv1(loc, "combatOffstatItems");
 		return;
 	}
 
 	if (my_level() < 5 && last != $location[outskirts of the knob]) {
-		adventure(1, $location[outskirts of the knob]);
+		preppedAdv1($location[outskirts of the knob]);
 		return;
 	}
 
@@ -150,7 +163,7 @@ void getFortune() {
 		boolean needEyedrops = get_property(propDoSideQuestOrchard).to_boolean() && get_property(propSideQuestOrchardCompleted) == "none";
 		boolean haveEyedrops = item_amount($item[cyclops eyedrops]) > 0 || have_effect($effect[one very clear eye]) > 0;
 		if (needEyedrops && !haveEyedrops && last != $location[limerick dungeon]) {
-			adventure(1, $location[limerick dungeon]);
+			preppedAdv1($location[limerick dungeon]);
 			return;
 		}
 	}
@@ -159,7 +172,7 @@ void getFortune() {
 		boolean needInhaler = get_property(propDoSideQuestNuns).to_boolean() && get_property(propSideQuestNunsCompleted) == "none";
 		boolean haveInhaler = item_amount($item[mick's icyvapohotness inhaler]) > 0 || have_effect($effect[sinuses for miles]) > 0;
 		if (needInhaler && !haveInhaler && last != $location[giant's castle]) {
-			adventure(1, $location[giant's castle]);
+			preppedAdv1($location[giant's castle]);
 			return;
 		}
 	}
@@ -168,9 +181,9 @@ void getFortune() {
 	set_property(propNeedFortuneCookie, false);
 
 	if (last != $location[outskirts of the knob]) {
-		adventure(1, $location[outskirts of the knob]);
+		preppedAdv1($location[outskirts of the knob]);
 	} else {
-		adventure(1, $location[haunted pantry]);
+		preppedAdv1($location[haunted pantry]);
 	}
 }
 
@@ -845,6 +858,7 @@ void main() {
 	betweenBattleInternal(my_location());
 }
 
+// This function should do minimal adventuring.
 void betweenBattleInternal(location loc) {
 	if (!canAdventure())
 		abort("Out of adventures!");
@@ -858,7 +872,12 @@ void betweenBattleInternal(location loc) {
 
 	if (my_daycount() == 1)
 		day1();
+	
+	betweenBattlePrep(loc);
+}
 
+// This function should not do any adventuring.
+void betweenBattlePrep(location loc) {
 	buyHammer();
 	allowMining();
 
