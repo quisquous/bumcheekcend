@@ -730,8 +730,10 @@ void getHellionCubes() {
 		visit_url("friars.php?action=ritual&pwd");
 	}
 
-	if (canPerformRitual())
+	if (canPerformRitual()) {
 		performRitual();
+		setBcascStageComplete("friars");
+	}
 }
 
 void openDispensary() {
