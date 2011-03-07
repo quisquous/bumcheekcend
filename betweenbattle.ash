@@ -442,6 +442,8 @@ void checkFamiliar(location loc) {
 			restore_mp(mp_cost($skill[entangling noodles]));
 			return;
 		}
+	} else if (my_familiar() == $familiar[mini-hipster]) {
+		use_familiar(get_property(propPrevFamiliar).to_familiar());
 	}
 
 	// Don't bother using the HeBo when there's no yellow ray.
