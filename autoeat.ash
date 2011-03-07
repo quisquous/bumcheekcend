@@ -1,9 +1,5 @@
 import <pcklutil.ash>
 
-void initAutoEat() {
-	set_property(propCookware, false);
-}
-
 boolean[item] fourSpleen = $items[
 	agua de vida,
 	coffee pixie stick,
@@ -18,6 +14,231 @@ boolean[item] allWads = $items[
 	stench wad,
 	twinkly wad,
 ];
+
+void initAutoEat() {
+	set_property(propCampgroundCock, false);
+	set_property(propCampgroundOven, false);
+}
+
+boolean getCock() {
+	boolean checkCock() {
+		string kitchen = visit_url("campground.php?action=inspectkitchen");
+		if (contains_text(kitchen, "/cocktailkit.gif")) {
+			set_property(propCampgroundCock, true);
+			return true;
+		}
+		return false;
+	}
+
+	if (get_property(propCampgroundCock) || checkCock())
+		return true;
+	if (my_meat() < 1000)
+		return false;
+
+	retrieve_item(1, $item[queue du coq]);
+	use(1, $item[queue du coq]);
+	return checkCock();
+}
+
+boolean getOven() {
+	boolean checkOven() {
+		string kitchen = visit_url("campground.php?action=inspectkitchen");
+		if (contains_text(kitchen, "/oven.gif")) {
+			set_property(propCampgroundOven, true);
+			return true;
+		}
+		return false;
+	}
+
+	if (get_property(propCampgroundOven) || checkOven())
+		return true;
+	if (my_meat() < 1000)
+		return false;
+
+	retrieve_item(1, $item[dramatic range]);
+	use(1, $item[dramatic range]);
+	return checkOven();
+}
+
+void prepForEating() {
+	// createable_amount(item) doesn't consider items you could summon or get.
+	// Obtain a minimal of amount of everything we might need.
+
+	int desiredNoodles = 1;
+	int desiredReagents = 1;
+
+	if (have_skill($skill[pastamastery])) {
+		int noodles = item_amount($item[dry noodles]);
+		if (noodles < desiredNoodles) {
+			use_skill(desiredNoodles - noodles, $skill[pastamastery]);
+		}
+	}
+	if (have_skill($skill[advanced saucecrafting])) {
+		int reagents = item_amount($item[scrumptious reagent]);
+		if (reagents < desiredReagents) {
+			use_skill(desiredReagents - reagents, $skill[advanced saucecrafting]);
+		}
+	}
+}
+
+// 6 fullness pastas that are always good to eat.
+boolean[item] reagentPasta = $items[
+	hell ramen,
+	fettucini inconnu,
+	gnocchetti di nietzsche,
+	spaghetti with skullheads,
+];
+
+// Eat food.  If force is true, use at least one thing if possible.
+// Returns true if something was eaten.
+boolean autoEat(boolean force) {
+	int fullnessLeft() {
+		return fullness_limit() - my_fullness();
+	}
+
+	boolean haveMilk() {
+		// Assumption: reagents already summoned.
+		return haveItem($item[milk of magnesium]) || haveItem($item[glass of goat's milk]) && haveItem($item[scrumptious reagent]);
+	}
+
+	boolean couldEatFortuneCookie() {
+		return get_property(propNeedFortuneCookie).to_boolean() && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount();
+	}
+
+	int foodAmount(item thing) {
+		return creatable_amount(thing) + item_amount(thing);
+	}
+
+	if (fullnessLeft() == 0)
+		return false;
+
+	boolean consumed = false;
+
+	if (contains_text(get_counters(fortuneCounter, 0, 5), fortuneCounter) && couldEatFortuneCookie()) {
+		eat(1, $item[fortune cookie]);
+		consumed = true;
+	}
+
+	if (my_level() < 2 || my_meat() < 1500 || !getOven())
+		return consumed;
+
+	// Eat when we get low on adventures
+	if (my_adventures() < 5)
+		force = true;
+
+	if (haveMilk()) {
+		int remaining = fullnessLeft();
+
+		int[item] toEat;
+		foreach thing in reagentPasta {
+			int couldMake = foodAmount(thing);
+			if (couldMake == 0)
+				continue;
+			
+			while (couldMake > 0 && remaining >= 6) {
+				if (toEat contains thing) {
+					toEat[thing] += 1;
+				} else {
+					toEat[thing] = 1;
+				}
+				couldMake -= 1;
+				remaining -= 6;
+			}
+		}
+
+		// If we have milk, wait on big pasta
+		if (!force && remaining >= 6)
+			return consumed;
+
+		int[item] consider;
+		consider[$item[badass pie]] = 2;
+		consider[$item[knob pasty]] = 1;
+		consider[$item[tasty tart]] = 1;
+		consider[$item[painful penne pasta]] = 3;
+		foreach thing in consider {
+			if (foodAmount(thing) == 0)
+				continue;
+			
+			int couldMake = remaining / consider[thing];
+			if (toEat contains thing) {
+				toEat[thing] += 1;
+			} else {
+				toEat[thing] = 1;
+			}
+			couldMake -= 1;
+			remaining -= consider[thing];
+		}
+
+		// FIXME: Consider eating more food
+
+		if (remaining == 0) {
+			foreach thing in toEat {
+				retrieve_item(toEat[thing], thing);
+			}
+			retrieve_item(1, $item[milk of magnesium]);
+			use(1, $item[milk of magnesium]);
+			foreach thing in toEat {
+				eat(toEat[thing], thing);
+			}
+		}
+	} else {
+		if (!force)
+			return consumed;
+
+		boolean saveRoomForPasta() {
+			return my_level() >= 6 && fullnessLeft() >= 6;
+		}
+
+		boolean haveRoomFor(int amount) {
+			return fullnessLeft() >= amount && (!saveRoomForPasta() || fullnessLeft() % 6 >= amount);
+		}
+
+		prepForEating();
+		if (saveRoomForPasta()) {
+			// FIXME: sort reagent pasta by stat
+			foreach thing in reagentPasta {
+				if (fullnessLeft() < 6)
+					break;
+				if (foodAmount(thing) == 0)
+					continue;
+				retrieve_item(1, thing);
+				eat(1, thing);
+				return true;
+			}
+		}
+
+		// FIXME: use mafia's food tables
+		int[item] awesomeFood;
+		if (my_level() >= 4)
+			awesomeFood[$item[badass pie]] = 2;
+		awesomeFood[$item[knob pasty]] = 1;
+		awesomeFood[$item[tasty tart]] = 1;
+
+		foreach thing in awesomeFood {
+			if (!haveItem(thing))
+				continue;
+			int foodFull = awesomeFood[thing];
+			if (!haveRoomFor(foodFull))
+				continue;
+			eat(1, thing);
+			return true;
+		}
+
+		if (haveItem($item[dry noodles]) && haveRoomFor(3)) {
+			hermit(1, $item[jabanero pepper]);
+			retrieve_item(1, $item[painful penne pasta]);
+			eat(1, $item[painful penne pasta]);
+
+			trySoak();
+
+			return true;
+		}
+
+		abort("Need to eat food, but don't know what to eat.  :(");
+	}
+
+	return consumed;
+}
 
 // Use spleen items.  If force is true, use at least one thing if possible.
 // Returns true if spleen item was used.
@@ -80,20 +301,7 @@ boolean autoSpleen(boolean force) {
 	return usedSomething;
 }
 
-void autoEat(location loc) {
-
-	if (!get_property(propCookware).to_boolean() && bcascStage("tavern") && my_meat() >= 2500) {
-		string kitchen = visit_url("campground.php?action=inspectkitchen");
-		if (!contains_text(kitchen, "/oven.gif")) {
-			retrieve_item(1, $item[dramatic range]);
-			use(1, $item[dramatic range]);
-		}
-		if (!contains_text(kitchen, "/cocktailkit.gif")) {
-			retrieve_item(1, $item[queue du coq]);
-			use(1, $item[queue du coq]);
-		}
-		set_property(propCookware, true);
-	}
+void autoConsume(location loc) {
 
 	if (my_daycount() == 1 && my_inebriety() == 0 && stillAvailable()) {
 		tryCast($skill[mojomuscular melody]);
@@ -107,43 +315,6 @@ void autoEat(location loc) {
 		cli_execute("council");
 	}
 
-	// FIXME: Be smarter about when to eat fortune cookies.  No need to eat until the window is up, which may roll over.
-	if (my_daycount() == 1 && my_turncount() > 5 && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount()) {
-		if (my_fullness() == 0) {
-			eat(1, $item[fortune cookie]);
-		}
-	}
-
-	if (!get_property(propCookware).to_boolean())
-		return;
-
-	if (my_daycount() == 1 && my_level() >= 3) {
-		// TODO save room for boss pie
-		while (fullness_limit() - my_fullness() >= 3 && my_meat() >= 500) {
-			if (item_amount($item[dry noodles]) == 0) {
-				if (my_mp() < mp_cost($skill[pastamastery]) && retrieve_item(1, $item[tonic water])) {
-					use(1, $item[tonic water]);
-				}
-				use_skill(1, $skill[pastamastery]);
-			}
-			if (item_amount($item[dry noodles]) == 0) {
-				abort("No noodles");
-			}
-
-			hermit(1, $item[jabanero pepper]);
-			create(1, $item[painful penne pasta]);
-			eat(1, $item[painful penne pasta]);
-		}
-
-		if (have_effect($effect[beaten up]) > 0) {
-			trySoak();
-		}
-	}
-
-	if (get_property(propCookware).to_boolean() && my_level() >= 4 && bcascStage("tavern")) {
-		// TODO picklish make 2-3 tavern drinks
-		// TODO picklish call EatDrink.ash for the rest
-	}
-
 	autoSpleen(false);
+	autoEat(false);
 }

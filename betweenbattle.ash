@@ -164,6 +164,9 @@ void getFortune() {
 		}
 	}
 
+	// FIXME: Right now this will use one more cookie than we really need.
+	set_property(propNeedFortuneCookie, false);
+
 	if (last != $location[outskirts of the knob]) {
 		adventure(1, $location[outskirts of the knob]);
 	} else {
@@ -369,6 +372,7 @@ void firstTurn() {
 	set_property(propPoolGames, 0);
 	set_property(propOrganFinishPie, false);
 	set_property(propSemirareKGE, true);
+	set_property(propNeedFortuneCookie, true);
 
 	// This script autosells war items, so don't abort for the war boss.
 	setBcascStageComplete("prewarboss");
@@ -845,7 +849,7 @@ void betweenBattleInternal(location loc) {
 
 	useWarMoney();
 
-	autoEat(loc);
+	autoConsume(loc);
 	checkCounters(loc);
 
 	equipSugar();
