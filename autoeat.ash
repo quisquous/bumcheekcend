@@ -1,9 +1,15 @@
 import <pcklutil.ash>
 
+boolean[item] fiveSpleen = $items[
+	breathetastic canned air,
+	instant karma,
+];
+
 boolean[item] fourSpleen = $items[
 	agua de vida,
 	coffee pixie stick,
 	glimmering roc feather,
+	not-a-pipe,
 ];
 
 boolean[item] allWads = $items[
@@ -262,13 +268,24 @@ boolean autoSpleen(boolean force) {
 		visit_url("arcade.php?action=skeeball&pwd");
 	}
 
+	boolean usedSomething = false;
+
+	if (my_level() >= 9) {
+		foreach thing in fiveSpleen {
+			if (spleenLeft() < 5)
+				break;
+			if (item_amount(thing) == 0)
+				continue;
+			usedSomething = true;
+			use(1, thing);
+		}
+	}
+
 	// Only use a mojo filter if it will create room for another 4 spleen item.
 	boolean filterUseful = (spleenLeft() % 4 == 1 || have_skill($skill[spleen of steel]));
 	if (filterUseful && my_spleen_use() > 0 && item_amount($item[mojo filter]) > 0) {
 		use(1, $item[mojo filter]);
 	}
-
-	boolean usedSomething = false;
 
 	// If there's room for any of these spleen items, use them immediately.
 	foreach thing in fourSpleen {
