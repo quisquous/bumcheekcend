@@ -714,6 +714,7 @@ void killKing() {
 	while (haveHarem && have_effect($effect[knob goblin perfume]) > 0 || haveElite && haveCake && have_effect($effect[beaten up]) == 0) {
 		betweenBattleInternal($location[throne room]);
 		use_familiar($familiar[organ grinder]);
+		set_property(propOrganFinishPie, true);
 		restore_mp(mp_cost($skill[entangling noodles]));
 		optimizeMCD($location[throne room]);
 
