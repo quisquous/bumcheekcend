@@ -9,6 +9,8 @@ string propBatTurns = "picklishBatTurns";
 string propBlessingReceived = "friarsBlessingReceived";
 string propCampgroundCock = "picklishCampgroundCock";
 string propCampgroundOven = "picklishCampgroundOven";
+string propChefHave = "picklishHaveChef";
+string propChefMake = "bcasc_chef";
 string propDoSideQuestNuns = "bcasc_doSideQuestNuns";
 string propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
 string propFaxUsed = "_photocopyUsed";
@@ -96,6 +98,38 @@ stat combatItemToStat(item thing) {
 
 boolean haveItem(item thing) {
 	return available_amount(thing) > 0;
+}
+
+item classEpicWeapon(class cls) {
+	switch (cls) {
+		case $class[turtle tamer]: return $item[turtle totem];
+		case $class[seal clubber]: return $item[mace of the tortoise];
+		case $class[pastamancer]: return $item[pasta of peril];
+		case $class[sauceror]: return $item[5-alarm saucepan];
+		case $class[disco bandit]: return $item[disco banjo];
+		case $class[accordion thief]: return $item[rock and roll legend];
+	}
+	return $item[none];
+}
+
+item classLegendaryWeapon(class cls) {
+	switch (cls) {
+		case $class[turtle tamer]: return $item[hammer of smiting];
+		case $class[seal clubber]: return $item[chelonian morning star];
+		case $class[pastamancer]: return $item[greek pasta of peril];
+		case $class[sauceror]: return $item[17-alarm saucepan];
+		case $class[disco bandit]: return $item[shagadelic disco banjo];
+		case $class[accordion thief]: return $item[squeezebox of the ages];
+	}
+	return $item[none];
+}
+
+boolean haveEpicWeapon() {
+	return haveItem(classEpicWeapon(my_class()));
+}
+
+boolean haveLegendaryWeapon() {
+	return haveItem(classLegendaryWeapon(my_class()));
 }
 
 boolean haveKGEOutfit() {

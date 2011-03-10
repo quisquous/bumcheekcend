@@ -390,6 +390,9 @@ void firstTurn() {
 	set_property(propFaxBlooper, 0);
 	set_property(propFaxLobster, 0);
 
+	set_property(propChefMake, true);
+	set_property(propChefHave, false);
+
 	// This script autosells war items, so don't abort for the war boss.
 	setBcascStageComplete("prewarboss");
 
@@ -857,6 +860,48 @@ void openGuild() {
 	}
 }
 
+boolean haveChefParts() {
+	return haveItem($item[chef's hat]) && (haveItem($item[spring]) || in_muscle_sign());
+}
+
+void getBoxes() {
+	boolean checkChef() {
+		if (!contains_text(visit_url("campground.php?action=inspectkitchen"), "chefinbox.gif")) {
+			return false;
+		}
+
+		set_property(propChefHave, true);
+		return true;
+	}
+
+	if (!get_property(propChefMake).to_boolean() || get_property(propChefHave).to_boolean() || haveItem($item[box]) || checkChef()) {
+		return;
+	}
+
+	// FIXME: get a chef's hat at some point?
+	if (!haveChefParts())
+		return;
+
+	// Balance out clover usage by waiting on bats1 and the RnR.
+	// FIXME: Probably need to wait on big rocks for other classes.
+	if (!bcascStage("bats1") || !haveEpicWeapon() && !haveLegendaryWeapon())
+		return;
+
+	// Funhouse requirement.
+	if (my_buffedstat(my_primestat()) < 15)
+		return;
+
+	while (!contains_text(visit_url("plains.php"), "funhouse.gif")) {
+		visit_url("guild.php?place=scg");
+	}
+		
+	if (cloversAvailable(true) == 0)
+		return;
+
+	betweenBattlePrep($location[funhouse]);
+	visit_url("adventure.php?snarfblat=20&confirm=on");
+}
+
 void locationSkills(location loc) {
 	if (loc == $location[boss bat's lair]) {
 		tryShrug($skill[fat leon's phat loot lyric]);
@@ -922,6 +967,7 @@ void betweenBattleInternal(location loc) {
 	checkCounters(loc);
 
 	openGuild();
+	getBoxes();
 	
 	betweenBattlePrep(loc);
 }
