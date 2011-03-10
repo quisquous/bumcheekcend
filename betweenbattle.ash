@@ -427,6 +427,10 @@ boolean checkOrgan() {
 }
 
 void checkFamiliar(location loc) {
+	if (my_familiar() == $familiar[obtuse angel]) {
+		return;
+	}
+
 	int hipster = get_property(propHipsterAdv).to_int();
 	if (have_familiar($familiar[mini-hipster]) && hipster < 7) {
 		boolean inCrypt = (
