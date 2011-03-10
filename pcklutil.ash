@@ -12,6 +12,9 @@ string propCampgroundOven = "picklishCampgroundOven";
 string propDoSideQuestNuns = "bcasc_doSideQuestNuns";
 string propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
 string propFaxUsed = "_photocopyUsed";
+string propFaxArt = "picklishFaxArt";
+string propFaxBlooper = "picklishFaxBlooper";
+string propFaxLobster = "picklishFaxLobster";
 string propHipsterAdv = "_hipsterAdv";
 string propMineUnaccOnly = "bcasc_MineUnaccOnly";
 string propNeedFortuneCookie = "picklishNeedFortuneCookie";
@@ -163,6 +166,10 @@ boolean counterActive(string counter) {
 void getPresent() {
 	if (visit_url("clan_viplounge.php").contains_text("a present under it"))
 		visit_url("clan_viplounge.php?action=crimbotree");
+}
+
+boolean canOutMoxie(monster mon) {
+	return my_buffedstat(my_primestat()) >= monster_attack(mon) + 4;
 }
 
 boolean poolTable(string type) {

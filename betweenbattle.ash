@@ -386,6 +386,9 @@ void firstTurn() {
 	set_property(propOrganFinishPie, false);
 	set_property(propSemirareKGE, true);
 	set_property(propNeedFortuneCookie, true);
+	set_property(propFaxArt, 0);
+	set_property(propFaxBlooper, 0);
+	set_property(propFaxLobster, 0);
 
 	// This script autosells war items, so don't abort for the war boss.
 	setBcascStageComplete("prewarboss");
@@ -766,6 +769,16 @@ void openDispensary() {
 	cli_execute("outfit picklish");
 }
 
+void faxAndFight(monster mon) {
+	if (get_property(propFaxUsed).to_boolean()) {
+		abort("Can't fight " + mon + " fax today.");
+	}
+
+	betweenBattleInternal(my_location());
+	restore_mp(mp_cost($skill[entangling noodles]));
+	use(1, $item[photocopied monster]);
+}
+
 void faxAndArrow(monster mon) {
 	if (get_property(propFaxUsed).to_boolean()) {
 		abort("Can't fight " + mon + " fax today.");
@@ -786,28 +799,61 @@ void faxAndArrow(monster mon) {
 	set_property(propRomanticEncounters, 0);
 }
 
+void autoFax(boolean force) {
+	if (get_property(propFaxUsed).to_boolean())
+		return;
+
+	if (!haveItem($item[digital key])) {
+		boolean mosquitoQuestDone() {
+			return my_level() >= 2 && bcascStage("pantry") && !contains_text(visit_url("questlog.php?which=1"), "bring them a mosquito larva");
+		}
+
+		if (!get_property(propFaxUsed).to_boolean() && get_property(propArrows).to_int() == 0 && romanticTarget() == $monster[none] && item_amount($item[digital key]) == 0 && mosquitoQuestDone()) {
+			set_property(propFaxBlooper, 1);
+			faxAndArrow($monster[blooper]);
+
+			// Ease on MP requirements for olfaction.
+			poolTable("mys");
+			poolTable("mys");
+		}
+
+		if (olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
+			bcasc8Bit();
+		} else if (get_property(propRomanticEncounters) == 1 && romanticTarget() == $monster[blooper]) {
+			olfactionPreparation();
+		}
+
+		// If no digital key, don't fax anything else yet.
+		return;
+	}
+
+	if (!bcascStage("chasm") && get_property(propFaxArt).to_int() == 0) {
+		monster target = $monster[bad ascii art];
+		if (canOutMoxie(target) || my_adventures() < 10 || force) {
+			set_property(propFaxArt, 1);
+			faxAndFight(target);
+		}
+
+		return;
+	}
+
+	if (item_amount($item[barrel of gunpowder]) < 5) {
+		// FIXME: Check on divine combat items here.
+
+		set_property(propFaxLobster, get_property(propFaxLobster).to_int() + 1);
+		faxAndArrow($monster[lobsterfrogman]);
+		return;
+	}
+
+	// FIXME: get telescope items
+}
+
 void day1() {
 	if (my_inebriety() == 0 && my_primestat() == $stat[moxie] && my_level() >= 2) {
 		// Open the guild as soon as possible for tonic water.
 		if (my_buffedstat(my_primestat()) > 10) {
 			bcascGuild1();
 		}
-	}
-
-	boolean mosquitoQuestDone() {
-		return my_level() >= 2 && bcascStage("pantry") && !contains_text(visit_url("questlog.php?which=1"), "bring them a mosquito larva");
-	}
-
-	if (!get_property(propFaxUsed).to_boolean() && get_property(propArrows).to_int() == 0 && romanticTarget() == $monster[none] && item_amount($item[digital key]) == 0 && mosquitoQuestDone()) {
-		faxAndArrow($monster[blooper]);
-		poolTable("mys");
-		poolTable("mys");
-	}
-
-	if (olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
-		bcasc8Bit();
-	} else if (get_property(propRomanticEncounters) == 1 && romanticTarget() == $monster[blooper]) {
-		olfactionPreparation();
 	}
 }
 
