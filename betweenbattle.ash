@@ -848,8 +848,8 @@ void autoFax(boolean force) {
 	// FIXME: get telescope items
 }
 
-void day1() {
-	if (my_inebriety() == 0 && my_primestat() == $stat[moxie] && my_level() >= 2) {
+void openGuild() {
+	if (!bcascStage("guild1") && my_inebriety() == 0 && my_primestat() == $stat[moxie] && my_level() >= 2) {
 		// Open the guild as soon as possible for tonic water.
 		if (my_buffedstat(my_primestat()) > 10) {
 			bcascGuild1();
@@ -921,16 +921,15 @@ void betweenBattleInternal(location loc) {
 	autoConsume(loc);
 	checkCounters(loc);
 
-	equipSugar();
-
-	if (my_daycount() == 1)
-		day1();
+	openGuild();
 	
 	betweenBattlePrep(loc);
 }
 
 // This function should not do any adventuring.
 void betweenBattlePrep(location loc) {
+	equipSugar();
+
 	buyHammer();
 	allowMining();
 
