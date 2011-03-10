@@ -267,6 +267,9 @@ boolean autoSpleen(boolean force) {
 	while (item_amount($item[game grid token]) > 0) {
 		visit_url("arcade.php?action=skeeball&pwd");
 	}
+	if (haveItem($item[game grid ticket])) {
+		retrieve_item(item_amount($item[game grid ticket]) / 10, $item[coffee pixie stick]);
+	}
 
 	boolean usedSomething = false;
 
