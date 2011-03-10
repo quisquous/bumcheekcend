@@ -430,7 +430,7 @@ int cloversAvailable(boolean makeOneTenLeafClover) {
 		while (hermit(1, $item[Ten-leaf clover])) {}
 		set_property("bcasc_lastHermitCloverGet", today_to_string());
 	} else {
-		print("BCC: We've already got Clovers Today", "purple");
+		//print("BCC: We've already got Clovers Today", "purple");
 	}
 	
 	if (makeOneTenLeafClover && (item_amount($item[ten-leaf clover]) + item_amount($item[disassembled clover])) > 0) {
