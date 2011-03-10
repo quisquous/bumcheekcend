@@ -530,8 +530,12 @@ void checkFamiliar(location loc) {
 		return;
 	}
 
+	boolean usingSpleenFamiliar() {
+		return my_familiar() == $familiar[sandworm] || my_familiar() == $familiar[rogue program];
+	}
+
 	if (have_familiar($familiar[frumious bandersnatch])) {
-		if (my_spleen_use() >= 12 && my_familiar() == $familiar[sandworm] && my_level() < 9)
+		if (my_spleen_use() >= 12 && usingSpleenFamiliar() && my_level() < 9)
 			use_familiar($familiar[Frumious Bandersnatch]);
 		if (my_level() <= 2)
 			use_familiar($familiar[Frumious Bandersnatch]);
