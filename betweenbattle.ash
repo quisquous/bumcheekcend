@@ -970,6 +970,7 @@ void betweenBattleInternal(location loc) {
 	autoConsume(loc);
 	checkCounters(loc);
 
+	autoFax(false);
 	openGuild();
 	getBoxes();
 	
