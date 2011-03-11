@@ -681,7 +681,14 @@ void allowMining() {
 }
 
 void killKing() {
-	if (bcascStage("knobking")) {
+	boolean knobKingSlain() {
+		if (!contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King"))
+			return false;
+		setBcascStageComplete("knobking");
+		return true;
+	}
+
+	if (bcascStage("knobking") || knobKingSlain()) {
 		return;
 	}
 
@@ -725,7 +732,7 @@ void killKing() {
 		cli_execute("maximize mainstat +outfit elite -ml -tie");
 	}
 
-	while (haveHarem && have_effect($effect[knob goblin perfume]) > 0 || haveElite && haveCake && have_effect($effect[beaten up]) == 0) {
+	if (haveHarem && have_effect($effect[knob goblin perfume]) > 0 || haveElite && haveCake && have_effect($effect[beaten up]) == 0) {
 		betweenBattleInternal($location[throne room]);
 		use_familiar($familiar[organ grinder]);
 		set_property(propOrganFinishPie, true);
@@ -735,9 +742,7 @@ void killKing() {
 		adventure(1, $location[throne room], "combatOffstatItems");
 	}
 
-	if (contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King")) {
-		checkStage("knobking", true);
-	} else {
+	if (!knobKingSlain()) {
 		abort("Tried to kill the Goblin King, but unexpectedly failed.");
 	}
 }
