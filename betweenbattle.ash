@@ -761,8 +761,8 @@ void getHellionCubes() {
 	}
 
 	if (canPerformRitual()) {
-		performRitual();
 		setBcascStageComplete("friars");
+		performRitual();
 	}
 }
 
