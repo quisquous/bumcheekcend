@@ -786,7 +786,8 @@ void faxAndFight(monster mon) {
 		abort("Can't fight " + mon + " fax today.");
 	}
 
-	betweenBattleInternal(my_location());
+	get_monster_fax(mon);
+	betweenBattlePrep(my_location());
 	restore_mp(mp_cost($skill[entangling noodles]));
 	use(1, $item[photocopied monster]);
 }
@@ -821,8 +822,8 @@ void autoFax(boolean force) {
 		}
 
 		if (!get_property(propFaxUsed).to_boolean() && get_property(propArrows).to_int() == 0 && romanticTarget() == $monster[none] && item_amount($item[digital key]) == 0 && mosquitoQuestDone()) {
-			set_property(propFaxBlooper, 1);
 			faxAndArrow($monster[blooper]);
+			set_property(propFaxBlooper, 1);
 
 			// Ease on MP requirements for olfaction.
 			poolTable("mys");
@@ -842,8 +843,8 @@ void autoFax(boolean force) {
 	if (!bcascStage("chasm") && get_property(propFaxArt).to_int() == 0) {
 		monster target = $monster[bad ascii art];
 		if (canOutMoxie(target) || my_adventures() < 10 || force) {
-			set_property(propFaxArt, 1);
 			faxAndFight(target);
+			set_property(propFaxArt, 1);
 		}
 
 		return;
@@ -852,8 +853,8 @@ void autoFax(boolean force) {
 	if (item_amount($item[barrel of gunpowder]) < 5) {
 		// FIXME: Check on divine combat items here.
 
-		set_property(propFaxLobster, get_property(propFaxLobster).to_int() + 1);
 		faxAndArrow($monster[lobsterfrogman]);
+		set_property(propFaxLobster, get_property(propFaxLobster).to_int() + 1);
 		return;
 	}
 
