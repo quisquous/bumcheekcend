@@ -381,13 +381,6 @@ boolean bumAdv1(location loc, string filter) {
 	return adventure(1, loc, filter);
 }
 
-//Use instead of visit_url if it will spend an adventure.
-string bumAdvUrl(string url) {
-	betweenBattle();
-	callBetweenBattleScript();
-	return visit_url(url);
-}
-
 boolean bumFamiliar(familiar fam) {
 	if (fam != $familiar[none] && !have_familiar(fam)) return false;
 	//Record desired familiar so between battle script can use that info.
@@ -968,6 +961,30 @@ boolean willMood() {
 * BEGIN FUNCTIONS THAT RELY ON OTHER FUNCTIONS *
 ***********************************************/
 
+//Use instead of visit_url if it will spend an adventure.
+string bumAdvUrl(string url) {
+	betweenBattle();
+	callBetweenBattleScript();
+	return visit_url(url);
+}
+
+boolean bumAdvClover(int snarfblat) {
+	if (i_a($item[ten-leaf clover]) == 0) {
+		if (cloversAvailable(true) == 0)
+			return false;
+	}
+
+	int clovers = i_a($item[ten-leaf clover]);
+	if (clovers == 0)
+		return false;
+
+	//Adventure.php can get interrupted by wandering monsters, so
+	//retry until we get the clover adventure.
+	while (i_a($item[ten-leaf clover]) == clovers)
+		bumAdvUrl("adventure.php?snarfblat=" + snarfblat + "&confirm=on");
+	return true;
+}
+
 void setMood(string combat) {
 	defaultMood(combat == "");
 	if (contains_text(combat,"+")) {
@@ -1054,7 +1071,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 						while (my_basestat($stat[Muscle]) < sMox && item_amount($item[disassembled clover]) > 1) {
 							print("BCC: We have "+item_amount($item[disassembled clover])+" clovers and are using one to level.", "purple");
 							use(1, $item[disassembled clover]);
-							bumAdvUrl("adventure.php?snarfblat=106&confirm=on");
+							bumAdvClover(106);
 						}
 					}
 				}
@@ -1106,7 +1123,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 							if (my_adventures() == 0) abort("No Adventures to level :(");
 							print("BCC: We have "+item_amount($item[disassembled clover])+" clovers and are using one to level.", "purple");
 							use(1, $item[disassembled clover]);
-							bumAdvUrl("adventure.php?snarfblat=109&confirm=on");
+							bumAdvClover(109);
 						}
 					}
 				}
@@ -1291,7 +1308,7 @@ boolean bcascBats1() {
 		while (item_amount($item[sonar-in-a-biscuit]) < 1 && contains_text(visit_url("bathole.php"), "action=rubble")) {
 			//Let's use a clover if we can.
 			if (i_a("sonar-in-a-biscuit") == 0 && cloversAvailable(true) > 0) {
-				bumAdvUrl("adventure.php?snarfblat=31&confirm=on");
+				bumAdvClover(31);
 			} else {
 				bumAdv($location[Guano Junction], "+10stench res", "items", "1 sonar-in-a-biscuit", "Getting a Sonars");
 			}
@@ -1782,7 +1799,7 @@ boolean bcascInnaboxen() {
 		}
 		
 		if (cloversAvailable(true) > 0) {
-			bumAdvUrl("adventure.php?snarfblat=20&confirm=on");
+			bumAdvClover(20);
 			return true;
 		}
 		
@@ -1802,7 +1819,7 @@ boolean bcascInnaboxen() {
 					if (creatable_amount($item[chef-in-the-box]) == 0) {
 						//Then the only thing we could need would be brain/skull, as we've checked for all the others. 
 						if (cloversAvailable(true) > 0) {
-							bumAdvUrl("adventure.php?snarfblat=58&confirm=on");
+							bumAdvClover(58);
 							cli_execute("use chef-in-the-box");
 						} else {
 							print("BCC: Uhoh, we don't have enough clovers to get the brain/skull we need.", "purple");
@@ -1824,7 +1841,7 @@ boolean bcascInnaboxen() {
 						if (creatable_amount($item[bartender-in-the-box]) == 0) {
 							if (creatable_amount($item[brainy skull]) + available_amount($item[brainy skull]) == 0) {
 								if (cloversAvailable(true) > 0) {
-									bumAdvUrl("adventure.php?snarfblat=58&confirm=on");
+									bumAdvClover(58);
 								} else {
 									print("BCC: Uhoh, we don't have enough clovers to get the brain/skull we need.", "purple");
 								}
@@ -1963,7 +1980,7 @@ boolean bcascLairFirstGate() {
 					print("BCC: I'm going to get the chewing gum using a clover.", "purple");
 					if (i_a("pack of chewing gum") == 0) {
 						if (cloversavailable(true) > 0) {
-							bumAdvUrl("adventure.php?snarfblat=45&confirm=on");
+							bumAdvClover(45);
 							cli_execute("use pack of chewing gum");
 							numGatesWeHaveItemFor = numGatesWeHaveItemFor + 1;
 						} else {
