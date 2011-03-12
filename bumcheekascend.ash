@@ -336,6 +336,40 @@ boolean betweenBattle() {
 	if (my_adventures() == 0) abort("No adventures left");
 }
 
+void callBetweenBattleScript() {
+	string script = get_property("betweenBattleScript");
+	if (script != "")
+		cli_execute("call " + script);
+}
+
+boolean hasNoCombats(location loc) {
+	float[monster] rates = appearance_rates(loc);
+	return rates[$monster[none]] == 100.0;
+}
+
+//Use instead of adventure(1, location)
+boolean bumAdv1(location loc) {
+	betweenBattle();
+	if (hasNoCombats(loc))
+		callBetweenBattleScript();
+	return adventure(1, loc);
+}
+
+//Use instead of adventure(1, location, filter)
+boolean bumAdv1(location loc, string filter) {
+	betweenBattle();
+	if (hasNoCombats(loc))
+		callBetweenBattleScript();
+	return adventure(1, loc, filter);
+}
+
+//Use instead of visit_url if it will spend an adventure.
+string bumAdvUrl(string url) {
+	betweenBattle();
+	callBetweenBattleScript();
+	return visit_url(url);
+}
+
 boolean bumFamiliar(familiar fam) {
 	if (fam != $familiar[none] && !have_familiar(fam)) return false;
 	//Record desired familiar so between battle script can use that info.
@@ -658,7 +692,7 @@ boolean identifyBangPotions() {
 	}
 	
 	while (numPotionsFound() < 5 && somePotionsUnknown()) {
-		adventure(1, $location[Hole in the Sky], "consultDoD");
+		bumAdv1($location[Hole in the Sky], "consultDoD");
 	}
 	
 	print("BCC: We have found "+numPotionsFound()+"/5 important DoD potions", "purple");
@@ -984,7 +1018,8 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 					//Check for temple.gif, or we're not getting in. 
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
 						setFamiliar("hipster");
-						adventure(my_adventures(), $location[Hidden Temple]);
+						while (my_basestat(my_primestat()) < sMox)
+							bumAdv1($location[Hidden Temple]);
 					} else {
 						adventure(my_adventures(), $location[Haunted Pantry]);
 					}
@@ -1010,7 +1045,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 						while (my_basestat($stat[Muscle]) < sMox && item_amount($item[disassembled clover]) > 1) {
 							print("BCC: We have "+item_amount($item[disassembled clover])+" clovers and are using one to level.", "purple");
 							use(1, $item[disassembled clover]);
-							visit_url("adventure.php?snarfblat=106&confirm=on");
+							bumAdvUrl("adventure.php?snarfblat=106&confirm=on");
 						}
 					}
 				}
@@ -1026,7 +1061,8 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 					//Check for temple.gif, or we're not getting in. 
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
 						setFamiliar("hipster");
-						adventure(my_adventures(), $location[Hidden Temple]);
+						while (my_basestat(my_primestat()) < sMox)
+							bumAdv1($location[Hidden Temple]);
 					} else {
 						adventure(my_adventures(), $location[Haunted Pantry]);
 					}
@@ -1060,7 +1096,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 							if (my_adventures() == 0) abort("No Adventures to level :(");
 							print("BCC: We have "+item_amount($item[disassembled clover])+" clovers and are using one to level.", "purple");
 							use(1, $item[disassembled clover]);
-							visit_url("adventure.php?snarfblat=109&confirm=on");
+							bumAdvUrl("adventure.php?snarfblat=109&confirm=on");
 						}
 					}
 				}
@@ -1074,7 +1110,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 						use(1, $item[dance card]);
 						adventure(4, $location[Haunted Ballroom]);
 					} else {
-						adventure(1, $location[Haunted Ballroom]);
+						bumAdv1($location[Haunted Ballroom]);
 					}
 				}
 			}
@@ -1151,11 +1187,13 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	}
 	if (canMCD() && loc == $location[Boss Bat's Lair]) { cli_execute("mcd "+b); }
 	if (canMCD() && loc == $location[Throne Room]) { cli_execute("mcd "+k); }
-	
+
+	//Because moods aren't restored, adventure only once in a non-combat zone.
+	int numAdv = hasNoCombats(loc) ? 1 : my_adventures();
 	if (consultScript != "") {
-		if (adventure(my_adventures(), loc, consultScript)) {}
+		if (adventure(numAdv, loc, consultScript)) {}
 	} else {
-		if (adventure(my_adventures(), loc)) {}
+		if (adventure(numAdv, loc)) {}
 	}
 
 	return true;
@@ -1249,12 +1287,12 @@ boolean bcascBats1() {
 		while (item_amount($item[sonar-in-a-biscuit]) < 1 && contains_text(visit_url("bathole.php"), "action=rubble")) {
 			//Let's use a clover if we can.
 			if (i_a("sonar-in-a-biscuit") == 0 && cloversAvailable(true) > 0) {
-				visit_url("adventure.php?snarfblat=31&confirm=on");
+				bumAdvUrl("adventure.php?snarfblat=31&confirm=on");
 			} else {
 				// Adventure 1 turn at a time in case of screambats.
 				buMax("+10 stench res");
 				setFamiliar("items");
-				adventure(1, $location[Guano Junction]);
+				bumAdv1($location[Guano Junction]);
 			}
 			if (cli_execute("use * sonar-in-a-biscuit")) {}
 		}
@@ -1317,7 +1355,7 @@ boolean bcascChasm() {
 		visit_url("forestvillage.php?place=untinker&action=screwquest");
 		visit_url("forestvillage.php?action=screwquest&submit=&quot;Sure Thing.&quot;");
 		visit_url("knoll.php?place=smith");
-		if (visit_url("mountains.php?orcs=1&pwd="+my_hash()).to_string() != "") {}
+		if (bumAdvUrl("mountains.php?orcs=1&pwd="+my_hash()).to_string() != "") {}
 	}
 	
 	while (contains_text(visit_url("questlog.php?which=1"), "A Quest, LOL")) {
@@ -1385,7 +1423,9 @@ void bcascDailyDungeon() {
 		cli_execute("make "+amountKeys+" skeleton key");
 	}
 	setFamiliar("");
-	if (!contains_text(visit_url("dungeon.php"), "reached the bottom")) cli_execute("adv " + my_adventures() + " daily dungeon");
+	if (!contains_text(visit_url("dungeon.php"), "reached the bottom")) {
+		bumAdv1($location[daily dungeon]);
+	}
 	zapKeys();
 }
 
@@ -1406,7 +1446,9 @@ boolean bcascDinghyHippy() {
 				string numTripsTaken = shore.group(1);
 				if (numTripsTaken == "no") numTripsTaken = "0";
 				if (numTripsTaken < 5 && (my_meat() > 500*(5-to_int(numTripsTaken))))
-					cli_execute("adv "+(5-numTripsTaken.to_int())+" moxie vacation");
+					for i from numTripsTaken+1 to 5 {
+						bumAdv1($location[Moxie Vacation]);
+					}
 			}
 			if (item_amount($item[dinghy plans]) == 0) abort("Unable to check shore progress. I recommend you make the Dinghy manually.");
 		}
@@ -1440,7 +1482,7 @@ boolean bcascEpicWeapons() {
 		
 		if (i_a("big rock") == 0 && cloversAvailable(true) > 0) {
 			print("BCC: Getting the Big Rock", "purple");
-			visit_url("casino.php?action=slot&whichslot=11&confirm=on");
+			bumAdvUrl("casino.php?action=slot&whichslot=11&confirm=on");
 		}
 		
 		visit_url("guild.php?place=sgc");
@@ -1575,8 +1617,7 @@ boolean bcascFriarsSteel() {
 		setFamiliar("itemsnc");
 		cli_execute("mood execute; conditions clear");
 		while (!logicPuzzleDone()) {
-			adventure(1, $location[Hey Deze Arena]);
-			betweenBattle();
+			bumAdv1($location[Hey Deze Arena]);
 		}
 		int bog = 0, sti = 0, fla = 0, jim = 0;
 		if (item_amount($item[giant marshmallow]) > 0) { bog = to_int($item[giant marshmallow]); }
@@ -1637,7 +1678,7 @@ boolean bcascGuild1() {
 		if (my_buffedstat(my_primestat()) > 10) {
 			print("BCC: Doing the First Challenge...", "purple");
 			if (my_adventures() == 0) abort("You are out of adventures.");
-			visit_url("guild.php?action=chal");
+			bumAdvUrl("guild.php?action=chal");
 			//Then sell the "wrong" reward and use the other two.
 			switch (my_class()) {
 				case $class[disco bandit] : cli_execute("use 2 giant moxie weed; sell enchanted barbell"); break;
@@ -1672,7 +1713,7 @@ boolean bcascHoleInTheSky() {
 	cli_execute("conditions clear");
 	
 	while (i_a("star hat") == 0 || i_a("star crossbow") == 0 || i_a("richard's star key") == 0) {
-		adventure(1, $location[Hole in the Sky]);
+		bumAdv1($location[Hole in the Sky]);
 		if (item_amount($item[star chart]) > 0) {
 			if (equipped_item($slot[hat]) != $item[star hat]) { (!retrieve_item(1, $item[star hat])); }
 			if (equipped_item($slot[weapon]) != $item[star crossbow]) { (!retrieve_item(1, $item[star crossbow])); }
@@ -1698,7 +1739,7 @@ boolean bcascInnaboxen() {
 		}
 		
 		if (cloversAvailable(true) > 0) {
-			visit_url("adventure.php?snarfblat=20&confirm=on");
+			bumAdvUrl("adventure.php?snarfblat=20&confirm=on");
 			return true;
 		}
 		
@@ -1718,7 +1759,7 @@ boolean bcascInnaboxen() {
 					if (creatable_amount($item[chef-in-the-box]) == 0) {
 						//Then the only thing we could need would be brain/skull, as we've checked for all the others. 
 						if (cloversAvailable(true) > 0) {
-							visit_url("adventure.php?snarfblat=58&confirm=on");
+							bumAdvUrl("adventure.php?snarfblat=58&confirm=on");
 							cli_execute("use chef-in-the-box");
 						} else {
 							print("BCC: Uhoh, we don't have enough clovers to get the brain/skull we need.", "purple");
@@ -1740,7 +1781,7 @@ boolean bcascInnaboxen() {
 						if (creatable_amount($item[bartender-in-the-box]) == 0) {
 							if (creatable_amount($item[brainy skull]) + available_amount($item[brainy skull]) == 0) {
 								if (cloversAvailable(true) > 0) {
-									visit_url("adventure.php?snarfblat=58&confirm=on");
+									bumAdvUrl("adventure.php?snarfblat=58&confirm=on");
 								} else {
 									print("BCC: Uhoh, we don't have enough clovers to get the brain/skull we need.", "purple");
 								}
@@ -1879,7 +1920,7 @@ boolean bcascLairFirstGate() {
 					print("BCC: I'm going to get the chewing gum using a clover.", "purple");
 					if (i_a("pack of chewing gum") == 0) {
 						if (cloversavailable(true) > 0) {
-							visit_url("adventure.php?snarfblat=45&confirm=on");
+							bumAdvUrl("adventure.php?snarfblat=45&confirm=on");
 							cli_execute("use pack of chewing gum");
 							numGatesWeHaveItemFor = numGatesWeHaveItemFor + 1;
 						} else {
@@ -1897,14 +1938,13 @@ boolean bcascLairFirstGate() {
 						setFamiliar("items");
 						setMood("i+");
 						while (!identifyBangPotions() && (bangPotionWeNeed() == "")) {
-							adventure(1, $location[Dungeons of Doom]);
-							betweenBattle();
+							bumAdv1($location[Dungeons of Doom]);
 							cli_execute("use * dead mimic; use * large box; use * small box");
 						}
 							
 						//So at this point, we at least know WHICH bang potion we need, though we don't know whether we have it or not.
 						while (item_amount(bangPotionWeNeed().to_item()) == 0) {
-							adventure(1, $location[Dungeons of Doom]);
+							bumAdv1($location[Dungeons of Doom]);
 							cli_execute("use * dead mimic; use * large box; use * small box");
 						}
 					}
@@ -1940,7 +1980,7 @@ boolean bcascLairFirstGate() {
 						case "smoky potion" :
 						case "swirly potion" :
 							while (item_amount(bangPotionWeNeed().to_item()) == 0) {
-								adventure(1, $location[Dungeons of Doom]);
+								bumAdv1($location[Dungeons of Doom]);
 								cli_execute("use * dead mimic; use * large box; use * small box");
 							}
 						break;
@@ -2136,7 +2176,7 @@ boolean bcascMacguffinFinal() {
 						bumAdv($location[Middle Chamber], "", "", "choiceadv", "Getting another choice adventure", "-");
 					}
 				}
-				return adventure(1,$location[lower chambers]);
+				return bumAdv1($location[lower chambers]);
 			}
 			
 			if (item_amount($item[ancient bronze token]) == 0 && item_amount($item[ancient bomb]) == 0 && !pyrstep("Step 1 / 3: get a token.","4"))
@@ -2152,7 +2192,7 @@ boolean bcascMacguffinFinal() {
 		//Fight Ed
 		if (my_adventures() < 7) { abort("You don't have enough adventures to fight Ed."); }
 		print("BCC: Fighting Ed", "purple");
-		visit_url("pyramid.php?action=lower");
+		bumAdvUrl("pyramid.php?action=lower");
 		run_combat();
 		while (item_amount($item[Holy MacGuffin]) == 0) {
 			if (my_hp() == 0) abort("Oops, you died. Probably better fight this one yourself.");
@@ -2242,11 +2282,10 @@ boolean bcascMacguffinHiddenCity() {
 			
 			if (squareNum != -1) {
 				//Then there's something to find. If squareNum==-1 then we've explored all the squares. 
-				betweenBattle();
 				
 				//Explore the square in question
 				print("Exploring square : "+(squareNum + 1)+" / 25");
-				string url = visit_url("hiddencity.php?which="+squareNum);
+				string url = bumAdvUrl("hiddencity.php?which="+squareNum);
 				run_combat();
 				print("BCC: Finished the combat. Let's carry on.", "purple");
 				find_all();
@@ -2295,7 +2334,7 @@ boolean bcascMacguffinHiddenCity() {
 		}
 		visit_url("hiddencity.php?which=" + i);
 		visit_url("hiddencity.php?action=trisocket");
-		string url = visit_url("hiddencity.php?which="+i);
+		string url = bumAdvUrl("hiddencity.php?which="+i);
 		if (!contains_text(run_combat(), "WINWINWIN")) {
 			abort("Failed to kill the protector spectre.  You must do this manually.");
 		}
@@ -2333,7 +2372,7 @@ boolean bcascMacguffinPalindome() {
 			
 			//Get the Mega Gem
 			while (i_a("mega gem") == 0 && my_adventures() > 0)
-				adventure(1, $location[laboratory]);
+				bumAdv1($location[laboratory]);
 		}
 		
 		if (i_a("mega gem") == 0) abort("That's weird. You don't have the Mega Gem.");
@@ -2341,7 +2380,7 @@ boolean bcascMacguffinPalindome() {
 		//Fight Dr. Awkward
 		cli_execute("restore hp; conditions clear;");
 		buMax("+equip Talisman o' Nam +equip Mega Gem");
-		adventure(1, $location[palindome]);
+		bumAdv1($location[palindome]);
 		if (item_amount($item[Staff of Fats]) == 0) abort("Looks like Dr. Awkward opened a can of whoop-ass on you. Try fighting him manually.");
 	}
 	
@@ -2365,7 +2404,7 @@ boolean bcascMacguffinPrelim() {
 	if (item_amount($item[your fathers macguffin diary]) == 0) {
 		print("BCC: Obtaining and Reading the Diary", "purple");
 		retrieve_item(1,$item[forged identification documents]);
-		adventure(1, to_location(to_string(my_primestat()) + " vacation"));
+		bumAdv1(to_location(to_string(my_primestat()) + " vacation"));
 		use(1, $item[your fathers macguffin diary]);
 	}
 	
@@ -2492,7 +2531,7 @@ boolean bcascMacguffinPyramid() {
 			if (i_a("can of black paint") == 0) {
 				cli_execute("buy can of black paint");
 			}
-			adventure(1, $location[desert (ultrahydrated)]);
+			bumAdv1($location[desert (ultrahydrated)]);
 		}
 		
 		//This part deals with meeting Gnasir for the second time and/or using the black paint if you didn't do it the first time. 
@@ -2501,7 +2540,7 @@ boolean bcascMacguffinPyramid() {
 				cli_execute("buy can of black paint");
 			}
 			print("BCC: Painting Gnasir's Door", "purple");
-			adventure(1, $location[desert (ultrahydrated)]);
+			bumAdv1($location[desert (ultrahydrated)]);
 		}
 		
 		//Now we need the worm riding manual. So get it.
@@ -2560,7 +2599,7 @@ boolean bcascManorBilliards() {
 				buMax();
 				if (adventure(have_effect($effect[Chalky Hand]), $location[Haunted Billiards Room])) {}
 			} else {
-				adventure(1, $location[Haunted Billiards Room]);
+				bumAdv1($location[Haunted Billiards Room]);
 			}
 		}
 	}
@@ -2611,8 +2650,7 @@ boolean bcascMeatcar() {
 			use(item_amount($item[gnollish toolbox]), $item[gnollish toolbox]);
 			while (creatable_amount($item[bitchin' meatcar]) == 0) {
 				use(item_amount($item[gnollish toolbox]), $item[gnollish toolbox]);
-				if (my_adventures() == 0) abort("No Adventures");
-				adventure(1, $location[Degrassi Knoll]);
+				bumAdv1($location[Degrassi Knoll]);
 			}
 		}
 		cli_execute("make meatcar");
@@ -2761,7 +2799,7 @@ boolean bcascMining() {
 		}
 
 		print(why + ": " + (choice % 8) + ", " + (choice / 8) + ".", "purple");
-		string result = visit_url("mining.php?mine=1&which=" + choice + "&pwd");
+		string result = bumAdvUrl("mining.php?mine=1&which=" + choice + "&pwd");
 		if (index_of(result, goalString) != -1) {
 			oreLocations[count(oreLocations)] = choice;
 		}
@@ -2858,8 +2896,7 @@ boolean bcascPirateFledges() {
 			while (!contains_text(visit_url("questlog.php?which=1"), "I Rate, You Rate")) {
 				if (my_adventures() == 0) { abort("You're out of adventures."); }
 				print("BCC: Adventuring once at a time to meet the Cap'm for the first time.", "purple");
-				adventure(1, $location[Barrrney's Barrr], "consultBarrr");
-				betweenBattle();
+				bumAdv1($location[Barrrney's Barrr], "consultBarrr");
 			}
 			
 			//Check whether we've completed the beer pong quest.
@@ -2887,7 +2924,7 @@ boolean bcascPirateFledges() {
 			while (numPirateInsults() < 7) {
 				print("BCC: Adventuring one turn at a time to get 7 insults. Currently, we have "+numPirateInsults()+" insults.", "purple");
 				if (my_adventures() == 0) { abort("You're out of adventures."); }
-				adventure(1, $location[Barrrney's Barrr], "consultBarrr");
+				bumAdv1($location[Barrrney's Barrr], "consultBarrr");
 			}
 			
 			print("BCC: Currently, we have "+numPirateInsults()+" insults. This is enough to continue with beer pong.", "purple");
@@ -2898,21 +2935,21 @@ boolean bcascPirateFledges() {
 					print("BCC: Using the skirt and hot wings to burgle the Frat House...", "purple");
 					cli_execute("checkpoint");
 					cli_execute("equip frilly skirt");
-					visit_url("inv_use.php?which=3&whichitem=2951&pwd");
+					bumAdvUrl("inv_use.php?which=3&whichitem=2951&pwd");
 					visit_url("choice.php?whichchoice=188&option=3&choiceform3=Catburgle&pwd");
 					cli_execute("outfit checkpoint");
 				} else if(i_a("Orcish baseball cap") > 0 && i_a("homoerotic frat-paddle") > 0 && i_a("Orcish cargo shorts") > 0) {
 					print("BCC: Using the Frat Outfit to burgle the Frat House...", "purple");
 					cli_execute("checkpoint");
 					cli_execute("outfit frat boy");
-					visit_url("inv_use.php?which=3&whichitem=2951&pwd");
+					bumAdvUrl("inv_use.php?which=3&whichitem=2951&pwd");
 					visit_url("choice.php?whichchoice=188&option=1&choiceform1=Catburgle&pwd");
 					cli_execute("outfit checkpoint");
 				} else if(i_a("mullet wig") > 0 && i_a("briefcase") > 0) {
 					print("BCC: Using the mullet wig and briefcase to burgle the Frat House...", "purple");
 					cli_execute("checkpoint");
 					cli_execute("equip mullet wig");
-					visit_url("inv_use.php?which=3&whichitem=2951&pwd");
+					bumAdvUrl("inv_use.php?which=3&whichitem=2951&pwd");
 					visit_url("choice.php?whichchoice=188&option=2&choiceform2=Catburgle&pwd");
 					cli_execute("outfit checkpoint");
 				} else {
@@ -2923,7 +2960,7 @@ boolean bcascPirateFledges() {
 			if (i_a("Cap'm Caronch's dentures") > 0) {
 				cli_execute("outfit swash");
 				print("BCC: Giving the dentures back to the Cap'm.", "purple");
-				while (available_amount($item[Cap'm Caronch's dentures]) > 0) adventure(1, $location[Barrrney's Barrr]);
+				while (available_amount($item[Cap'm Caronch's dentures]) > 0) bumAdv1($location[Barrrney's Barrr]);
 			}
 			
 			print("BCC: Now going to do the beer pong adventure. This is HIGHLY experimental. Pausing to let you read this.", "purple");
@@ -2975,7 +3012,7 @@ boolean bcascSpookyForest() {
 		
 		while (item_amount($item[spooky sapling]) == 0) {
 			cli_execute("mood execute");
-			if (contains_text(visit_url("adventure.php?snarfblat=15"), "Combat")) {
+			if (contains_text(bumAdvUrl("adventure.php?snarfblat=15"), "Combat")) {
 				run_combat();
 			} else {
 				visit_url("choice.php?whichchoice=502&option=1&pwd="+my_hash());
@@ -3023,7 +3060,7 @@ boolean bcascTavern() {
 		tavern();
 	}
 
-	visit_url("rats.php?action=faucetoff");
+	bumAdvUrl("rats.php?action=faucetoff");
 	visit_url("tavern.php?place=barkeep");
 	visit_url("tavern.php?place=barkeep");
 
@@ -3051,9 +3088,8 @@ boolean bcascTeleportitisBurn() {
 		} else {
 			abort("Internal error.  Couldn't sort out telescope text.");
 		}
-		if (item_amount(goal) == 0) {
-			adventure(1, vacation);
-		}
+		if (item_amount(goal) == 0)
+			bumAdv1(vacation);
 	}
 	if (have_effect($effect[Teleportitis]) == 0) return true;
 	bcascMining();
@@ -3236,8 +3272,7 @@ boolean bcascWand() {
 				bumAdv($location[Greater-Than Sign], "", "itemsnc", "1 choiceadv", "Getting Teleportitis", "-");
 			}
 			cli_execute("set choiceAdventure3 = 3");
-			betweenBattle();
-			adventure(1, $location[Greater-Than Sign]);
+			bumAdv1($location[Greater-Than Sign]);
 			if (i_a("plus sign") > 0) { if (cli_execute("use plus sign")) {} }
 		}
 		
@@ -3358,7 +3393,7 @@ void bcs9() {
 		while (contains_text(visit_url("guild.php?place=challenge"), "<form")) {
 			print("BCC: Doing the guild tests to open the store.", "purple");
 			if (my_adventures() == 0) abort("You are out of adventures.");
-			visit_url("guild.php?action=chal");
+			bumAdvUrl("guild.php?action=chal");
 		}
 	}
 	
@@ -3461,13 +3496,13 @@ void bcs12() {
 					string url;
 					boolean altered = false;
 					repeat {
-						url = visit_url("adventure.php?snarfblat=137");
+						url = bumAdvUrl("adventure.php?snarfblat=137");
 						if (contains_text(url, "Combat")) {
 							throw_item($item[chaos butterfly]);
 							altered = true;
 							run_combat();
 						} else  {
-							adventure(1,$location[barn]);
+							bumAdv1($location[barn]);
 						}
 					} until (altered || contains_text(url,"no more ducks here."));
 					
@@ -3514,7 +3549,7 @@ void bcs12() {
 				
 				//Put on the outfit and adventure, printing debug information each time. 
 				buMax("+outfit "+bcasc_warOutfit);
-				while (my_adventures() > 0 && adventure(1, $location[themthar hills])) {
+				while (my_adventures() > 0 && bumAdv1($location[themthar hills])) {
 					print("BCC: Nunmeat retrieved: "+get_property("currentNunneryMeat")+" Estimated adventures remaining: "+estimated_advs(), "green");
 				}
 				
