@@ -446,14 +446,24 @@ int cloversAvailable(boolean makeOneTenLeafClover) {
 }
 int cloversAvailable() { return cloversAvailable(false); }
 
+boolean isExpectedMonster(string opp) {
+	monster mon = opp.to_monster();
+	boolean expected = appearance_rates(my_location()) contains mon;
+	print("PCKLSH: opp(" + opp + "), mon(" + mon + "), loc(" + my_location() + "), expected(" + expected + ")", "green");
+	//return expected;
+	return true;
+}
+
 string consultBarrr(int round, string opp, string text) {
+	if (!isExpectedMonster(opp)) return get_ccs_action(round);
 	if (round == 1) {
 		return "item the big book of pirate insults";
 	}
-	return "attack";
+	return get_ccs_action(round + 1);
 }
 
 string consultCyrus(int round, string opp, string text) {
+	if (!isExpectedMonster(opp)) return get_ccs_action(round);
 	if (round == 1) {
 		if (bcasc_doWarAs == "frat") {
 			if(item_amount(to_item("antique hand mirror")) == 0)
@@ -467,11 +477,12 @@ string consultCyrus(int round, string opp, string text) {
 				return "item jam band flyers;item antique hand mirror";
 		}
 	}
-	return "attack";
+	return get_ccs_action(round + 1);
 }
 
 //This consult script is just to be used to sling !potions against 
 string consultDoD(int round, string opp, string text) {
+	if (!isExpectedMonster(opp)) return get_ccs_action(round);
 	foreach pot, eff in allBangPotions() {
 		if (item_amount(pot) > 0) {
 			if (eff == $effect[none]) return "item "+pot;
@@ -479,10 +490,11 @@ string consultDoD(int round, string opp, string text) {
 		}
 	}
 	print("BCC: We've identified all the bang potions we have to hand.", "purple");
-	return "attack";
+	return get_ccs_action(round);
 }
 
 string consultGMOB(int round, string opp, string text) {
+	if (!isExpectedMonster(opp)) return get_ccs_action(round);
 	if (contains_text(text, "Guy Made Of Bees")) {
 		print("BCC: We are fighting the GMOB!", "purple");
 		if (bcasc_doWarAs == "frat") {
@@ -492,14 +504,15 @@ string consultGMOB(int round, string opp, string text) {
 		}
 	}
 	print("BCC: We are not fighting the GMOB!", "purple");
-	return "attack";
+	return get_ccs_action(round);
 }
 
 string consultHeBo(int round, string opp, string text) {
+	if (!isExpectedMonster(opp)) return get_ccs_action(round);
 	//If we're under the effect "Everything Looks Yellow", then ignore everything and attack.
 	if (have_effect($effect[Everything Looks Yellow]) > 0) {
 		print("BCC: We would LIKE to use a Yellow Ray somewhere in this zone, but we can't because Everything Looks Yellow.", "purple");
-		return "attack";
+		return get_ccs_action(round);
 	}
 
 	boolean isGremlin = contains_text(text, "A.M.C. gremlin") || contains_text(text, "batwinged gremlin") || contains_text(text, "erudite gremlin") || contains_text(text, "spider gremlin") || contains_text(text, "vegetable gremlin");
@@ -524,7 +537,7 @@ string consultHeBo(int round, string opp, string text) {
 			return "item pumpkin bomb";
 		} else {
 			print("BCC: We are trying to use the HeBoulder, but you don't have one (nor a pumpkin bomb), so I'm attacking.", "purple");
-			return "attack";
+			return get_ccs_action(round);
 		}
 	}
 	print("BCC: We are trying to use the HeBoulder, but this is not the right monster, so I'm attacking.", "purple");
@@ -532,16 +545,17 @@ string consultHeBo(int round, string opp, string text) {
 	if (my_familiar() == $familiar[He-Boulder] && have_effect($effect[Everything Looks Red]) == 0 && contains_text(text, "red eye"))
 		return "skill point at your opponent";
 	
-	return "attack";
+	return get_ccs_action(round);
 }
 
-string consultJunkyard(int found, string opp, string text) {
+string consultJunkyard(int round, string opp, string text) {
+	if (!isExpectedMonster(opp)) return get_ccs_action(round);
 	boolean isRightMonster = false;
 	
 	//AMC Gremlins are useless. 
 	if (opp == $monster[a.m.c. gremlin]) {
 		if (item_amount($item[divine champagne popper]) > 0) return "item divine champagne popper";
-		return "attack";
+		return get_ccs_action(round);
 	} else {
 		//Check to see if the monster CAN carry the item we want. This comes straight from Zarqon's SmartStasis.ash. 
 		if (my_location() == to_location(get_property("currentJunkyardLocation"))) {
@@ -572,10 +586,11 @@ string consultJunkyard(int found, string opp, string text) {
 	} else {
 		print("BCC: This is the wrong monster.", "purple");
 	}
-	return "attack";
+	return get_ccs_action(round);
 }
 
 string consultRunaway(int round, string opp, string text) {
+	if (!isExpectedMonster(opp)) return get_ccs_action(round);
 	if (round == 1 && have_skill($skill[Entangling Noodles])) { return "skill entangling noodles"; }
 	return "try to run away";
 }
