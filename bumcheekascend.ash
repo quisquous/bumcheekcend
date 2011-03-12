@@ -365,15 +365,10 @@ void callBetweenBattleScript() {
 		cli_execute("call " + script);
 }
 
-boolean hasNoCombats(location loc) {
-	float[monster] rates = appearance_rates(loc);
-	return rates[$monster[none]] == 100.0;
-}
-
 //Use instead of adventure(1, location)
 boolean bumAdv1(location loc) {
 	betweenBattle();
-	if (hasNoCombats(loc))
+	if (loc.nocombats)
 		callBetweenBattleScript();
 	return adventure(1, loc);
 }
@@ -381,7 +376,7 @@ boolean bumAdv1(location loc) {
 //Use instead of adventure(1, location, filter)
 boolean bumAdv1(location loc, string filter) {
 	betweenBattle();
-	if (hasNoCombats(loc))
+	if (loc.nocombats)
 		callBetweenBattleScript();
 	return adventure(1, loc, filter);
 }
@@ -1206,7 +1201,7 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	if (canMCD() && loc == $location[Throne Room]) { cli_execute("mcd "+k); }
 
 	//Because moods aren't restored, adventure only once in a non-combat zone.
-	int numAdv = hasNoCombats(loc) ? 1 : my_adventures();
+	int numAdv = loc.nocombats ? 1 : my_adventures();
 	if (consultScript != "") {
 		if (adventure(numAdv, loc, consultScript)) {}
 	} else {
