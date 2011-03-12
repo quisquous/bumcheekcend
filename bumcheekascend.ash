@@ -2371,18 +2371,21 @@ boolean bcascMacguffinPrelim() {
 		print("BCC: Opening the Spookyraven Cellar", "purple");
 		adventure(my_adventures(), $location[haunted ballroom]);
 	}
-	
-	while (my_basestat($stat[Mysticality]) < 60) {
+
+	boolean needFledges() { return my_primestat() != $stat[Moxie]; }
+	boolean canEquipFledges() { return my_basestat($stat[Mysticality]) >= 60; }
+
+	while (needFledges() && !canEquipFledges()) {
 		//Gotta level somewhere, don't we?
 		bumAdv($location[Haunted Bathroom], "", "", "60 mysticality", "Getting 60 myst to equip the fledges");
 	}
 	if (cli_execute("use 2 gaudy key")) {}
 	if (cli_execute("make talisman o nam")) {}
-	while (i_a("Talisman o' Nam") == 0 && my_basestat($stat[Mysticality]) >= 60) {
+	while (i_a("Talisman o' Nam") == 0) {
 		//We will almost certainly have the fledges equipped due to maximizing our Moxie. We re-equip them if we don't have them. 
-		if (equipped_amount($item[pirate fledges]) == 0) equip($slot[acc3], $item[pirate fledges]);
-		if (!contains_text(visit_url("cove.php"), "cove3_5x2b.gif")) bumAdv($location[Poop Deck], "+equip pirate fledges", "", "", "Opening Belowdecks");
-		bumAdv($location[Belowdecks], "+equip pirate fledges", "", "2 gaudy key", "Getting the Talisman");
+		string maxme = canEquipFledges() ? "+equip pirate fledges" : "+outfit swash";
+		if (!contains_text(visit_url("cove.php"), "cove3_5x2b.gif")) bumAdv($location[Poop Deck], maxme, "", "", "Opening Belowdecks");
+		bumAdv($location[Belowdecks], maxme, "", "2 gaudy key", "Getting the Talisman");
 		if (cli_execute("use 2 gaudy key")) {}
 		if (cli_execute("make talisman o nam")) {}
 	}
