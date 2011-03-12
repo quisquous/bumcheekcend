@@ -82,6 +82,7 @@ void process_inventory() {
 		frat army fgf,
 		frobozz instant house,
 		hippy army mpe,
+		knob goblin lunchbox,
 		knob kitchen grab-bag,
 		large box,
 		newbiesport tent,
