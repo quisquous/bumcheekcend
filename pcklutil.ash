@@ -11,20 +11,24 @@ string propCampgroundCock = "picklishCampgroundCock";
 string propCampgroundOven = "picklishCampgroundOven";
 string propChefHave = "picklishHaveChef";
 string propChefMake = "bcasc_chef";
+string propCocktailSummons = "cocktailSummons";
 string propDoSideQuestNuns = "bcasc_doSideQuestNuns";
 string propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
-string propFaxUsed = "_photocopyUsed";
 string propFaxArt = "picklishFaxArt";
 string propFaxBlooper = "picklishFaxBlooper";
 string propFaxLobster = "picklishFaxLobster";
+string propFaxUsed = "_photocopyUsed";
 string propHipsterAdv = "_hipsterAdv";
+string propLibramSummons = "libramSummons";
 string propMineUnaccOnly = "bcasc_MineUnaccOnly";
 string propNeedFortuneCookie = "picklishNeedFortuneCookie";
+string propNoodleSummons = "noodleSummons";
 string propOrganFinishPie = "picklishOrganFinishPie";
 string propOrganTurns = "_piePartsCount";
 string propPieCount = "_pieDrops";
 string propPoolGames = "_poolGames";
 string propPrevFamiliar = "bcasc_familiar";
+string propReagentSummons = "reagentSummons";
 string propRomanticEncounters = "picklishRomanticEncounters";
 string propSemirareCounter = "semirareCounter";
 string propSemirareKGE = "picklishSemirareKGE";
@@ -137,6 +141,89 @@ boolean haveKGEOutfit() {
 }
 
 // Skills and effects
+
+int maxCocktailSummons() {
+	if (have_skill($skill[advanced cocktail crafting]))
+		return have_skill($skill[superhuman cocktail crafting]) ? 5 : 3;
+	return 0;
+}
+
+int maxNoodleSummons() {
+	if (have_skill($skill[pastamastery]))
+		return have_skill($skill[transcendental noodlecraft]) ? 5 : 3;
+	return 0;
+}
+
+int maxReagentSummons() {
+	if (have_skill($skill[advanced saucecrafting]))
+		return have_skill($skill[the way of sauce]) ? 5 : 3;
+	return 0;
+}
+
+int mpRegenerationByEffect(effect e) {
+	switch (e) {
+	case $effect[antarctic memories]: return 40;
+	case $effect[florid cheeks]: return 30;
+	case $effect[black tongue]: return 20;
+	case $effect[purple tongue]: return 20;
+	case $effect[the real deal]: return 20;
+	case $effect[tiny bubbles in the cupcake]: return 20;
+	case $effect[extra terrestrial]: return 20;
+	case $effect[hella smart]: return 20;
+	case $effect[mental a-cue-ity]: return 10;
+	case $effect[blessing of squirtlcthulli]: return 10;
+	case $effect[feelin' philosophical]: return 10;
+	case $effect[heart of orange]: return 6;
+	case $effect[in tuna]: return 5;
+	}
+
+	return 0;
+}
+
+int mpRegenerationByItem(item thing) {
+	switch (thing) {
+	case $item[plexiglass pith helmet]: return 12;
+	case $item[energy drink iv]: return 7;
+	case $item[hilarious comedy prop]: return 7;
+	case $item[sugar chapeau]: return 5;
+	case $item[bubblewrap bottlecap turtleban]: return 3;
+	case $item[chef's hat]: return 1;
+	}
+
+	return 0;
+}
+
+int mpRegeneration() {
+	int regen = 0;
+
+	int fiery = have_effect($effect[fiery heart]);
+	regen += min(fiery, 20) / 2;
+
+	regen += mpRegenerationByItem(equipped_item($slot[hat]));
+	regen += mpRegenerationByItem(equipped_item($slot[weapon]));
+
+	foreach e in $effects[
+		antarctic memories,
+		florid cheeks,
+		black tongue,
+		purple tongue,
+		the real deal,
+		tiny bubbles in the cupcake,
+		extra terrestrial,
+		hella smart,
+		mental a-cue-ity,
+		blessing of squirtlcthulli,
+		feelin' philosophical,
+		heart of orange,
+		in tuna,
+	] {
+		if (have_effect(e) == 0)
+			continue;
+		regen += mpRegenerationByEffect(e);
+	}
+
+	return regen;
+}
 
 monster olfactTarget() {
 	return have_effect($effect[on the trail]) > 0 ? get_property("olfactedMonster").to_monster() : $monster[none];

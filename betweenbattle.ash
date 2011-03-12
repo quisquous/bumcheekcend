@@ -348,6 +348,59 @@ void restoreSelf(location loc) {
 	}
 }
 
+void burnExcessMp(location loc)
+{
+	int expectedRestore = mpRegeneration();
+
+	// "Go slowly past the drawers" => 40-50 HP and MP
+	if (loc == $location[defiled cranny])
+		expectedRestore += 50;
+
+	boolean tryBurn(skill s) {
+		if (!have_skill(s))
+			return false;
+
+		int minMp = get_property(propAutoMpMin).to_float() * my_maxmp();
+		if (my_mp() - mp_cost(s) < minMp)
+			return false;
+		
+		return use_skill(1, s);
+	}
+
+	while (expectedRestore - (my_maxmp() - my_mp()) > 0) {
+		if (tryBurn($skill[advanced cocktailcrafting]))
+			continue;
+
+		if (tryBurn($skill[summon party favor]))
+			continue;
+
+		if (tryBurn($skill[summon tasteful items]))
+			continue;
+
+		if (tryBurn($skill[summon alice's army cards]))
+			continue;
+
+		if (tryBurn($skill[summon hilarious objects]))
+			continue;
+
+		if (tryBurn($skill[pastamastery]))
+			continue;
+
+		if (tryBurn($skill[advanced saucecrafting]))
+			continue;
+
+		if (tryBurn($skill[leash of linguini]))
+			continue;
+
+		if (tryBurn($skill[empathy of the newt]))
+			continue;
+
+		// FIXME: Use somebody else's auto-burn script here.
+		// FIXME: Also consider setting the rebalance buffs flag.
+		break;
+	}
+}
+
 void useRedRay(location loc) {
 	if (have_effect($effect[everything looks red]) > 0)
 		return;
@@ -1023,4 +1076,5 @@ void betweenBattlePrep(location loc) {
 	optimizeMCD(loc);
 	setAutoRestoreLevels(loc);
 	restoreSelf(loc);
+	burnExcessMp(loc);
 }
