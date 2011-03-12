@@ -2356,7 +2356,7 @@ boolean bcascMacguffinPrelim() {
 	
 	while (!contains_text(visit_url("beach.php"),"oasis.gif")) {
 		print("BCC: Revealing the Oasis", "purple");
-		bumAdv($location[desert (unhydrated)], "", "", "1 choiceadv", "Revealing the Oasis");
+		bumAdv($location[desert (unhydrated)], "", "hipster", "1 choiceadv", "Revealing the Oasis");
 	}
 	
 	while (!contains_text(visit_url("woods.php"),"hiddencity.gif")) {
