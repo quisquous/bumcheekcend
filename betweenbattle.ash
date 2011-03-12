@@ -288,7 +288,7 @@ string consultRedRay(int round, string opp, string text) {
 	return "attack";
 }
 
-void setAutoRestoreLevels() {
+void setAutoRestoreLevels(location loc) {
 	if (my_primestat() != $stat[moxie])
 		abort("FIXME for muscle classes");
 
@@ -304,7 +304,11 @@ void setAutoRestoreLevels() {
 		if (have_skill($skill[saucegeyser]))
 			restoreMp = mp_cost($skill[saucegeyser]) * 2;
 	}
-		
+
+	if (needOlfaction(loc)) {
+		restoreMp += mp_cost($skill[transcendent olfaction]);
+	}
+
 	if (have_skill($skill[entangling noodles]))
 		restoreMp += mp_cost($skill[entangling noodles]);
 
@@ -1017,6 +1021,6 @@ void betweenBattlePrep(location loc) {
 	}
 	useFriars(loc);
 	optimizeMCD(loc);
-	setAutoRestoreLevels();
+	setAutoRestoreLevels(loc);
 	restoreSelf(loc);
 }
