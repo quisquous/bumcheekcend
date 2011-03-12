@@ -233,20 +233,8 @@ monster romanticTarget() {
 	return get_property("romanticTarget").to_monster();
 }
 
-effect skillToEffect(skill s) {
-	switch (s) {
-		case $skill[fat leon's phat loot lyric]: return $effect[fat leon's phat loot lyric];
-		case $skill[leash of linguini]: return $effect[leash of linguini];
-		case $skill[mojomuscular melody]: return $effect[mojomuscular melody];
-		case $skill[moxious madrigal]: return $effect[moxious madrigal];
-		case $skill[polka of plenty]: return $effect[polka of plenty];
-	}
-
-	return $effect[none];
-}
-
 boolean tryCast(skill s) {
-	effect e = skillToEffect(s);
+	effect e = to_effect(s);
 	if (e == $effect[none] || !have_skill(s) || have_effect(e) > 0)
 		return false;
 
@@ -255,7 +243,7 @@ boolean tryCast(skill s) {
 }
 
 boolean tryShrug(skill s) {
-	effect e = skillToEffect(s);
+	effect e = to_effect(s);
 	if (e == $effect[none] || have_effect(e) == 0)
 		return true;
 
