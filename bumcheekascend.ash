@@ -1087,8 +1087,8 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	//We initially set the MCD to 0 just in case we had it turned on before. 
 	if (my_adventures() == 0) { abort("No Adventures. How Sad."); }
 	if (canMCD()) cli_execute("mcd 0");
+	cli_execute("goal clear");
 	if (length(goals) > 0) {
-		cli_execute("goal clear");
 		cli_execute("goal set "+goals);
 		//print("BCC: Setting goals of '"+goals+"'...", "lime");
 	}
