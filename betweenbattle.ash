@@ -34,54 +34,9 @@ boolean preppedAdv1(location loc, string combat) {
 }
 
 string combatHard(int round, string opp, string text) {
-	if (round == 1 && have_skill($skill[entangling noodles]))
-		return "skill entangling noodles";
-
-	boolean shouldUsePrimeCombatItems = false;
-
-	monster mon = opp.to_monster();
-	if (mon != $monster[none]) {
-		if (canOutMoxie(mon) && !will_usually_miss())
-			return "attack";
-
-		// FIXME: Make this more general, maybe using expected_damage()
-		if (mon == $monster[lobsterfrogman])
-			shouldUsePrimeCombatItems = true;
-	}
-
-	string useCombatItem(boolean considerPrimeStat) {
-		item hand1;
-		item hand2;
-		foreach thing in combatItems {
-			if (!considerPrimeStat && combatItemToStat(thing) == my_primestat())
-				continue;
-			if (item_amount(thing) >= 2) {
-				hand1 = thing;
-				hand2 = thing;
-				break;
-			} else if (item_amount(thing) == 1) {
-				if (hand1 == $item[none]) {
-					hand1 = thing;
-				} else {
-					hand2 = thing;
-					break;
-				}
-			}
-		}
-
-		if (hand1 == $item[none])
-			return "";
-
-		if (hand2 == $item[none]) {
-			return "item " + hand1;
-		}
-		return "item " + hand1 + "," + hand2;
-	}
-
-	string action = useCombatItem(shouldUsePrimeCombatItems);
-	if (action == "")
-		action = "attack";
-	return action;
+	// Because this logic gets used both from a ccs and as a combat filter,
+	// it has to be a consult script.
+	return "consult consulthard.ash";
 }
 
 void useWarMoney() {
