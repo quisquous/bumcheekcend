@@ -33,36 +33,55 @@ boolean preppedAdv1(location loc, string combat) {
 	return adv1(loc, 0, combat);
 }
 
-string combatOffstatItems(int round, string opp, string text) {
+string combatHard(int round, string opp, string text) {
 	if (round == 1 && have_skill($skill[entangling noodles]))
 		return "skill entangling noodles";
 
-	item hand1;
-	item hand2;
-	foreach thing in combatItems {
-		if (combatItemToStat(thing) == my_primestat())
-			continue;
-		if (item_amount(thing) >= 2) {
-			hand1 = thing;
-			hand2 = thing;
-			break;
-		} else if (item_amount(thing) == 1) {
-			if (hand1 == $item[none]) {
+	boolean shouldUsePrimeCombatItems = false;
+
+	monster mon = opp.to_monster();
+	if (mon != $monster[none]) {
+		if (canOutMoxie(mon) && !will_usually_miss())
+			return "attack";
+
+		// FIXME: Make this more general, maybe using expected_damage()
+		if (mon == $monster[lobsterfrogman])
+			shouldUsePrimeCombatItems = true;
+	}
+
+	string useCombatItem(boolean considerPrimeStat) {
+		item hand1;
+		item hand2;
+		foreach thing in combatItems {
+			if (!considerPrimeStat && combatItemToStat(thing) == my_primestat())
+				continue;
+			if (item_amount(thing) >= 2) {
 				hand1 = thing;
-			} else {
 				hand2 = thing;
 				break;
+			} else if (item_amount(thing) == 1) {
+				if (hand1 == $item[none]) {
+					hand1 = thing;
+				} else {
+					hand2 = thing;
+					break;
+				}
 			}
 		}
+
+		if (hand1 == $item[none])
+			return "";
+
+		if (hand2 == $item[none]) {
+			return "item " + hand1;
+		}
+		return "item " + hand1 + "," + hand2;
 	}
 
-	if (hand1 == $item[none])
-		return "attack";
-
-	if (hand2 == $item[none]) {
-		return "item " + hand1;
-	}
-	return "item " + hand1 + "," + hand2;
+	string action = useCombatItem(shouldUsePrimeCombatItems);
+	if (action == "")
+		action = "attack";
+	return action;
 }
 
 void useWarMoney() {
@@ -150,7 +169,7 @@ void getFortune() {
 		// FIXME: find some better way to ensure victory
 		setFamiliar("");
 		restore_mp(mp_cost($skill[entangling noodles]));
-		preppedAdv1(loc, "combatOffstatItems");
+		preppedAdv1(loc, "combatHard");
 		return;
 	}
 
@@ -739,7 +758,7 @@ void killKing() {
 		restore_mp(mp_cost($skill[entangling noodles]));
 		optimizeMCD($location[throne room]);
 
-		adventure(1, $location[throne room], "combatOffstatItems");
+		adventure(1, $location[throne room], "combatHard");
 	}
 
 	if (!knobKingSlain()) {
