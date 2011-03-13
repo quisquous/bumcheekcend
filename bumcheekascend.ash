@@ -496,8 +496,8 @@ boolean isExpectedMonster(string opp) {
 	}
 
 	monster mon = opp.to_monster();
-	boolean expected = appearance_rates(my_location()) contains mon;
-	print("PCKLSH: opp(" + opp + "), mon(" + mon + "), loc(" + my_location() + "), expected(" + expected + ")", "green");
+	boolean expected = appearance_rates(loc) contains mon;
+	print("PCKLSH: mon(" + mon + "), loc(" + my_location() + "), expected(" + expected + ")", "green");
 	//return expected;
 	return true;
 }
