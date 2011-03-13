@@ -1435,7 +1435,7 @@ void bcascDailyDungeon() {
 		cli_execute("make "+amountKeys+" skeleton key");
 	}
 	setFamiliar("");
-	if (!contains_text(visit_url("dungeon.php"), "reached the bottom")) {
+	while (!contains_text(visit_url("dungeon.php"), "reached the bottom")) {
 		bumAdv1($location[daily dungeon]);
 	}
 	zapKeys();
