@@ -17,8 +17,8 @@ void consultRomantic(int round, monster mob, string combat) {
 	// Only handle the first encounter specially, because we want to
 	// olfact the second (like we'd do with any normal blooper).
 	if (mob == $monster[blooper]) {
-		encounters > 1) {
-		return;
+		if (encounters > 1)
+			return;
 	}
 
 	for i from round to 30 {
