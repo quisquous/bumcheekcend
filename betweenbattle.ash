@@ -322,26 +322,41 @@ void burnExcessMp(location loc)
 		return use_skill(1, s);
 	}
 
+	// use_skill returns true even if summon has already occurred, so track
+	// if we've tried this already.
+	boolean triedTasteful = false;
+	boolean triedAlice = false;
+	boolean triedHilarious = false;
+
 	while (expectedRestore - (my_maxmp() - my_mp()) > 0) {
-		if (tryBurn($skill[advanced cocktailcrafting]))
+		if (have_effect($effect[mojomuscular melody]) <= 1 && tryBurn($skill[mojomuscular melody]))
+			continue;
+
+		if (get_property(propCocktailSummons).to_int() < maxCocktailSummons() && tryBurn($skill[advanced cocktailcrafting]))
 			continue;
 
 		if (tryBurn($skill[summon party favor]))
 			continue;
 
-		if (tryBurn($skill[summon tasteful items]))
+		if (!triedTasteful && tryBurn($skill[summon tasteful items])) {
+			triedTasteful = true;
+			continue;
+		}
+
+		if (!triedAlice && tryBurn($skill[summon alice's army cards])) {
+			triedAlice = true;
+			continue;
+		}
+
+		if (!triedHilarious && tryBurn($skill[summon hilarious objects])) {
+			triedHilarious = true;
+			continue;
+		}
+
+		if (get_property(propNoodleSummons).to_int() < maxNoodleSummons() && tryBurn($skill[pastamastery]))
 			continue;
 
-		if (tryBurn($skill[summon alice's army cards]))
-			continue;
-
-		if (tryBurn($skill[summon hilarious objects]))
-			continue;
-
-		if (tryBurn($skill[pastamastery]))
-			continue;
-
-		if (tryBurn($skill[advanced saucecrafting]))
+		if (get_property(propReagentSummons).to_int() < maxReagentSummons() && tryBurn($skill[advanced saucecrafting]))
 			continue;
 
 		if (tryBurn($skill[leash of linguini]))
