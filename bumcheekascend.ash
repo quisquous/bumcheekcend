@@ -469,6 +469,32 @@ int cloversAvailable(boolean makeOneTenLeafClover) {
 int cloversAvailable() { return cloversAvailable(false); }
 
 boolean isExpectedMonster(string opp) {
+	location loc = my_location();
+
+	boolean haveOutfitEquipped(string outfit) {
+		boolean anyEquipped = false;
+		boolean allEquipped = true;
+		foreach key, thing in outfit_pieces(outfit) {
+			if (have_equipped(thing)) {
+				anyEquipped = true;
+			} else {
+				allEquipped = false;
+				break;
+			}
+		}
+
+		return anyEquipped && allEquipped;
+	}
+
+	//Fix up location appropriately.  :(
+	if (loc == $location[wartime frat house]) {
+		if (haveOutfitEquipped("hippy disguise") || haveOutfitEquipped("war hippy fatigues"))
+			loc = $location[wartime frat house (hippy disguise)];
+	} else if (loc == $location[wartime hippy camp]) {
+		if (haveOutfitEquipped("frat boy ensemble") || haveOutfitEquipped("frat boy fatigues"))
+			loc = $location[wartime hippy camp (frat disguise)];
+	}
+
 	monster mon = opp.to_monster();
 	boolean expected = appearance_rates(my_location()) contains mon;
 	print("PCKLSH: opp(" + opp + "), mon(" + mon + "), loc(" + my_location() + "), expected(" + expected + ")", "green");
