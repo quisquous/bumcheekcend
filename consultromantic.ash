@@ -22,7 +22,7 @@ void consultRomantic(int round, monster mob, string combat) {
 	}
 
 	for i from round to 30 {
-		if (contains_text(consultHard(round, mob, combat), "WINWINWIN"))
+		if (contains_text(consultHard(i, mob, combat), "WINWINWIN"))
 			break;
 	}
 }
