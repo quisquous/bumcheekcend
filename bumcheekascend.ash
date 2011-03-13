@@ -2306,7 +2306,6 @@ boolean bcascMacguffinHiddenCity() {
 				print("spheres : "+ sphere_count() + " / 4","maroon");
 				print("altars : " + altarcount + " / 4","maroon");
 				if (altar_check()) print("Altars and temple all found!");
-				if (get_property("betweenBattleScript") != "") cli_execute("call "+get_property("betweenBattleScript"));
 			} else {
 				print("BCC: We've explored all the squares.", "purple");
 			}
@@ -2345,8 +2344,8 @@ boolean bcascMacguffinHiddenCity() {
 			break;
 		}
 		visit_url("hiddencity.php?which=" + i);
-		visit_url("hiddencity.php?action=trisocket");
-		string url = bumAdvUrl("hiddencity.php?which="+i);
+		bumAdvUrl("hiddencity.php?action=trisocket");
+		string url = visit_url("hiddencity.php?which="+i);
 		if (!contains_text(run_combat(), "WINWINWIN")) {
 			abort("Failed to kill the protector spectre.  You must do this manually.");
 		}
