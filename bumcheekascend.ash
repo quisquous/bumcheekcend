@@ -3676,6 +3676,10 @@ void bcs12() {
 			abort("Please specify if you want the war done as a Hippy or a Fratboy.");
 		}
 		
+		while (my_basestat($stat[mysticality]) < 70) {
+			bumAdv($location[Haunted Bathroom], "", "", "70 mysticality", "Getting 70 myst to equip the " + bcasc_warOutfit + " outfit");
+		}
+
 		//So now we have the outfit. Let's check if the war has kicked off yet. 
 		if (!contains_text(visit_url("questlog.php?which=1"), "war between the hippies and frat boys started")) {
 			if (bcasc_doWarAs == "hippy") {
