@@ -3092,6 +3092,9 @@ boolean bcascTavern() {
 	setMood("");
 	buMax();
 
+	//Re-get the current tavern layout.
+	visit_url("cellar.php");
+
 	while (!get_property("tavernLayout").contains_text("3")) {
 		if (my_adventures() == 0) abort("No adventures.");
 		tavern();
