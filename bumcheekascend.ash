@@ -1,5 +1,5 @@
 /*
-	bumcheekascend.ash v0.19
+	bumcheekascend.ash v0.20
 	A script to ascend a character from start to finish.
 	
 	0.1 - Spun initial release. Gets up to about level 10, haphazardly. 
@@ -138,7 +138,12 @@
 		- Get the AT epic weapon last. 
 		- Major tavern fix from picklish. 
 		- Revamped Level 5 quest. 
-		- 
+		- Open Gallery as Muscle class.
+	0.20- Some better Sven logic.
+		- Fixed detection of Cyrpt, KnobKing, Steel Item and Innaboxen stages if they were done out-of-script. Thanks, Winterbay!
+		- Improved Tavern handling from picklish. 
+		- Stuff. Various actually quite large fixes that I forgot to mention. 
+		- Ability to set default familiar. Check your relay scripts.
 */
 
 script "bumcheekascend.ash";
@@ -159,7 +164,7 @@ if (bcasc_doWarAs == "frat") {
 	abort("Please specify whether you would like to do the war as a frat or hippy by downloading the relay script at http://kolmafia.us/showthread.php?t=5470 and setting the settings for the script.");
 }
 
-if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.19</b>") == -1) {
+if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.20</b>") == -1) {
 	print("There is a new version available - go download the next version of bumcheekascend.ash at http://kolmafia.us/showthread.php?t=4963!", "red");
 }
 
@@ -376,15 +381,12 @@ boolean buMax(string maxme) {
 		cli_execute("maximize mainstat "+maxme+" +melee -ml -tie"); 
 		return true;
 	}
-	if (contains_text(maxme, "knob goblin elite") && my_primestat() == $stat[Muscle]) {
-		cli_execute("maximize mainstat "+maxme+" +melee -ml -tie"); 
+	if (contains_text(maxme, "knob goblin elite")) {
+		cli_execute("maximize mainstat "+maxme+" -ml -tie"); 
 		return true;
 	}
 	if (maxme.contains_text("item") && have_familiar($familiar[Mad Hatrack])) {
 		maxme += " -equip spangly sombrero";
-	}
-	if (!(i_a("spangly sombrero") > 0 && have_familiar($familiar[Mad Hatrack]))) {
-		maxme += " -equip sugar shield";
 	}
 	
 	//Basically, we ALWAYS want -tie and -ml, for ALL classes. Otherwise we let an override happen. 
@@ -799,6 +801,12 @@ string runChoice( string page_text )
 	return page_text;
 }
 
+void sellJunk() {
+	foreach i in $items[meat stack, dense meat stack, meat paste, magicalness-in-a-can, moxie weed, strongness elixir] {
+		if (item_amount(i) > 0) autosell(item_amount(i), i);
+	}
+}
+
 //Returns the safe Moxie for given location, by going through all the monsters in it.
 int safeMox(location loc) {
 	if (loc == $location[primordial soup]) return 0;
@@ -897,6 +905,12 @@ boolean setFamiliar(string famtype) {
 				return true;
 			}
 		}
+	}
+	
+	//If we set a familiar as default, use it. 
+	if (get_property("bcasc_defaultFamiliar") != "") {
+		print("BCC: Setting the default familiar to your choice of '"+get_property("bcasc_defaultFamiliar")+"'.", "purple");
+		return bumFamiliar(to_familiar(get_property("bcasc_defaultFamiliar")));
 	}
 	
 	//Now either we have neither of the above, or we have enough spleen today.
@@ -1158,6 +1172,8 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 boolean levelMe(int sMox) { levelMe(sMox, false); }
 
 boolean bumAdv(location loc, string maxme, string famtype, string goals, string printme, string combat, string consultScript) {
+	sellJunk();
+
 	//We initially set the MCD to 0 just in case we had it turned on before. 
 	if (my_adventures() == 0) { abort("No Adventures. How Sad."); }
 	if (canMCD()) cli_execute("mcd 0");
@@ -1422,7 +1438,7 @@ boolean bcascCyrpt() {
 	
 	if (!contains_text(visit_url("questlog.php?which=2"), "defeated the Bonerdagon")) {
 		if (my_buffedstat(my_primestat()) > 101) {
-			bumAdv($location[Haert of the Cyrpt]);
+			bumAdv($location[Haert of the Cyrpt], "", "meatboss");
 			visit_url("council.php");
 			if (item_amount($item[chest of the Bonerdagon]) > 0) {
 				cli_execute("use chest of the Bonerdagon");
@@ -1430,6 +1446,9 @@ boolean bcascCyrpt() {
 				return true;
 			}
 		}
+	} else {
+		checkStage("cyrpt", true);
+		return true;
 	}
 }
 
@@ -1617,7 +1636,12 @@ boolean bcascFriarsSteel() {
 	if (to_string(visit_url("pandemonium.php")) != "") {}
 	if (checkStage("friarssteel")) return true;
 	//Let's do this check now to get it out the way. 
-	if (!contains_text(visit_url("questlog.php?which=1"), "this is Azazel in Hell")) return false;
+	if (!contains_text(visit_url("questlog.php?which=1"), "this is Azazel in Hell")) {
+		return false;
+	} else if (contains_text(visit_url("questlog.php?which=2"), "this is Azazel in Hell")) {
+		checkStage("friarssteel", true);
+		return true;
+	}
 	
 	string steelName() {
 		if (!can_drink() && !can_eat()) { return "steel-scented air freshener"; }
@@ -1766,6 +1790,21 @@ boolean bcascInnaboxen() {
 	if (bcasc_cloverless) return false;
 	if (checkStage("innaboxen")) return true;
 	
+	int[item] campground = get_campground();
+	if((bcasc_bartender && campground contains to_item("bartender-in-the-box")) && (bcasc_chef && campground contains to_item("chef-in-the-box"))) {
+		checkStage("innaboxen", true);
+		return true;
+	} else if((bcasc_bartender && !bcasc_chef) && campground contains to_item("bartender in-the-box")) {
+		checkStage("innaboxen", true);
+		return true;
+	} else if((!bcasc_bartender && bcasc_chef) && campground contains to_item("chef-n-the-box")) {
+		checkStage("innaboxen", true);
+		return true;
+	} else if(!bcasc_bartender && !bcasc_chef) {
+		checkStage("innaboxen", true);
+		return true;
+	}
+	
 	boolean getBox() {
 		//I know, we should already have run this, but what's a visit to the hermit between friends?
 		if (i_a("box") > 0) { return true; }
@@ -1878,6 +1917,10 @@ boolean bcascKnobKing() {
 		}
 		
 		//Then we need the cake. 
+		if (!contains_text(visit_url("campground.php?action=inspectkitchen"), "Dramatic")) {
+			if (!use(1, to_item("Dramatic range"))) abort("You need a dramatic oven for this to work.");
+		}
+		
 		while (available_amount($item[Knob cake]) + creatable_amount($item[Knob cake]) == 0) {
 			while (item_amount($item[Knob frosting]) == 0) {
 				bumAdv($location[Cobb's Knob Kitchens], "+outfit knob goblin elite", "", "1 knob frosting", "Getting the Knob Frosting");
@@ -1897,11 +1940,14 @@ boolean bcascKnobKing() {
 			buMax();
 			if (my_buffedstat(my_primestat()) >= 75) {
 				if (canMCD()) cli_execute("mcd 7");
-				bumAdv($location[Throne Room], "+outfit kge", "", "", "Killing the Knob King");
+				bumAdv($location[Throne Room], "+outfit kge", "meatboss", "", "Killing the Knob King");
 				checkStage("knobking", true);
 				return true;
 			}
 		}
+	} else {
+		checkStage("knobking", true);
+		return true;
 	}
 }
 
@@ -2313,6 +2359,7 @@ boolean bcascMacguffinHiddenCity() {
 		
 		//Finish function and start the actual adventuring code bit.
 		find_all();
+		setFamiliar("meatboss");
 		while (!(item_amount($item[triangular stone]) + sphere_count() == 4 && altar_check())) {
 			print("BCC: Continuing to adventure in the Hidden City.", "purple");
 			if (my_adventures() == 0) abort("You're out of adventures.");
@@ -2362,7 +2409,8 @@ boolean bcascMacguffinHiddenCity() {
 		//Visit the smallish temple and kill the protector spirit. 
 		switch (my_primestat()) {
 			case $stat[Muscle] :
-				if (have_familiar($familiar[Frumious Bandersnatch])) bumFamiliar($familiar[Frumious Bandersnatch]);
+				//This ruins 100% runs and there's no point. 
+				//if (have_familiar($familiar[Frumious Bandersnatch])) bumFamiliar($familiar[Frumious Bandersnatch]);
 			break;
 			
 			case $stat[Moxie] :
@@ -2372,9 +2420,7 @@ boolean bcascMacguffinHiddenCity() {
 		visit_url("hiddencity.php?which=" + i);
 		bumAdvUrl("hiddencity.php?action=trisocket");
 		string url = visit_url("hiddencity.php?which="+i);
-		if (!contains_text(run_combat(), "WINWINWIN")) {
-			abort("Failed to kill the protector spectre.  You must do this manually.");
-		}
+		if (index_of(run_combat(), "WINWINWIN") == -1) abort("Failed to kill the last spectre!\n");
 		
 		print("BCC: Finished exploring the Hidden City.", "purple");
 	}
@@ -2417,6 +2463,7 @@ boolean bcascMacguffinPalindome() {
 		//Fight Dr. Awkward
 		cli_execute("restore hp; conditions clear;");
 		buMax("+equip Talisman o' Nam +equip Mega Gem");
+		setFamiliar("meatboss");
 		bumAdv1($location[palindome]);
 		if (item_amount($item[Staff of Fats]) == 0) abort("Looks like Dr. Awkward opened a can of whoop-ass on you. Try fighting him manually.");
 	}
@@ -2461,6 +2508,7 @@ boolean bcascMacguffinPrelim() {
 	while (!contains_text(visit_url("manor.php"),"sm8b.gif")) {
 		print("BCC: Opening the Spookyraven Cellar", "purple");
 		adventure(my_adventures(), $location[haunted ballroom]);
+		betweenBattle();
 	}
 
 	boolean needFledges() { return my_primestat() != $stat[Moxie]; }
@@ -2539,8 +2587,9 @@ boolean bcascMacguffinSpooky() {
 			} else {
 				cli_execute("use can of black paint");
 			}
-			//The below is "just in case" we haven't done this yet. It doesn't harm anyone to hit trapper.php here.
+			//The below is "just in case" we haven't done the trapper's cold bit yet. It doesn't harm anyone to hit trapper.php here.
 			visit_url("trapper.php");
+			setFamiliar("meatboss");
 			visit_url("manor3.php?place=chamber");
 			run_combat();
 			if (item_amount($item[eye of ed]) == 0) abort("The Spooky man pwned you with his evil. Fight him yourself.");
@@ -3099,7 +3148,6 @@ boolean bcascTavern() {
 		if (my_adventures() == 0) abort("No adventures.");
 		tavern();
 	}
-
 	bumAdvUrl("rats.php?action=faucetoff");
 	visit_url("tavern.php?place=barkeep");
 	visit_url("tavern.php?place=barkeep");
@@ -3268,7 +3316,7 @@ boolean bcascToot() {
 	if (get_property("bcasc_sellgems") == "true") {
 		foreach stone in $items[hamethyst, baconstone, porquoise] autosell(item_amount(stone), stone);
 	}
-	if (i_a("stolen accordion") == 0) {
+	if (i_a("stolen accordion") == 0 && i_a("Rock and Roll Legend") == 0 && i_a("Squeezebox of the Ages") == 0 && i_a("The Trickster's Trikitixa") == 0) {
 		print("BCC: Getting an Accordion before we start.", "purple");
 		while (i_a("stolen accordion") == 0) use(1, $item[chewing gum on a string]);
 	}
@@ -3681,8 +3729,8 @@ void bcs12() {
 		
 		while (my_basestat($stat[mysticality]) < 70) {
 			bumAdv($location[Haunted Bathroom], "", "", "70 mysticality", "Getting 70 myst to equip the " + bcasc_warOutfit + " outfit");
-		}
-
+		} 
+		
 		//So now we have the outfit. Let's check if the war has kicked off yet. 
 		if (!contains_text(visit_url("questlog.php?which=1"), "war between the hippies and frat boys started")) {
 			if (bcasc_doWarAs == "hippy") {
@@ -3862,9 +3910,7 @@ void main() {
 		print("BCC: Getting an Accordion before we start.", "purple");
 		while (i_a("stolen accordion") == 0) use(1, $item[chewing gum on a string]);
 	}
-	foreach i in $items[meat stack, dense meat stack, meat paste] {
-		if (item_amount(i) > 0) autosell(item_amount(i), i);
-	}
+	sellJunk();
 	
 	bumcheekcend();
 	
