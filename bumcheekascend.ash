@@ -1697,7 +1697,8 @@ boolean bcascFriarsSteel() {
 		if (contains_text(visit_url("pandamonium.php?action=sven"), "<option>Jim")) visit_url("pandamonium.php?action=sven&bandmember=Jim&togive="+jim+"&preaction=try");
 		if (item_amount($item[Azazel's unicorn]) == 0) abort("The script doesn't have the unicorn, but it should have. Please do this part manually.");
 	}
-	
+
+	buMax();
 	while (item_amount($item[Azazel's lollipop]) == 0) {
 		levelMe(77, false);
 		void tryThis(item i, string preaction) {
