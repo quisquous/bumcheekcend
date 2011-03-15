@@ -1678,6 +1678,7 @@ boolean bcascFriarsSteel() {
 		print("BCC: Getting Azazel's unicorn", "purple");
 		setFamiliar("itemsnc");
 		cli_execute("mood execute; conditions clear");
+		visit_url("pandamonium.php?action=sven");
 		while (!logicPuzzleDone()) {
 			bumAdv1($location[Hey Deze Arena]);
 		}
