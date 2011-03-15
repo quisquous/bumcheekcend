@@ -335,7 +335,7 @@ void burnExcessMp(location loc)
 		if (get_property(propCocktailSummons).to_int() < maxCocktailSummons() && tryBurn($skill[advanced cocktailcrafting]))
 			continue;
 
-		if (tryBurn($skill[summon party favor]))
+		if (mp_cost($skill[summon party favor]) < 30 && tryBurn($skill[summon party favor]))
 			continue;
 
 		if (!triedTasteful && tryBurn($skill[summon tasteful items])) {
