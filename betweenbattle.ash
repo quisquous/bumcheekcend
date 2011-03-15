@@ -421,7 +421,7 @@ void firstTurn() {
 
 	cli_execute("ccs hardcore");
 	if (get_property(propTelescopeUpgrades).to_int() > 0)
-		cli_execute("telescope");
+		cli_execute("telescope low");
 
 	set_property(propMineUnaccOnly, true);
 	set_property(propOrganTurns, 0);
