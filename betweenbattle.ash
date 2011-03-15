@@ -812,13 +812,18 @@ void getHellionCubes() {
 }
 
 void openDispensary() {
-	if (dispensary_available() || !haveKGEOutfit())
+	if (dispensary_available() || !haveItem($item[cobb's knob lab key]) || !haveKGEOutfit()) {
 		return;
+	}
 
 	cli_execute("outfit save picklish");
 	cli_execute("maximize mainstat +outfit elite -ml -tie");
 	preppedAdventure(1, $location[cobb's knob barracks]);
 	cli_execute("outfit picklish");
+
+	if (!dispensary_available()) {
+		abort("Adventured in the barracks, but no password?");
+	}
 }
 
 void faxAndFight(monster mon) {
