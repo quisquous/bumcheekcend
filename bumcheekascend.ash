@@ -852,7 +852,7 @@ boolean setFamiliar(string famtype) {
 		string [int] famlist;
 		load_current_map("bcs_fam_"+famtype, famlist);
 		foreach x in famlist {
-			print("Checking for familiar '"+famlist[x]+"' where x="+x, "purple");
+			//print("Checking for familiar '"+famlist[x]+"' where x="+x, "purple");
 			if (have_familiar(famlist[x].to_familiar())) {
 				bumFamiliar(famlist[x].to_familiar());
 				return true;
