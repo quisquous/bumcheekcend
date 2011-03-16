@@ -945,7 +945,7 @@ boolean setMCD(int moxie, int sMox) {
 
 //Thanks, Riff!
 string tryBeerPong() {
-	string page = visit_url("adventure.php?snarfblat=157");
+	string page = bumAdvUrl("adventure.php?snarfblat=157");
 	
 	if (contains_text(page, "Combat")) {
 		//The way I use this, we shouldn't ever have a combat with this script, but there's no harm in a check for a combat. 
