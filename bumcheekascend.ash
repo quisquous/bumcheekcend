@@ -889,14 +889,14 @@ boolean setFamiliar(string famtype) {
 			
 			//Then we have space for some spleen items.
 			if (have_familiar($familiar[Rogue Program]) && have_familiar($familiar[Baby Sandworm])) {
-				//Then randomly pick between the two.
-				if (random(2) == 0) {
-					bumFamiliar($familiar[Rogue Program]);
-					return true;
-				} else {
+				//Alternate spleen familiars, starting with the rogue.
+				int agua = get_property("_aguaDrops").to_int();
+				int token = get_property("_tokenDrops").to_int();
+				if (agua + 1 <= token)
 					bumFamiliar($familiar[Baby Sandworm]);
-					return true;
-				}
+				else
+					bumFamiliar($familiar[Rogue Program]);
+				return true;
 			} else if (have_familiar($familiar[Rogue Program])) {
 				bumFamiliar($familiar[Rogue Program]);
 				return true;
