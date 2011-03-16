@@ -363,6 +363,13 @@ boolean bumAdv1(location loc, string filter) {
 	return adventure(1, loc, filter);
 }
 
+//Use instead of visit_url if it will spend an adventure.
+string bumAdvUrl(string url) {
+	betweenBattle();
+	callBetweenBattleScript();
+	return visit_url(url);
+}
+
 boolean bumFamiliar(familiar fam) {
 	if (fam != $familiar[none] && !have_familiar(fam)) return false;
 	//Record desired familiar so between battle script can use that info.
@@ -978,13 +985,6 @@ boolean willMood() {
 /***********************************************
 * BEGIN FUNCTIONS THAT RELY ON OTHER FUNCTIONS *
 ***********************************************/
-
-//Use instead of visit_url if it will spend an adventure.
-string bumAdvUrl(string url) {
-	betweenBattle();
-	callBetweenBattleScript();
-	return visit_url(url);
-}
 
 boolean bumAdvClover(int snarfblat) {
 	if (i_a($item[ten-leaf clover]) == 0) {
