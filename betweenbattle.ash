@@ -458,7 +458,11 @@ boolean checkOrgan() {
 
 	int organ = get_property(propOrganTurns).to_int();
 	int pie = get_property(propPieCount).to_int();
-	boolean needOrgan = organ > 0 && pie == 0 && get_property(propOrganFinishPie).to_boolean();
+
+	if (organ == 0 && pie > 0)
+		set_property(propOrganFinishPie, false);
+
+	boolean needOrgan = organ > 0 && pie == 0 || get_property(propOrganFinishPie).to_boolean() && pie == 0;
 	if (needOrgan && my_familiar() == $familiar[organ grinder])
 		return true;
 	if (!needOrgan && my_familiar() != $familiar[organ grinder])
