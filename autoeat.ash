@@ -120,6 +120,7 @@ boolean autoEat(boolean force) {
 
 	boolean consumed = false;
 
+	// FIXME: Consider moving this to the counter script.
 	if (contains_text(get_counters(semirareWindowCounter, 0, 10), semirareWindowCounter) && couldEatFortuneCookie()) {
 		eat(1, $item[fortune cookie]);
 		consumed = true;
@@ -285,7 +286,7 @@ boolean autoSpleen(boolean force) {
 	}
 
 	// Only use a mojo filter if it will create room for another 4 spleen item.
-	boolean filterUseful = (spleenLeft() % 4 == 1 || have_skill($skill[spleen of steel]));
+	boolean filterUseful = (spleenLeft() % 4 == 3 || have_skill($skill[spleen of steel]));
 	if (filterUseful && my_spleen_use() > 0 && item_amount($item[mojo filter]) > 0) {
 		use(1, $item[mojo filter]);
 	}
