@@ -252,7 +252,7 @@ void setAutoRestoreLevels(location loc) {
 			restoreMp = mp_cost($skill[saucegeyser]) * 2;
 	}
 
-	if (needOlfaction(loc)) {
+	if (needOlfaction(loc) && have_effect($effect[on the trail]) == 0) {
 		restoreMp += mp_cost($skill[transcendent olfaction]);
 	}
 
@@ -1032,7 +1032,7 @@ void betweenBattlePrep(location loc) {
 	locationSkills(loc);
 	process_inventory();
 	checkFamiliar(loc);
-	if (needOlfaction(loc)) {
+	if (needOlfaction(loc) && have_effect($effect[on the trail]) == 0) {
 		olfactionPreparation();
 	}
 	useFriars(loc);
