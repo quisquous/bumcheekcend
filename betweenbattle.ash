@@ -542,7 +542,8 @@ void checkFamiliar(location loc) {
 		if (loc == $location[hidden temple] ||
 			loc == $location[spooky forest] && hipster <= 4 ||
 			inCrypt ||
-			loc == $location[palindome] && have_effect($effect[everything looks yellow]) > 0) {
+			loc == $location[palindome] && have_effect($effect[everything looks yellow]) > 0 ||
+			loc == $location[cobb's knob laboratory]) {
 			use_familiar($familiar[mini-hipster]);
 			restore_mp(mp_cost($skill[entangling noodles]));
 			return;
