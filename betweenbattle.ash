@@ -473,7 +473,7 @@ boolean checkOrgan() {
 		return true;
 	} else {
 		familiar prev = get_property(propPrevFamiliar).to_familiar();
-		if (have_familiar(prev))
+		if (have_familiar(prev) && prev != $familiar[organ grinder])
 			use_familiar(prev);
 		else
 			setFamiliar("");
