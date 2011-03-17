@@ -362,7 +362,7 @@ void burnExcessMp(location loc)
 		if (tryBurn($skill[leash of linguini]))
 			continue;
 
-		if (tryBurn($skill[empathy of the newt]))
+		if (haveItem($item[turtle totem]) && tryBurn($skill[empathy of the newt]))
 			continue;
 
 		// FIXME: Use somebody else's auto-burn script here.
