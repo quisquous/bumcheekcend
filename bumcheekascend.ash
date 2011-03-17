@@ -980,8 +980,10 @@ boolean bumAdvClover(int snarfblat) {
 
 	//Adventure.php can get interrupted by wandering monsters, so
 	//retry until we get the clover adventure.
-	while (i_a($item[ten-leaf clover]) == clovers)
+	while (i_a($item[ten-leaf clover]) == clovers) {
 		bumAdvUrl("adventure.php?snarfblat=" + snarfblat + "&confirm=on");
+		run_combat();
+	}
 	return true;
 }
 
