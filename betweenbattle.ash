@@ -165,6 +165,10 @@ boolean needOlfaction(location loc) {
 	if (!have_skill($skill[transcendent olfaction]))
 		return false;
 
+	if (get_property(propRomanticEncounters) == 1 && romanticTarget() == $monster[blooper]) {
+		return true;
+	}
+
 	// TODO(picklish) - don't depend on CSS settings here.
 	switch (loc) {
 	case $location[8-bit realm]:
@@ -870,8 +874,6 @@ void autoFax(boolean force) {
 
 		if (olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
 			bcasc8Bit();
-		} else if (get_property(propRomanticEncounters) == 1 && romanticTarget() == $monster[blooper]) {
-			olfactionPreparation();
 		}
 
 		// If no digital key, don't fax anything else yet.
