@@ -161,18 +161,6 @@ void getFortune() {
 	}
 }
 
-void checkCounters(location loc) {
-	if (counterThisTurn(danceCardCounter)) {
-		if (loc != $location[haunted ballroom]) {
-			debug("Detouring to the Ballroom for the dance card counter");
-			preppedAdventure(1, $location[haunted ballroom]);
-		}
-	}
-	if (counterThisTurn(fortuneCounter)) {
-		getFortune();
-	}
-}
-
 boolean needOlfaction(location loc) {
 	if (!have_skill($skill[transcendent olfaction]))
 		return false;
@@ -1024,7 +1012,6 @@ void betweenBattleInternal(location loc) {
 	useWarMoney();
 
 	autoConsume(loc);
-	checkCounters(loc);
 
 	autoFax(false);
 	openGuild();

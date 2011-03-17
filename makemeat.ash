@@ -253,7 +253,6 @@ void process_inventory() {
 		miner's helmet,
 		miner's pants,
 		photoprotoneutron torpedo,
-		plot hole,
 		possessed tomato,
 		razor-sharp can lid,
 		ruby w,

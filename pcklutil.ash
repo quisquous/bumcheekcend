@@ -13,6 +13,7 @@ string propCampgroundOven = "picklishCampgroundOven";
 string propChefHave = "picklishHaveChef";
 string propChefMake = "bcasc_chef";
 string propCocktailSummons = "cocktailSummons";
+string propCounterScript = "counterScript";
 string propDoSideQuestNuns = "bcasc_doSideQuestNuns";
 string propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
 string propFaxArt = "picklishFaxArt";
