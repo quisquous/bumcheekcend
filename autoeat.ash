@@ -231,6 +231,11 @@ boolean autoEat(boolean force) {
 			return true;
 		}
 
+		if (my_primestat() == $stat[moxie] && haveRoomFor(3) && retrieve_item(1, $item[delicious noodles])) {
+			eat(1, $item[delicious noodles]);
+			return true;
+		}
+
 		if (haveItem($item[dry noodles]) && haveRoomFor(3)) {
 			hermit(1, $item[jabanero pepper]);
 			retrieve_item(1, $item[painful penne pasta]);
