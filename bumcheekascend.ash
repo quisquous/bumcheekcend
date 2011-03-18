@@ -506,9 +506,7 @@ boolean isExpectedMonster(string opp) {
 
 	monster mon = opp.to_monster();
 	boolean expected = appearance_rates(loc) contains mon;
-	print("PCKLSH: mon(" + mon + "), loc(" + my_location() + "), expected(" + expected + ")", "green");
-	//return expected;
-	return true;
+	return expected;
 }
 
 string consultBarrr(int round, string opp, string text) {
