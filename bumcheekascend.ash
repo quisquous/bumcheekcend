@@ -3006,7 +3006,7 @@ boolean bcascPirateFledges() {
 			
 			//If we have the booty, we'll need to get the map.
 			if (i_a("Cap'm Caronch's nasty booty") > 0)
-				bumAdv($location[Barrrney's Barrr], "+outfit swash", "", "1 Orcish Frat House blueprints", "", "Getting the Blueprints", "consultBarrr");
+				bumAdv($location[Barrrney's Barrr], "+outfit swash", "", "1 Orcish Frat House blueprints", "Getting the Blueprints", "", "consultBarrr");
 			
 			//Now, we'll have the blueprints, so we'll need to make sure we have 8 insults before using them. 
 			while (numPirateInsults() < 7) {
