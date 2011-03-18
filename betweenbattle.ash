@@ -105,8 +105,11 @@ void getFortune() {
 	location last = get_property(propSemirareLast).to_location();
 
 	if (my_level() >= 9 && !bcascStage("chasm") && last != $location[orc chasm]) {
-		// FIXME: Don't get this if we have all the scroll components.
-		if (!contains_text(visit_url("mountains.php"), "chasm.gif")) {
+		boolean haveTwo334 = item_amount($item[334 scroll]) >= 2 || item_amount($item[668 scroll]) >= 1;
+		boolean have30669 = haveItem($item[30669 scroll]) || haveItem($item[64067 scroll]);
+		boolean have33398 = haveItem($item[33398 scroll]) || haveItem($item[64067 scroll]);
+		boolean haveEverything = haveTwo334 && have30669 && have33398 || haveItem($item[64735 scroll]);
+		if (!haveEverything && !contains_text(visit_url("mountains.php"), "chasm.gif")) {
 			preppedAdv1($location[orc chasm]);
 			return;
 		}
