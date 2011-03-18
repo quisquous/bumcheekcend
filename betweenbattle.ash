@@ -165,7 +165,7 @@ boolean needOlfaction(location loc) {
 	if (!have_skill($skill[transcendent olfaction]))
 		return false;
 
-	if (get_property(propRomanticEncounters) == 1 && romanticTarget() == $monster[blooper]) {
+	if (get_property(propRomanticEncounters) == 1 && romanticTarget() == $monster[blooper] && !haveItem($item[digital key])) {
 		return true;
 	}
 
@@ -179,9 +179,9 @@ boolean needOlfaction(location loc) {
 	case $location[dark neck of the woods]:
 	case $location[pandamonium slums]:
 		return item_amount($item[hellion cube]) <= 10;
-	default:
-		return false;
 	}
+
+	return false;
 }
 
 void olfactionPreparation() {
