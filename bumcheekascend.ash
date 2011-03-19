@@ -2463,7 +2463,8 @@ boolean bcascMacguffinPalindome() {
 		if (i_a("mega gem") == 0) abort("That's weird. You don't have the Mega Gem.");
 		
 		//Fight Dr. Awkward
-		cli_execute("restore hp; conditions clear;");
+		betweenBattle();
+		cli_execute("conditions clear;");
 		buMax("+equip Talisman o' Nam +equip Mega Gem");
 		setFamiliar("meatboss");
 		bumAdv1($location[palindome]);
@@ -2584,6 +2585,7 @@ boolean bcascMacguffinSpooky() {
 			buMax();
 			print("BCC: Fighting Spookyraven", "purple");
 			restore_hp(my_maxhp());
+			betweenBattle();
 			if (have_skill($skill[Elemental Saucesphere])) {
 				cli_execute("cast Elemental Saucesphere");
 			} else {
