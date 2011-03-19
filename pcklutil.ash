@@ -1,5 +1,6 @@
 // Named KoLmafia properties 
 
+string propAguaDrops = "_aguaDrops";
 string propArrows = "_badlyRomanticArrows";
 string propAutoHpMin = "hpAutoRecovery";
 string propAutoHpTarget = "hpAutoRecoveryTarget";
@@ -39,6 +40,7 @@ string propSideQuestNunsCompleted = "sidequestNunsCompleted";
 string propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 string propSoak = "_hotTubSoaks";
 string propTelescopeUpgrades = "telescopeUpgrades";
+string propTokenDrops = "_tokenDrops";
 string propWarFratDefeated = "hippiesDefeated";
 string propWarFratMoney = "availableQuarters";
 string propWarHippyDefeated = "fratboysDefeated";
@@ -262,6 +264,10 @@ boolean canAdventure() {
 	return true;
 }
 
+boolean canOutMoxie(monster mon) {
+	return my_buffedstat(my_primestat()) >= monster_attack(mon) + 4;
+}
+
 boolean counterThisTurn(string counter) {
 	return get_counters(counter, 0, 0) == counter;
 }
@@ -272,15 +278,53 @@ boolean counterActive(string counter) {
 	return contains_text(get_counters(counter, 0, 1000), counter);
 }
 
+int monsterLevel(location loc) {
+	int ml = 0;
+	foreach mob, freq in appearance_rates(loc) {
+		if (freq == 0 || mob == $monster[guy made of bees])
+			continue;
+		ml = max(ml, monster_attack(mob));
+	}
+	return ml;
+}
+
+float sombreroStats(int weight, float ml) {
+	float mlAdjust = 1.0;
+	if (ml >= 4.0)
+		mlAdjust += square_root(ml - 4.0);
+	return square_root(weight) * mlAdjust / 10.0;
+}
+
+float volleyballStats(int weight) {
+	return square_root(weight);
+}
+
+float statsForFamiliar(familiar fam, location loc) {
+	if (!have_familiar(fam))
+		return 0.0;
+
+	int weight = familiar_weight(fam) + weight_adjustment();
+	int ml = monsterLevel(loc) + monster_level_adjustment();
+
+	// FIXME: Handle more familiar options here.
+	switch (fam) {
+	case $familiar[baby sandworm]:
+	case $familiar[sombrero]:
+		return sombreroStats(weight, ml);
+	case $familiar[bandersnatch]:
+	case $familiar[volleyball]:
+		return volleyballStats(weight);
+	}
+
+	abort("Unhandled familiar: " + fam);
+	return 0.0;
+}
+
 // Miscellaneous actions
 
 void getPresent() {
 	if (visit_url("clan_viplounge.php").contains_text("a present under it"))
 		visit_url("clan_viplounge.php?action=crimbotree");
-}
-
-boolean canOutMoxie(monster mon) {
-	return my_buffedstat(my_primestat()) >= monster_attack(mon) + 4;
 }
 
 boolean poolTable(string type) {

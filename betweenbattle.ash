@@ -547,39 +547,81 @@ void checkFamiliar(location loc) {
 		use_familiar(get_property(propPrevFamiliar).to_familiar());
 	}
 
+	void useStatFamiliar() {
+		// This isn't perfect.  Arguably maybe you want to level up the bander
+		// more for runaways or maybe level up the sandworm earlier to get
+		// more stats later.  Still, switch to the local maximum.
+
+		float bestStats = 0.0;
+		familiar bestFamiliar = $familiar[none];
+
+		foreach fam in $familiars[
+			baby sandworm,
+			bandersnatch,
+			sombrero,
+			volleyball,
+		] {
+			float stats = statsForFamiliar(fam, my_location());
+			if (have_familiar(fam) && stats > bestStats) {
+				bestStats = stats;
+				bestFamiliar = fam;
+			}
+		}
+
+		if (bestFamiliar != $familiar[none])
+			use_familiar(bestFamiliar);
+		else
+			setFamiliar("");
+	}
+
+	void useSpleenFamiliar() {
+		int agua = get_property(propAguaDrops).to_int();
+		int token = get_property(propTokenDrops).to_int();
+		if (have_familiar($familiar[baby sandworm]) && agua < token)
+			use_familiar($familiar[baby sandworm]);
+		else if (have_familiar($familiar[rogue program]))
+			use_familiar($familiar[rogue program]);
+		else
+			setFamiliar("");
+	}
+
+	void useItemFamiliar() {
+		setFamiliar("items");
+	}
+
 	// Don't bother using the HeBo when there's no yellow ray.
 	if (my_familiar() == $familiar[He-Boulder] && have_effect($effect[Everything Looks Yellow]) > 0) {
 		// If we're using the He-Bo, it's likely that there was only one set of
 		// items that we care about.  So, switch to a stat familiar.
-		setFamiliar("");
+		useStatFamiliar();
 		return;
 	} else if (my_familiar() == $familiar[He-Boulder]) {
 		// If we're using a hebo, there's probably a good reason.
 		return;
 	}
 
+	boolean needSpleen() {
+		if (!have_familiar($familiar[rogue program]) && !have_familiar($familiar[baby sandworm]))
+			return false;
+
+		return spleen_limit() - my_spleen_use() >= 4;
+	}
+
 	// If we need olfaction, we probably should be using an item familiar.
 	if (needOlfaction(loc)) {
 		// There are some times when we lots of levelling in the ballroom is
 		// needed.  In these cases, filling spleen becomes more important.
-		if (loc == $location[haunted ballroom] && my_spleen_use() < 12) {
-			setFamiliar("");
-		} else {
-			setFamiliar("items");
-		}
+		if (loc == $location[haunted ballroom] && needSpleen())
+			useSpleenFamiliar();
+		else
+			useItemFamiliar();
 		return;
 	}
 
-	boolean usingSpleenFamiliar() {
-		return my_familiar() == $familiar[sandworm] || my_familiar() == $familiar[rogue program];
-	}
-
-	if (have_familiar($familiar[frumious bandersnatch])) {
-		if (my_spleen_use() >= 12 && usingSpleenFamiliar() && my_level() < 9)
-			use_familiar($familiar[Frumious Bandersnatch]);
-		if (my_level() <= 2)
-			use_familiar($familiar[Frumious Bandersnatch]);
-	}
+	if (needSpleen() && my_level() > 2)
+		useSpleenFamiliar();
+	else
+		useStatFamiliar();
 }
 
 void equipSugar() {
