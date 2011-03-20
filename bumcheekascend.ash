@@ -1749,7 +1749,7 @@ boolean bcascGuild1() {
 		if (my_buffedstat(my_primestat()) > 10) {
 			print("BCC: Doing the First Challenge...", "purple");
 			if (my_adventures() == 0) abort("You are out of adventures.");
-			bumAdvUrl("guild.php?action=chal");
+			visit_url("guild.php?action=chal");
 			//Then sell the "wrong" reward and use the other two.
 			switch (my_class()) {
 				case $class[disco bandit] : cli_execute("use 2 giant moxie weed; sell enchanted barbell"); break;
