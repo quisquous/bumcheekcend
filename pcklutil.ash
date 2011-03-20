@@ -22,6 +22,7 @@ string propFaxBlooper = "picklishFaxBlooper";
 string propFaxLobster = "picklishFaxLobster";
 string propFaxUsed = "_photocopyUsed";
 string propHipsterAdv = "_hipsterAdv";
+string propLevelMeCommand = "bcasc_preLevelMe";
 string propLibramSummons = "libramSummons";
 string propMineUnaccOnly = "bcasc_MineUnaccOnly";
 string propNeedFortuneCookie = "picklishNeedFortuneCookie";

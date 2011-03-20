@@ -433,6 +433,7 @@ void firstTurn() {
 
 	set_property(propChefMake, true);
 	set_property(propChefHave, false);
+	set_property(propLevelMeCommand, "call levelup.ash");
 
 	// This script autosells war items, so don't abort for the war boss.
 	setBcascStageComplete("prewarboss");

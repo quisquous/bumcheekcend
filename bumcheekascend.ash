@@ -1060,7 +1060,14 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 		sMox = my_basestat(my_primestat()) + extraMoxieNeeded;	
 	}
 	cli_execute("goal clear; goal set "+sMox+" "+to_string(my_primestat()));
-	
+
+	string command = get_property("bcasc_preLevelMe");
+	if (command != "") {
+		cli_execute(command + " " + sMox);
+		if (my_basestat(my_primestat()) >= sMox)
+			return true;
+	}
+
 	switch (my_primestat()) {
 		case $stat[Muscle] :
 			if (my_buffedstat($stat[Muscle]) < 120) {
