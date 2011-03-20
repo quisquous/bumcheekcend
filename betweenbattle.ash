@@ -918,10 +918,6 @@ void autoFax(boolean force) {
 			poolTable("mys");
 		}
 
-		if (olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
-			bcasc8Bit();
-		}
-
 		// If no digital key, don't fax anything else yet.
 		return;
 	}
@@ -1064,7 +1060,11 @@ void betweenBattleInternal(location loc) {
 	autoFax(false);
 	openGuild();
 	getBoxes();
-	
+
+	if (olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
+		bcasc8Bit();
+	}
+
 	betweenBattlePrep(loc);
 }
 
