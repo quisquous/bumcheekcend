@@ -932,7 +932,7 @@ void autoFax(boolean force) {
 		return;
 	}
 
-	if (item_amount($item[barrel of gunpowder]) < 5) {
+	if (item_amount($item[barrel of gunpowder]) < 5 && get_property(propSideQuestLighthouseCompleted) == "none") {
 		// FIXME: Check on divine combat items here.
 
 		faxAndArrow($monster[lobsterfrogman]);

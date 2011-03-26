@@ -37,6 +37,7 @@ string propRomanticEncounters = "picklishRomanticEncounters";
 string propSemirareCounter = "semirareCounter";
 string propSemirareKGE = "picklishSemirareKGE";
 string propSemirareLast = "semirareLocation";
+string propSideQuestLighthouseCompleted = "sidequestLighthouseCompleted";
 string propSideQuestNunsCompleted = "sidequestNunsCompleted";
 string propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 string propSoak = "_hotTubSoaks";
