@@ -720,32 +720,6 @@ void optimizeMCD(location loc) {
 	}
 }
 
-void endOfDay() {
-	// overdrink
-	// finish eating and spleening, just in case
-
-	// zap keys
-	// zap telescope items (black pepper)
-	// zap other items (garnishes?)
-
-	// still uses
-
-	cli_execute("maximize adv");
-	useFriars($location[none]);
-
-	for i from 1 to 3 {
-		poolTable("mys");
-	}
-	trySoak();
-
-	// tea party
-	// 	snorkel - +10 moxie
-	//  dread sack - +40% meat
-	//  reinforced beaded headband - +5 weight
-	//  ravioli hat - +10 myst
-	//  pail - +20 ML
-}
-
 void buyHammer() {
 	if (!have_skill($skill[pulverize]))
 		return;

@@ -41,6 +41,7 @@ string propSideQuestLighthouseCompleted = "sidequestLighthouseCompleted";
 string propSideQuestNunsCompleted = "sidequestNunsCompleted";
 string propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
 string propSoak = "_hotTubSoaks";
+string propTeaParty = "_madTeaParty";
 string propTelescopeUpgrades = "telescopeUpgrades";
 string propTokenDrops = "_tokenDrops";
 string propWarFratDefeated = "hippiesDefeated";
