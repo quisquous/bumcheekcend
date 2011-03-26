@@ -66,6 +66,18 @@ attack with weapon
 skill entangling noodles
 attack with weapon
 
+[ tomb rat ]
+if hascombatitem tangle of rat tails
+    item tangle of rat tails
+    abort
+endif
+special action
+skill transcendent olfaction
+attack with weapon
+
+[ tomb rat king ]
+consult consulthard.ash
+
 [ wealthy pirate ]
 special action
 skill transcendent olfaction
