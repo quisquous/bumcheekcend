@@ -619,6 +619,12 @@ void checkFamiliar(location loc) {
 		return;
 	}
 
+	// Don't override item familiars.
+	if (get_property(propPrevFamiliar).to_familiar() == $familiar[hound dog] ||
+		get_property(propPrevFamiliar).to_familiar() == $familiar[slimeling]) {
+		return;
+	}
+
 	if (needSpleen() && my_level() > 2)
 		useSpleenFamiliar();
 	else
@@ -759,7 +765,7 @@ void buyHammer() {
 void allowMining() {
 	// Mining is an excellent use of burning teleportitis turns.
 	// Once we've had teleportitis, no need to delay mining further.
-	if (have_effect($effect[Teleportitis]) > 0)
+	if (have_effect($effect[Teleportitis]) > 0 || bcascStage("wand"))
 		set_property(propMineUnaccOnly, false);
 }
 
