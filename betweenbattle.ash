@@ -1057,12 +1057,12 @@ void betweenBattlePrep(location loc) {
 
 	locationSkills(loc);
 	process_inventory();
+	optimizeMCD(loc);
 	checkFamiliar(loc);
 	if (needOlfaction(loc) && have_effect($effect[on the trail]) == 0) {
 		olfactionPreparation();
 	}
 	useFriars(loc);
-	optimizeMCD(loc);
 	setAutoRestoreLevels(loc);
 	restoreSelf(loc);
 	burnExcessMp(loc);
