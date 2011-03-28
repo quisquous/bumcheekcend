@@ -289,7 +289,7 @@ int monsterLevel(location loc) {
 		ml = 300;
 
 	foreach mob, freq in appearance_rates(loc) {
-		if (freq == 0 || mob == $monster[guy made of bees])
+		if (freq == 0)
 			continue;
 		ml = max(ml, monster_attack(mob));
 	}
