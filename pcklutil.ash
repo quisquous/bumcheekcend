@@ -283,6 +283,11 @@ boolean counterActive(string counter) {
 
 int monsterLevel(location loc) {
 	int ml = 0;
+
+	// Hack: Ed doesn't appear in appearance_rates().
+	if (loc == $location[lower chambers])
+		ml = 300;
+
 	foreach mob, freq in appearance_rates(loc) {
 		if (freq == 0 || mob == $monster[guy made of bees])
 			continue;
