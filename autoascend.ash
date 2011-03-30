@@ -27,7 +27,7 @@ boolean teaParty(item thing) {
 		use(1, $item[drink me potion]);
 
 	debug("Visiting the tea party with " + thing);
-	visit_url("choice.php?whichchoice=441&option=1&pwd");
+	visit_url("choice.php?whichchoice=441&option=1&pwd", true);
 
 	return true;
 }
