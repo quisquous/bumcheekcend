@@ -381,6 +381,13 @@ boolean bumAdv1(location loc, string filter) {
 	return adventure(1, loc, filter);
 }
 
+//Use instead of visit_url if visiting the url has a chance of causing a combat.
+string bumAdvUrl(string url) {
+	betweenBattle();
+	callBetweenBattleScript();
+	return visit_url(url);
+}
+
 boolean bumFamiliar(familiar fam) {
 	if (fam != $familiar[none] && !have_familiar(fam)) return false;
 	//Record desired familiar so between battle script can use that info.
@@ -1375,7 +1382,7 @@ boolean bcascChasm() {
 		visit_url("forestvillage.php?place=untinker&action=screwquest");
 		visit_url("forestvillage.php?action=screwquest&submit=&quot;Sure Thing.&quot;");
 		safe_visit_url("knoll.php?place=smith");
-		if (bumAdvUrl("mountains.php?orcs=1&pwd="+my_hash()).to_string() != "") {}
+		if (visit_url("mountains.php?orcs=1&pwd="+my_hash()).to_string() != "") {}
 	}
 	
 	while (contains_text(visit_url("questlog.php?which=1"), "A Quest, LOL")) {
@@ -1505,7 +1512,7 @@ boolean bcascEpicWeapons() {
 		
 		if (i_a("big rock") == 0 && cloversAvailable(true) > 0) {
 			print("BCC: Getting the Big Rock", "purple");
-			bumAdvUrl("casino.php?action=slot&whichslot=11&confirm=on");
+			visit_url("casino.php?action=slot&whichslot=11&confirm=on");
 		}
 		
 		visit_url("guild.php?place=sgc");
@@ -2856,7 +2863,7 @@ boolean bcascMining() {
 		}
 
 		print(why + ": " + (choice % 8) + ", " + (choice / 8) + ".", "purple");
-		string result = bumAdvUrl("mining.php?mine=1&which=" + choice + "&pwd");
+		string result = visit_url("mining.php?mine=1&which=" + choice + "&pwd");
 		if (index_of(result, goalString) != -1) {
 			oreLocations[count(oreLocations)] = choice;
 		}
@@ -2993,21 +3000,21 @@ boolean bcascPirateFledges() {
 					print("BCC: Using the skirt and hot wings to burgle the Frat House...", "purple");
 					cli_execute("checkpoint");
 					cli_execute("equip frilly skirt");
-					bumAdvUrl("inv_use.php?which=3&whichitem=2951&pwd");
+					visit_url("inv_use.php?which=3&whichitem=2951&pwd");
 					visit_url("choice.php?whichchoice=188&option=3&choiceform3=Catburgle&pwd");
 					cli_execute("outfit checkpoint");
 				} else if(i_a("Orcish baseball cap") > 0 && i_a("homoerotic frat-paddle") > 0 && i_a("Orcish cargo shorts") > 0) {
 					print("BCC: Using the Frat Outfit to burgle the Frat House...", "purple");
 					cli_execute("checkpoint");
 					cli_execute("outfit frat boy");
-					bumAdvUrl("inv_use.php?which=3&whichitem=2951&pwd");
+					visit_url("inv_use.php?which=3&whichitem=2951&pwd");
 					visit_url("choice.php?whichchoice=188&option=1&choiceform1=Catburgle&pwd");
 					cli_execute("outfit checkpoint");
 				} else if(i_a("mullet wig") > 0 && i_a("briefcase") > 0) {
 					print("BCC: Using the mullet wig and briefcase to burgle the Frat House...", "purple");
 					cli_execute("checkpoint");
 					cli_execute("equip mullet wig");
-					bumAdvUrl("inv_use.php?which=3&whichitem=2951&pwd");
+					visit_url("inv_use.php?which=3&whichitem=2951&pwd");
 					visit_url("choice.php?whichchoice=188&option=2&choiceform2=Catburgle&pwd");
 					cli_execute("outfit checkpoint");
 				} else {
@@ -3121,8 +3128,7 @@ boolean bcascTavern() {
 		if (my_adventures() == 0) abort("No adventures.");
 		tavern();
 	}
-
-	bumAdvUrl("rats.php?action=faucetoff");
+	visit_url("rats.php?action=faucetoff");
 	visit_url("tavern.php?place=barkeep");
 	visit_url("tavern.php?place=barkeep");
 
@@ -3450,7 +3456,7 @@ void bcs9() {
 		while (contains_text(visit_url("guild.php?place=challenge"), "<form")) {
 			print("BCC: Doing the guild tests to open the store.", "purple");
 			if (my_adventures() == 0) abort("You are out of adventures.");
-			bumAdvUrl("guild.php?action=chal");
+			visit_url("guild.php?action=chal");
 		}
 	}
 	
