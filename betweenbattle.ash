@@ -975,10 +975,11 @@ void getBoxes() {
 }
 
 void locationSkills(location loc) {
+	boolean needPolka = false;
 	if (loc == $location[boss bat's lair]) {
 		tryShrug($skill[fat leon's phat loot lyric]);
-		tryCast($skill[polka of plenty]);
 		tryCast($skill[leash of linguini]);
+		needPolka = true;
 	}
 
 	if (loc == $location[wartime sonofa beach]) {
@@ -988,7 +989,7 @@ void locationSkills(location loc) {
 
 	if (loc == $location[defiled cranny] || loc == $location[defiled alcove]) {
 		tryShrug($skill[fat leon's phat loot lyric]);
-		tryCast($skill[polka of plenty]);
+		needPolka = true;
 	}
 
 	if (my_level() >= 6 && my_meat() > 1000)
@@ -1011,6 +1012,11 @@ void locationSkills(location loc) {
 			poolTable("sty");
 		}
 	}
+
+	if (needPolka)
+		tryCast($skill[polka of plenty]);
+	else
+		tryShrug($skill[polka of plenty]);
 }
 
 void main() {
