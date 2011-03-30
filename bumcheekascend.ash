@@ -367,17 +367,23 @@ void callBetweenBattleScript() {
 
 //Use instead of adventure(1, location)
 boolean bumAdv1(location loc) {
-	betweenBattle();
+	//100% non-combat locations don't call the between battle script,
+	//so call it automatically. Also, don't call betweenBattle for these
+	//locations as we don't want to force healing in the Hidden Temple,
+	//for example.
 	if (loc.nocombats)
 		callBetweenBattleScript();
+	else
+		betweenBattle();
 	return adventure(1, loc);
 }
 
 //Use instead of adventure(1, location, filter)
 boolean bumAdv1(location loc, string filter) {
-	betweenBattle();
 	if (loc.nocombats)
 		callBetweenBattleScript();
+	else
+		betweenBattle();
 	return adventure(1, loc, filter);
 }
 
