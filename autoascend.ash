@@ -202,9 +202,9 @@ void endOfDay() {
 
 	useSpareZaps();
 
-	while (stills_available() > 0) {
-		if (!retrieve_item(1, $item[tonic water]))
-			break;
+
+	if (stills_available() > 0) {
+		retrieve_item(item_amount($item[tonic water]) + stills_available(), $item[tonic water]);
 	}
 
 	if (bcascStage("friars") && !get_property(propBlessingReceived).to_boolean()) {
