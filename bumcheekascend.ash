@@ -1107,8 +1107,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
 						if (get_property("bcasc_dontLevelInTemple") == "true") abort("You don't want to level in the temple.");
 						setFamiliar("hipster");
-						while (my_basestat(my_primestat()) < sMox)
-							bumAdv1($location[Hidden Temple]);
+						adventure(my_adventures(), $location[Hidden Temple]);
 					} else {
 						adventure(my_adventures(), $location[Haunted Pantry]);
 					}
@@ -1151,8 +1150,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
 						if (get_property("bcasc_dontLevelInTemple") == "true") abort("You don't want to level in the temple.");
 						setFamiliar("hipster");
-						while (my_basestat(my_primestat()) < sMox)
-							bumAdv1($location[Hidden Temple]);
+						adventure(my_adventures(), $location[Hidden Temple]);
 					} else {
 						adventure(my_adventures(), $location[Haunted Pantry]);
 					}
@@ -1280,7 +1278,10 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	if (canMCD() && loc == $location[Boss Bat's Lair]) { cli_execute("mcd "+b); }
 	if (canMCD() && loc == $location[Throne Room]) { cli_execute("mcd "+k); }
 
-	//Because moods aren't restored, adventure only once in a non-combat zone.
+	if (loc.nocombats)
+		callBetweenBattleScript();
+
+	//Because between battle scripts aren't called reliably, adventure one adventure at a time in a non-combat zone.
 	int numAdv = loc.nocombats ? 1 : my_adventures();
 	if (consultScript != "") {
 		if (adventure(numAdv, loc, consultScript)) {}
@@ -1541,9 +1542,7 @@ boolean bcascDinghyHippy() {
 				string numTripsTaken = shore.group(1);
 				if (numTripsTaken == "no") numTripsTaken = "0";
 				if (numTripsTaken < 5 && (my_meat() > 500*(5-to_int(numTripsTaken))))
-					for i from numTripsTaken+1 to 5 {
-						bumAdv1($location[Moxie Vacation]);
-					}
+					cli_execute("adv "+(5-numTripsTaken.to_int())+" moxie vacation");
 			}
 			if (item_amount($item[dinghy plans]) == 0) abort("Unable to check shore progress (99% of the time, this is because you lack meat). I recommend you make the Dinghy manually.");
 		}
