@@ -394,13 +394,6 @@ string bumAdvUrl(string url) {
 	return visit_url(url);
 }
 
-boolean bumFamiliar(familiar fam) {
-	if (fam != $familiar[none] && !have_familiar(fam)) return false;
-	//Record desired familiar so between battle script can use that info.
-	set_property("bcasc_familiar", fam);
-	return use_familiar(fam);
-}
-
 boolean buMax(string maxme) {
 	//We should sell these to avoid hassle when muscle classes.
 	foreach i in $items[antique helmet, antique shield, antique greaves, antique spear] {
