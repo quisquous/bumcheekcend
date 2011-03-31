@@ -20,7 +20,7 @@ boolean teaParty(item thing) {
 	if (!haveItem(thing))
 		return false;
 
-	if (!equip(thing))
+	if (equipped_amount(thing) == 0 && !equip(thing))
 		return false;
 
 	if (have_effect($effect[down the rabbit hole]) == 0)
