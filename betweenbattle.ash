@@ -504,6 +504,7 @@ void checkFamiliar(location loc) {
 
 			// If this won't complete a pie, do so ourselves.
 			set_property(propOrganFinishPie, parts != 4 || pie != 0);
+			return;
 		}
 	}
 
