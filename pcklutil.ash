@@ -275,10 +275,26 @@ boolean counterThisTurn(string counter) {
 	return get_counters(counter, 0, 0) == counter;
 }
 
-boolean counterActive(string counter) {
+boolean counterWithinTurns(string counter, int maxTurns) {
 	// If multiple, they'll all be returned as one string, so use
 	// contains_text instead of equality.
-	return contains_text(get_counters(counter, 0, 1000), counter);
+	return contains_text(get_counters(counter, 0, maxTurns), counter);
+}
+
+boolean counterActive(string counter) {
+	return counterWithinTurns(counter, 1000);
+}
+
+// A rough estimate of how many mainstat per adventure we could expected
+// to receive when trying to level as quickly as possible.
+float statsPerAdventure() {
+	// FIXME: See: http://www.houeland.com/kol/powerlevel
+
+	if (my_primestat() != $stat[moxie])
+		abort("Unhandled prime stat");
+
+	// For now, just return a linear interpolation of expected ballroom stats.
+	return 0.625 * my_basestat(my_primestat()) + 9.5;
 }
 
 int monsterLevel(location loc) {
