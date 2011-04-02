@@ -2,36 +2,6 @@ import <autoeat.ash>
 import <bumcheekascend.ash>
 import <pcklutil.ash>
 
-boolean teaParty(item thing) {
-	if (get_property(propTeaParty).to_boolean())
-		return false;
-
-	if (have_effect($effect[down the rabbit hole]) == 0) {
-		if (!haveItem($item[clan vip lounge key]))
-			return false;
-
-		if (!haveItem($item[drink me potion]))
-			visit_url("clan_viplounge.php?action=lookingglass");
-
-		if (!haveItem($item[drink me potion]))
-			return false;
-	}
-
-	if (!haveItem(thing))
-		return false;
-
-	if (equipped_amount(thing) == 0 && !equip(thing))
-		return false;
-
-	if (have_effect($effect[down the rabbit hole]) == 0)
-		use(1, $item[drink me potion]);
-
-	debug("Visiting the tea party with " + thing);
-	visit_url("choice.php?whichchoice=441&option=1&pwd", true);
-
-	return true;
-}
-
 void tryTeaParty() {
 	if (teaParty($item[reinforced beaded headband]))
 		return;

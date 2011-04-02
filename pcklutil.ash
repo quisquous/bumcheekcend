@@ -362,6 +362,48 @@ boolean stillAvailable() {
 	return visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still");
 }
 
+boolean teaParty(item thing) {
+	if (get_property(propTeaParty).to_boolean())
+		return false;
+
+	if (have_effect($effect[down the rabbit hole]) == 0) {
+		if (!haveItem($item[clan vip lounge key]))
+			return false;
+
+		if (!haveItem($item[drink me potion]))
+			visit_url("clan_viplounge.php?action=lookingglass");
+
+		if (!haveItem($item[drink me potion]))
+			return false;
+	}
+
+	if (!haveItem(thing))
+		return false;
+
+	cli_execute("checkpoint");
+	if (equipped_amount(thing) == 0) {
+		equip(thing);
+		if (equipped_amount(thing) == 0) {
+			cli_execute("outfit checkpoint");
+			return false;
+		}
+	}
+
+	if (have_effect($effect[down the rabbit hole]) == 0) {
+		use(1, $item[drink me potion]);
+		if (have_effect($effect[down the rabbit hole]) == 0) {
+			cli_execute("outfit checkpoint");
+			return false;
+		}
+	}
+
+	debug("Visiting the tea party with " + thing);
+	visit_url("choice.php?pwd&whichchoice=441&option=1&Try to get a seat", true);
+
+	cli_execute("outfit checkpoint");
+	return true;
+}
+
 boolean trySoak() {
 	if (item_amount($item[clan vip lounge key]) == 0 || get_property(propSoak).to_int() >= 5) {
 		return false;
