@@ -855,7 +855,8 @@ void faxAndFight(monster mon) {
 		abort("Can't fight " + mon + " fax today.");
 	}
 
-	get_monster_fax(mon);
+	if (!get_monster_fax(mon))
+		abort("Failed to fax " + mon);
 	betweenBattlePrep(my_location());
 	restore_mp(mp_cost($skill[entangling noodles]));
 	use(1, $item[photocopied monster]);
@@ -865,7 +866,8 @@ void faxAndArrow(monster mon) {
 	if (get_property(propFaxUsed).to_boolean()) {
 		abort("Can't fight " + mon + " fax today.");
 	}
-	get_monster_fax(mon);
+	if (!get_monster_fax(mon))
+		abort("Failed to fax " + mon);
 	use_familiar($familiar[obtuse angel]);
 	cli_execute("ccs obtuse");
 
