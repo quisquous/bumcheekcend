@@ -424,9 +424,9 @@ boolean buMax(string maxme) {
 	
 	//Basically, we ALWAYS want -tie and -ml, for ALL classes. Otherwise we let an override happen. 
 	switch (my_primestat()) {
-		case $stat[Muscle] : 		cli_execute("maximize mainstat "+maxme+" +melee +shield -ml -tie"); break;
+		case $stat[Muscle] : 		cli_execute("maximize mainstat "+maxme+" +melee +shield -ml -tie +muscle experience"); break;
 		case $stat[Mysticality] : 	abort("This script does not support Mysticality classes."); break;
-		case $stat[Moxie] : 		cli_execute("maximize mainstat "+maxme+" -melee -ml -tie"); break;
+		case $stat[Moxie] : 		cli_execute("maximize mainstat "+maxme+" -melee -ml -tie +moxie experience"); break;
 	}
 	return true;
 	/*
