@@ -737,6 +737,43 @@ void buyHammer() {
 	}
 }
 
+void pawnHipsterItemsInto(item goal)
+{
+	if (my_familiar() != $familiar[mini-hipster])
+		return;
+
+	item equipped = familiar_equipped_equipment($familiar[mini-hipster]);
+	if (equipped == goal)
+		return;
+
+	if (equipped != $item[none])
+		retrieve_item(1, equipped);
+
+	while (!haveItem(goal)) {
+		boolean haveAny = false;
+
+		foreach thing in $items[
+			ironic moustache,
+			chiptune guitar,
+			fixed-gear bicycle,
+		] {
+			if (!haveItem(thing))
+				continue;
+			haveAny = true;
+			if (thing != goal)
+				use(1, thing);
+		}
+		
+		if (!haveAny)
+			return;
+	}
+
+	if (!haveItem(goal))
+		abort("Internal error");
+
+	equip(goal);
+}
+
 void allowMining() {
 	// Mining is an excellent use of burning teleportitis turns.
 	// Once we've had teleportitis, no need to delay mining further.
@@ -1068,6 +1105,7 @@ void betweenBattlePrep(location loc) {
 	process_inventory();
 	optimizeMCD(loc);
 	checkFamiliar(loc);
+	pawnHipsterItemsInto($item[fixed-gear bicycle]);
 	if (needOlfaction(loc) && have_effect($effect[on the trail]) == 0) {
 		olfactionPreparation();
 	}
