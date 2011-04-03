@@ -810,8 +810,6 @@ void autoConsume(location loc) {
 		cli_execute("council");
 	}
 
-	autoSpleen(false);
-
-	boolean needAdv = my_adventures() < 10;
-	autoEat(false, needAdv);
+	autoSpleen(my_adventures() < 10);
+	autoEat(false, my_adventures() < 10);
 }
