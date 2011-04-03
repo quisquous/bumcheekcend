@@ -606,7 +606,22 @@ void checkFamiliar(location loc) {
 		if (!have_familiar($familiar[rogue program]) && !have_familiar($familiar[baby sandworm]))
 			return false;
 
-		return spleen_limit() - my_spleen_use() >= 4;
+		if (spleen_limit() - my_spleen_use() < 4)
+			return false;
+
+		if (my_level() >= 4)
+			return true;
+
+		int quantity = 0;
+		foreach thing in $items[
+			agua de vida,
+			coffee pixie stick,
+			game grid token,
+		] {
+			quantity += item_amount(thing);
+		}
+
+		return spleen_limit() - my_spleen_use() - quantity * 4 >= 4;
 	}
 
 	// If we need olfaction, we probably should be using an item familiar.
