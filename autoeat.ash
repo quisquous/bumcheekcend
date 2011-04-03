@@ -485,27 +485,6 @@ boolean getOven() {
 	return checkOven();
 }
 
-void prepForEating() {
-	// creatable_amount(item) doesn't consider items you could summon or get.
-	// Obtain a minimal of amount of everything we might need.
-
-	int desiredNoodles = 1;
-	int desiredReagents = 1;
-
-	if (have_skill($skill[pastamastery])) {
-		int noodles = item_amount($item[dry noodles]);
-		if (noodles < desiredNoodles) {
-			use_skill(desiredNoodles - noodles, $skill[pastamastery]);
-		}
-	}
-	if (have_skill($skill[advanced saucecrafting])) {
-		int reagents = item_amount($item[scrumptious reagent]);
-		if (reagents < desiredReagents) {
-			use_skill(desiredReagents - reagents, $skill[advanced saucecrafting]);
-		}
-	}
-}
-
 boolean canEat(item thing) {
 	int quantity = item_amount(thing) + creatable_amount(thing);
 	if (quantity == 0)
