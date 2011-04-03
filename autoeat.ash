@@ -605,6 +605,9 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		sort foodKeys by -foodStats(mafiaFood[index]);
 
 		foreach thing in foodKeys {
+			if (foodStats(mafiaFood[index]) <= 0)
+				return false;
+
 			if (eatItem(thing))
 				return true;
 		}
@@ -692,7 +695,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 
 	if (needStats && eatBestStatItem(result))
 		return true;
-	else if (needAdv && eatBestItem(result))
+	if (needAdv && eatBestItem(result))
 		return true;
 
 	if (!needAdv)
