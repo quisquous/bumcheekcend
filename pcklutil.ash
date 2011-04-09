@@ -435,6 +435,7 @@ boolean teaParty(item thing) {
 	}
 
 	debug("Visiting the tea party with " + thing);
+	visit_url("rabbithole.php?action=teaparty");
 	visit_url("choice.php?pwd&whichchoice=441&option=1&Try to get a seat", true);
 
 	cli_execute("outfit checkpoint");
