@@ -510,6 +510,9 @@ FoodInfo[item] getInfo(boolean[item] foodList) {
 	return getInfo(foodList, 0.0);
 }
 
+boolean autoDrink(boolean needStats, boolean needAdv) {
+}
+
 boolean couldEatFortuneCookie() {
 	return get_property(propNeedFortuneCookie).to_boolean() && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount();
 }
@@ -797,8 +800,13 @@ void autoConsume(location loc) {
 		cli_execute("council");
 	}
 
-	autoSpleen(my_adventures() < 10);
-	autoEat(false, my_adventures() < 10);
+	boolean needAdventures() {
+		return my_adventures() < 10;
+	}
+
+	autoSpleen(needAdventures());
+	autoEat(false, needAdventures());
+	autoDrink(false, needAdventures());
 
 	int totalFullness = fullness_limit() - my_fullness();
 	// Do this last, in case we auto-ate a fortune cookie with milk.
