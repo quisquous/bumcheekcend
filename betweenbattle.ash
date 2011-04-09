@@ -1075,6 +1075,9 @@ void locationSkills(location loc) {
 }
 
 void main() {
+	if (can_interact())
+		return;
+
 	if (my_daycount() == 1 && my_turncount() == 0) {
 		firstTurn();
 	}
