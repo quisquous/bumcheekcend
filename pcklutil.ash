@@ -156,6 +156,14 @@ void setFortuneCookieEatenToday() {
 	set_property(propLastFortuneCookie, today_to_string());
 }
 
+boolean harvestCampground() {
+	int[item] campground = get_campground();
+	if (campground[$item[pumpkin]] == 0)
+		return false;
+
+	return cli_execute("garden pick");
+}
+
 // Skills and effects
 
 int maxCocktailSummons() {

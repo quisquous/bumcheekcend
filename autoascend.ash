@@ -169,9 +169,9 @@ void useSpareZaps() {
 void endOfDay() {
 	// Force use remaining spleen items.
 	while (autoSpleen(true)) {}
+	while (autoEat(false, true)) {}
 
 	useSpareZaps();
-
 
 	if (stills_available() > 0) {
 		retrieve_item(item_amount($item[tonic water]) + stills_available(), $item[tonic water]);
@@ -184,6 +184,8 @@ void endOfDay() {
 	for i from 1 to 3 {
 		poolTable("mys");
 	}
+
+	harvestCampground();
 
 	tryTeaParty();
 
