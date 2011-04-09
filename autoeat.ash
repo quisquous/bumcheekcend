@@ -40,7 +40,7 @@ record FoodList {
 };
 
 // For a given max fullness level and set of foods, return the optimal menu.
-FoodList findBest(FoodInfo[item] foods, int maxFullness) {
+FoodList[int] findAllBest(FoodInfo[item] foods, int maxFullness) {
 	// Deciding what to eat is the bounded knapsack problem.  Given that
 	// maxFull <= 35, we can do a dynamic programming approach considering the
 	// foods at ascending levels of fullness.  Silly NP complete problems.  Try
@@ -133,8 +133,12 @@ FoodList findBest(FoodInfo[item] foods, int maxFullness) {
 		}
 	}
 
-	// All done.  Return best list of items.  The best list of food may not
-	// be the highest fullness, so search for it.
+	return bestFood;
+}
+
+FoodList findBest(FoodInfo[item] foods, int maxFullness) {
+	FoodList[int] bestFood = findAllBest(foods, maxFullness);
+
 	float bestQuality = 0.0;
 	int bestFullness = 0;
 	for fullness from 1 to maxFullness {
@@ -517,8 +521,7 @@ FoodInfo[item] getInfo(boolean[item] foodList, float milkMultiplier) {
 FoodInfo[item] getInfo(boolean[item] foodList) {
 	return getInfo(foodList, 0.0);
 }
-// Eat food.  If force is true, use at least one thing if possible.
-// Returns true if something was eaten.
+
 boolean autoEat(boolean needStats, boolean needAdv) {
 	int totalFullness = fullness_limit() - my_fullness();
 
@@ -605,7 +608,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		sort foodKeys by -foodStats(mafiaFood[index]);
 
 		foreach thing in foodKeys {
-			if (foodStats(mafiaFood[index]) <= 0)
+			if (foodStats(mafiaFood[thing]) <= 0)
 				return false;
 
 			if (eatItem(thing))
@@ -616,8 +619,6 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	}
 
 	boolean useMilk = haveItem($item[milk of magnesium]) || haveItem($item[glass of goat's milk]);
-	if (useMilk)
-		abort("TEST DEBUG PICKLISH MILK");
 	float milkMultiplier = useMilk ? 1 : 0;
 
 	FoodInfo[item] milkFoods = getInfo(awesomeFood, milkMultiplier);
@@ -647,19 +648,19 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	}
 
 	// FIXME: need to sort out when to eat fortune cookies and when to wait.
-/*
 	if (couldEatFortuneCookie()) {
 		milkFoods[$item[fortune cookie]].quantity = 1;
 		milkFoods[$item[fortune cookie]].quality = 1000;
 	}
-*/
 
 	FoodList result = findBest(milkFoods, totalFullness);
 	if (useMilk) {
 		int fullness;
 		foreach thing in result.foodList {
-			if (!couldCreate(thing))
+			if (!couldCreate(thing)) {
 				fullness -= thing.fullness;
+				debug("Couldn't maek " + thing);
+			}
 		}
 
 		if (fullness != totalFullness && !needAdv)
@@ -673,9 +674,11 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		boolean createdSomething = false;
 		foreach thing in result.foodList {
 			createdSomething |= createItem(result.foodList[thing], thing);
+			debug("Making: " + thing);
 		}
 
 		if (createdSomething) {
+			abort("TEST DEBUG PICKLISH MILK");
 			retrieve_item(1, $item[milk of magnesium]);
 			use(1, $item[milk of magnesium]);
 
