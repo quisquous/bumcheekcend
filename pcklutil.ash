@@ -164,16 +164,28 @@ int maxCocktailSummons() {
 	return 0;
 }
 
+int cocktailSummonsRemaining() {
+	return maxCocktailSummons() - get_property(propCocktailSummons).to_int();
+}
+
 int maxNoodleSummons() {
 	if (have_skill($skill[pastamastery]))
 		return have_skill($skill[transcendental noodlecraft]) ? 5 : 3;
 	return 0;
 }
 
+int noodleSummonsRemaining() {
+	return maxNoodleSummons() - get_property(propNoodleSummons).to_int();
+}
+
 int maxReagentSummons() {
 	if (have_skill($skill[advanced saucecrafting]))
 		return have_skill($skill[the way of sauce]) ? 5 : 3;
 	return 0;
+}
+
+int reagentSummonsRemaining() {
+	return maxReagentSummons() - get_property(propReagentSummons).to_int();
 }
 
 int mpRegenerationByEffect(effect e) {
@@ -254,6 +266,8 @@ boolean tryCast(skill s) {
 	if (e == $effect[none] || !have_skill(s) || have_effect(e) > 0)
 		return false;
 
+	// FIXME: consider accordion thief song count.
+
 	use_skill(1, s);
 	return have_effect(e) > 0;
 }
@@ -264,6 +278,20 @@ boolean tryShrug(skill s) {
 		return true;
 
 	return cli_execute("uneffect " + e);
+}
+
+boolean tryTonic(int neededMP) {
+	if (my_mp() >= neededMP)
+		return false;
+
+	if (!haveItem($item[tonic water]))
+		return false;
+
+	if (my_maxmp() - my_mp() < 50) {
+		tryCast($skill[mojomuscular melody]);
+	}
+
+	return use(1, $item[tonic water]);
 }
 
 // Adventuring

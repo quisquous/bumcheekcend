@@ -47,13 +47,20 @@ FoodList[int] findAllBest(FoodInfo[item] foods, int maxFullness) {
 	// to keep the food list small, because this is of complexity
 	// O(maxFullness^2 * count(foods)).
 
+	// Note: For simplicity, the list of foods is considered to be wholly
+	// independent (i.e. the quantity available of one does not affect the
+	// quantity of another).  This is not true, but this function can be
+	// called repeatedly until a local maximum is found.  This doesn't work
+	// in any general sense, but most interdependence of ingredients is found
+	// in foods of similar quality and identical fullness (e.g. garnishes)
+	// so it should largely be the global maximum as well.
+
 	// WTF WTF WTF.  Sort destroys the association between keys and values.
 	// So, create a second array of "just" the food items, so that we can
 	// sort by value and not destroy the information passed into this func.
 	boolean[item] foodKeys;
-	foreach thing in foods {
+	foreach thing in foods
 		foodKeys[thing] = true;
-	}
 	sort foodKeys by -foods[index].quality;
 
 	// Sparse array of best foods for a given fullness level.
@@ -236,6 +243,7 @@ boolean[item] milkFoodList = $items[
 	boring spaghetti,
 	boris's key lime pie,
 	brain-meltingly-hot chicken wings,
+	bunch of square grapes,
 	candied yams,
 	can-shaped gelatinous cranberry sauce,
 	cold hi mein,
@@ -477,26 +485,165 @@ boolean getOven() {
 	return checkOven();
 }
 
-boolean canEat(item thing) {
-	int quantity = item_amount(thing) + creatable_amount(thing);
-	if (quantity == 0)
-		return false;
+boolean canConsume(item thing) {
+	return thing.levelreq <= my_level();
+}
 
-	if (thing.levelreq > my_level())
-		return false;
+int[item] npcCost;
+npcCost[$item[bowl of rye sprouts]] = 300;
+npcCost[$item[cob of corn]] = 300;
+npcCost[$item[flat dough]] = 50;
+npcCost[$item[fortune cookie]] = 40;
+npcCost[$item[gnollish casserole dish]] = 150;
+npcCost[$item[gnollish pie tin]] = 30;
+npcCost[$item[grapes]] = 70;
+npcCost[$item[herbs]] = 64;
+npcCost[$item[juniper berries]] = 300;
+npcCost[$item[lemon]] = 70;
+npcCost[$item[olive]] = 70;
+npcCost[$item[orange]] = 70;
+npcCost[$item[peach]] = 300;
+npcCost[$item[pear]] = 300;
+npcCost[$item[plum]] = 300;
+npcCost[$item[skewer]] = 80;
+npcCost[$item[strawberry]] = 70;
+npcCost[$item[taco shell]] = 80;
+npcCost[$item[tomato]] = 70;
+npcCost[$item[wad of dough]] = 50;
 
-	return true;
+int purchasableAmount(item thing) {
+	if (!is_npc_item(thing))
+		return 0;
+
+	switch (thing) {
+	case $item[fortune cookie]:
+		return my_meat() / npcCost[thing];
+
+	case $item[grapes]:
+	case $item[herbs]:
+	case $item[lemon]:
+	case $item[olive]:
+	case $item[orange]:
+	case $item[strawberry]:
+	case $item[tomato]:
+		if (!hippy_store_available() || !have_outfit("filthy hippy disguise"))
+			return 0;
+		return my_meat() / npcCost[thing];
+
+	case $item[peach]:
+	case $item[pear]:
+	case $item[plum]:
+		// FIXME
+		return 0;
+
+	case $item[bowl of rye sprouts]:
+	case $item[cob of corn]:
+	case $item[juniper berries]:
+		// FIXME
+		return 0;
+
+	case $item[gnollish pie tin]:
+	case $item[wad of dough]:
+	case $item[flat dough]:
+	case $item[skewer]:
+	case $item[taco shell]:
+	case $item[gnollish casserole dish]:
+		if (!in_muscle_sign() && !have_outfit("bugbear costume"))
+			return 0;
+		return my_meat() / npcCost[thing];
+	}
+
+	return 0;
+}
+
+int couldCreateQuantity(item thing) {
+	switch (thing) {
+	case $item[dry noodles]:
+		return noodleSummonsRemaining() + item_amount(thing);
+	case $item[scrumptious reagent]:
+		return reagentSummonsRemaining() + item_amount(thing);
+	case $item[jabanero pepper]:
+	case $item[ketchup]:
+	case $item[catsup]:
+		return my_meat() / 150 + item_amount(thing);
+	}
+
+	int quantity = creatable_amount(thing);
+
+	// Break infinite loops in ingredient lists.
+	if (thing == $item[flat dough])
+		return item_amount(thing) + purchasableAmount(thing);
+
+	// Maybe recursively try to create this thing?
+	int[item] ingredientList = get_ingredients(thing);
+	if (count(ingredientList) > 0) {
+		int quantity = 10000;
+
+		foreach ingredient in ingredientList {
+			quantity = min(quantity, couldCreateQuantity(ingredient));
+			if (quantity == 0)
+				break;
+		}
+	}
+
+	quantity += item_amount(thing) + purchasableAmount(thing);
+	return quantity;
+}
+
+boolean couldCreate(item thing) {
+	return couldCreateQuantity(thing) > 0;
+}
+
+boolean createItem(int quantity, item thing) {
+	if (item_amount(thing) >= quantity)
+		return true;
+
+	// FIXME: use Inigo's here.
+
+	switch (thing) {
+	case $item[jabanero pepper]:
+		hermit(quantity, $item[jabanero pepper]);
+		break;
+	case $item[dry noodles]:
+		if (have_skill($skill[pastamastery])) {
+			int noodles = item_amount($item[dry noodles]);
+			if (noodles < quantity) {
+				use_skill(quantity - noodles, $skill[pastamastery]);
+			}
+		}
+		break;
+	case $item[scrumptious reagent]:
+		if (have_skill($skill[advanced saucecrafting])) {
+			int reagents = item_amount($item[scrumptious reagent]);
+			if (reagents < quantity) {
+				use_skill(quantity - reagents, $skill[advanced saucecrafting]);
+			}
+		}
+	}
+
+	// Maybe recursively try to create this thing?
+	int[item] ingredientList = get_ingredients(thing);
+	foreach ingredient in ingredientList {
+		if (!createItem(ingredientList[ingredient], ingredient))
+			return false;
+	}
+
+	return retrieve_item(quantity, thing);
 }
 
 FoodInfo[item] getInfo(boolean[item] foodList, float milkMultiplier) {
 	FoodInfo[item] foods;
 
 	foreach thing in foodList {
-		if (!canEat(thing))
+		if (!canConsume(thing))
+			continue;
+
+		int quantity = couldCreateQuantity(thing);
+		if (quantity <= 0)
 			continue;
 
 		float quality = foodQuality(thing) + milkMultiplier * thing.fullness;
-		if (quality < 0)
+		if (quality <= 0)
 			continue;
 
 		foods[thing].quantity = item_amount(thing) + creatable_amount(thing);
@@ -511,10 +658,121 @@ FoodInfo[item] getInfo(boolean[item] foodList) {
 }
 
 boolean autoDrink(boolean needStats, boolean needAdv) {
+	return false;
+
+	int totalDrunk = inebriety_limit() - my_inebriety();
+
+	if (totalDrunk <= 0)
+		return false;
+	
+	boolean drinkItem(item thing) {
+		debug("Trying to drink" + thing);
+		if (!createItem(1, thing))
+			return false;
+
+		abort("TEST DEBUG ABORT BEFORE DRINKING: " + thing);
+		return drink(1, thing);
+	}
+
+	boolean drinkBestItem(FoodList list) {
+		boolean[item] foodKeys;
+		foreach thing in list.foodList
+			foodKeys[thing] = true;
+		sort foodKeys by -foodQuality(index);
+
+		foreach thing in foodKeys {
+			if (drinkItem(thing))
+				return true;
+		}
+
+		return false;
+	}
+
+	boolean drinkBestStatItem(FoodList list) {
+		boolean[item] foodKeys;
+		foreach thing in list.foodList
+			foodKeys[thing] = true;
+		sort foodKeys by -foodStats(mafiaFood[index]);
+
+		foreach thing in foodKeys {
+			if (foodStats(mafiaFood[thing]) <= 0)
+				return false;
+
+			if (drinkItem(thing))
+				return true;
+		}
+
+		return false;
+	}
+
+	if (needAdv && cocktailSummonsRemaining() > 0) {
+		int quantity = cocktailSummonsRemaining();
+
+		debug("We need adventures, so summoning garnishes.");
+		tryTonic(quantity * 10);
+		use_skill(quantity, $skill[advanced cocktailcrafting]);
+	}
+
+	// Don't bother drinking unless we have garnishes.
+	// There's some special logic for pumpkin beer elsewhere.
+	if (cocktailSummonsRemaining() > 0) {
+		debug("TEMP: Still have summons remaining, no drinking: " + cocktailSummonsRemaining());
+		return false;
+	}
+
+	boolean useOde = true;
+	float odeMultiplier = useOde ? 1 : 0;
+	FoodInfo[item] odeDrinks = getInfo(odeDrinkList, odeMultiplier);
+
+	FoodList result = findBest(odeDrinks, totalDrunk);
+	if (useOde) {
+		foreach thing in result.foodList {
+			if (!createItem(result.foodList[thing], thing)) {
+			}
+		}
+	}
+
+	if (needStats && drinkBestStatItem(result))
+		return true;
+	if (needAdv && drinkBestItem(result))
+		return true;
+
+	if (!needAdv)
+		return false;
+
+	debug("We need adventures, but couldn't drink anything awesome.");
+	abort("Whoa there.");
+
+	FoodList awesomeList = findBest(getInfo(odeDrinkList), totalDrunk);
+	if (drinkBestItem(awesomeList))
+		return true;
+
+	FoodList otherList = findBest(getInfo(otherDrinkList), totalDrunk);
+	if (drinkBestItem(otherList))
+		return true;
+
+	debug("Somehow we couldn't drink anything.");
+	return false;
+
 }
 
 boolean couldEatFortuneCookie() {
 	return get_property(propNeedFortuneCookie).to_boolean() && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount();
+}
+
+boolean eatItem(item thing) {
+	debug("Trying to eat " + thing);
+	if (createItem(1, thing)) {
+		if (!eat(1, thing))
+			return false;
+
+		if (thing == $item[fortune cookie])
+			setFortuneCookieEatenToday();
+
+		return true;
+	}
+
+	return false;
 }
 
 boolean autoEat(boolean needStats, boolean needAdv) {
@@ -522,62 +780,6 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 
 	if (totalFullness <= 0)
 		return false;
-
-	boolean couldCreate(item thing) {
-		// Noodle summoning, etc...
-		return canEat(thing);
-	}
-
-	boolean createItem(int quantity, item thing) {
-		if (item_amount(thing) >= quantity)
-			return true;
-
-		switch (thing) {
-		case $item[jabanero pepper]:
-			hermit(quantity, $item[jabanero pepper]);
-			break;
-		case $item[dry noodles]:
-			if (have_skill($skill[pastamastery])) {
-				int noodles = item_amount($item[dry noodles]);
-				if (noodles < quantity) {
-					use_skill(quantity - noodles, $skill[pastamastery]);
-				}
-			}
-			break;
-		case $item[scrumptious reagent]:
-			if (have_skill($skill[advanced saucecrafting])) {
-				int reagents = item_amount($item[scrumptious reagent]);
-				if (reagents < quantity) {
-					use_skill(quantity - reagents, $skill[advanced saucecrafting]);
-				}
-			}
-		}
-
-		// Maybe recursively try to create this thing?
-		int[item] ingredientList = get_ingredients(thing);
-		foreach ingredient in ingredientList {
-			if (!createItem(ingredientList[ingredient], ingredient))
-				return false;
-		}
-
-		return retrieve_item(quantity, thing);
-	}
-
-	boolean eatItem(item thing) {
-		debug("Trying to eat " + thing);
-		if (createItem(1, thing)) {
-			abort("TEST DEBUG ABORT BEFORE EATING: " + thing);
-			if (!eat(1, thing))
-				return false;
-
-			if (thing == $item[fortune cookie])
-				setFortuneCookieEatenToday();
-
-			return true;
-		}
-
-		return false;
-	}
 
 	boolean eatBestItem(FoodList list) {
 		boolean[item] foodKeys;
@@ -610,10 +812,21 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		return false;
 	}
 
-	boolean useMilk = haveItem($item[milk of magnesium]) || haveItem($item[glass of goat's milk]);
+	boolean useMilk = couldCreateQuantity($item[milk of magnesium]) > 0;
 	float milkMultiplier = useMilk ? 1 : 0;
 
-	FoodInfo[item] milkFoods = getInfo(milkFoodList, milkMultiplier);
+	FoodInfo[item] getMilkFoodInfo(float milkMultiplier) {
+		FoodInfo[item] milkFoods = getInfo(milkFoodList, milkMultiplier);
+
+		if (couldEatFortuneCookie() && !eatenFortuneCookieToday()) {
+			milkFoods[$item[fortune cookie]].quantity = 1;
+			milkFoods[$item[fortune cookie]].quality = 1000;
+		}
+
+		return milkFoods;
+	}
+
+	FoodInfo[item] milkFoods = getMilkFoodInfo(milkMultiplier);
 
 	// Special items.  Insert them even if we can't make or eat them, under
 	// the assumption that we might be able to later.
@@ -639,62 +852,71 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		milkFoods[thing].quality = quality;
 	}
 
-	// FIXME: need to sort out when to eat fortune cookies and when to wait.
-	if (couldEatFortuneCookie() && !eatenFortuneCookieToday()) {
-		milkFoods[$item[fortune cookie]].quantity = 1;
-		milkFoods[$item[fortune cookie]].quality = 1000;
+	int createAndGetFullness(FoodList list) {
+		// We may not be able to create everything, so create the best items first.
+		boolean[item] foodKeys;
+		foreach thing in list.foodList
+			foodKeys[thing] = true;
+		sort foodKeys by -foodQuality(index);
+
+		int total = 0;
+		foreach thing in foodKeys {
+			total += thing.fullness * min(couldCreateQuantity(thing), list.foodList[thing]);
+		}
+		return total;
 	}
 
 	FoodList result = findBest(milkFoods, totalFullness);
+
 	if (useMilk) {
-		int fullness;
-		foreach thing in result.foodList {
-			if (!couldCreate(thing)) {
-				fullness -= thing.fullness;
-				debug("Couldn't maek " + thing);
-			}
+		int fullness = createAndGetFullness(result);
+		if (fullness != totalFullness) {
+			// We want to use milk, but wait on better food items.
+			if (!needAdv)
+				return false;
+
+			// Try again, but don't add special items.
+			//
+			// Additionally, one failure of the optimal diet algorithm is that
+			// interdependence of ingredients among items isn't handled.  So,
+			// if two items require something we only have one of, we may fail
+			// to create the second one.  So, repeat finding the best until
+			// fullness doesn't improve.
+			int lastFullness;
+			repeat {
+				lastFullness = fullness;
+				result = findBest(getMilkFoodInfo(milkMultiplier), totalFullness);
+				fullness = createAndGetFullness(result);
+			} until (fullness == lastFullness);
 		}
 
-		if (fullness != totalFullness && !needAdv)
+		if (fullness == 0)
 			return false;
 
-		if (fullness < 10)
-			useMilk = false;
-	}
-
-	if (useMilk) {
-		boolean createdSomething = false;
-		foreach thing in result.foodList {
-			createdSomething |= createItem(result.foodList[thing], thing);
-			debug("Making: " + thing);
-		}
-
-		if (createdSomething) {
-			abort("TEST DEBUG PICKLISH MILK");
+		if (have_effect($effect[got milk]) == 0) {
 			retrieve_item(1, $item[milk of magnesium]);
 			use(1, $item[milk of magnesium]);
-
-			boolean ateSomething = false;
-			foreach thing in result.foodList {
-				if (item_amount(thing) > 0)
-					ateSomething |= eatItem(thing);
-			}
-			if (!ateSomething)
-				abort("Used milk, but failed to eat anything!");
-
-			return ateSomething;
-		} else {
-			abort("Tried to use milk but couldn't create anything.");
 		}
+
+		// FIXME: What if milk is going to run out?
+
+		boolean ateSomething = false;
+		foreach thing in result.foodList {
+			for count from 1 to result.foodList[thing]
+				ateSomething |= eatItem(thing);
+		}
+		if (!ateSomething)
+			abort("Used milk, but failed to eat anything!");
+
+		return ateSomething;
+	} else {
+		abort("Tried to use milk but couldn't create anything.");
 	}
 
-	if (needStats && eatBestStatItem(result))
-		return true;
+	if (needStats)
+		return eatBestStatItem(result);
 	if (needAdv && eatBestItem(result))
 		return true;
-
-	if (!needAdv)
-		return false;
 
 	debug("We need adventures, but couldn't eat anything awesome.");
 	abort("Whoa there.");
@@ -790,7 +1012,7 @@ void autoConsume(location loc) {
 
 	if (my_daycount() == 1 && my_inebriety() == 0 && stillAvailable()) {
 		tryCast($skill[mojomuscular melody]);
-		retrieve_item(1, $item[tonic water]);
+		retrieve_item(4, $item[tonic water]);
 		use(1, $item[tonic water]);
 		use_skill(1, $skill[ode to booze]);
 		cli_execute("garden pick");
@@ -811,6 +1033,6 @@ void autoConsume(location loc) {
 	int totalFullness = fullness_limit() - my_fullness();
 	// Do this last, in case we auto-ate a fortune cookie with milk.
 	if (totalFullness >= 1 && couldEatFortuneCookie() && counterWithinTurns(semirareWindowCounter, 10)) {
-		eat(1, $item[fortune cookie]);
+		eatItem($item[fortune cookie]);
 	}
 }
