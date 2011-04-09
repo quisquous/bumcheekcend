@@ -1,5 +1,5 @@
 import <pcklutil.ash>
 
-void main(int goal) {
+void main(int goal, boolean needBaseStat) {
 	debug("Level me goal: " + goal);
 }

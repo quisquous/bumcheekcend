@@ -1092,7 +1092,7 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 
 	string command = get_property("bcasc_preLevelMe");
 	if (command != "") {
-		cli_execute(command + " " + sMox);
+		cli_execute(command + " " + sMox + " " + needBaseStat);
 		if (my_basestat(my_primestat()) >= sMox)
 			return true;
 	}
