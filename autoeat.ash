@@ -228,7 +228,7 @@ boolean[item] allWads = $items[
 	twinkly wad,
 ];
 
-boolean[item] awesomeFood = $items[
+boolean[item] milkFoodList = $items[
 	asparagus lo mein,
 	badass pie,
 	bat wing chow mein,
@@ -303,42 +303,36 @@ boolean[item] awesomeFood = $items[
 	yam candy,
 ];
 
-boolean[item] goodFood = $items[
-	blackberry,
-	knob jelly donut,
-	knob nuts,
-	manetwich,
-	natto pocky,
-	peach,
-	pear,
-	plum,
-	tobiko pocky,
-	wasabi pocky,
-];
-
-boolean[item] decentFood = $items[
+boolean[item] otherFoodList = $items[
 	abominable snowcone,
-	cocktail onion,
-	kiwi,
-	kumquat,
-	raspberry,
-	tangerine,
-];
-
-boolean[item] crappyFood = $items[
+	blackberry,
 	bowl of cottage cheese,
+	cocktail onion,
 	cranberries,
 	grapefruit,
 	grapes,
 	hot wing,
+	kiwi,
+	knob jelly donut,
+	knob nuts,
+	kumquat,
 	lemon,
+	manetwich,
 	mug cake,
+	natto pocky,
 	olive,
 	orange,
+	peach,
+	pear,
+	plum,
+	raspberry,
 	royal jelly,
 	strawberry,
+	tangerine,
+	tobiko pocky,
 	tomato,
 	urinal cake,
+	wasabi pocky,
 ];
 
 boolean[item] awesomeDrinks = $items[
@@ -622,7 +616,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	boolean useMilk = haveItem($item[milk of magnesium]) || haveItem($item[glass of goat's milk]);
 	float milkMultiplier = useMilk ? 1 : 0;
 
-	FoodInfo[item] milkFoods = getInfo(awesomeFood, milkMultiplier);
+	FoodInfo[item] milkFoods = getInfo(milkFoodList, milkMultiplier);
 
 	// Special items.  Insert them even if we can't make or eat them, under
 	// the assumption that we might be able to later.
@@ -708,20 +702,12 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	debug("We need adventures, but couldn't eat anything awesome.");
 	abort("Whoa there.");
 
-	FoodList awesomeList = findBest(getInfo(awesomeFood), totalFullness);
+	FoodList awesomeList = findBest(getInfo(milkFoodList), totalFullness);
 	if (eatBestItem(awesomeList))
 		return true;
 
-	FoodList goodList = findBest(getInfo(goodFood), totalFullness);
+	FoodList goodList = findBest(getInfo(otherFoodList), totalFullness);
 	if (eatBestItem(goodList))
-		return true;
-
-	FoodList decentList = findBest(getInfo(decentFood), totalFullness);
-	if (eatBestItem(decentList))
-		return true;
-	
-	FoodList crappyList = findBest(getInfo(crappyFood), totalFullness);
-	if (eatBestItem(crappyList))
 		return true;
 
 	debug("Somehow we couldn't eat anything.");
