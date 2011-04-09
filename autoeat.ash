@@ -522,17 +522,12 @@ FoodInfo[item] getInfo(boolean[item] foodList) {
 	return getInfo(foodList, 0.0);
 }
 
+boolean couldEatFortuneCookie() {
+	return get_property(propNeedFortuneCookie).to_boolean() && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount();
+}
+
 boolean autoEat(boolean needStats, boolean needAdv) {
 	int totalFullness = fullness_limit() - my_fullness();
-
-	boolean couldEatFortuneCookie() {
-		return get_property(propNeedFortuneCookie).to_boolean() && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount();
- 	}
-
-	if (totalFullness >= 1 && couldEatFortuneCookie() && counterWithinTurns(semirareWindowCounter, 10)) {
-		if (eat(1, $item[fortune cookie]))
-			totalFullness -= 1;
-	}
 
 	if (totalFullness <= 0)
 		return false;
@@ -581,7 +576,13 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		debug("Trying to eat " + thing);
 		if (createItem(1, thing)) {
 			abort("TEST DEBUG ABORT BEFORE EATING: " + thing);
-			return eat(1, thing);
+			if (!eat(1, thing))
+				return false;
+
+			if (thing == $item[fortune cookie])
+				setFortuneCookieEatenToday();
+
+			return true;
 		}
 
 		return false;
@@ -648,7 +649,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	}
 
 	// FIXME: need to sort out when to eat fortune cookies and when to wait.
-	if (couldEatFortuneCookie()) {
+	if (couldEatFortuneCookie() && !eatenFortuneCookieToday()) {
 		milkFoods[$item[fortune cookie]].quantity = 1;
 		milkFoods[$item[fortune cookie]].quality = 1000;
 	}
@@ -818,4 +819,10 @@ void autoConsume(location loc) {
 
 	autoSpleen(my_adventures() < 10);
 	autoEat(false, my_adventures() < 10);
+
+	int totalFullness = fullness_limit() - my_fullness();
+	// Do this last, in case we auto-ate a fortune cookie with milk.
+	if (totalFullness >= 1 && couldEatFortuneCookie() && counterWithinTurns(semirareWindowCounter, 10)) {
+		eat(1, $item[fortune cookie]);
+	}
 }

@@ -22,6 +22,7 @@ string propFaxBlooper = "picklishFaxBlooper";
 string propFaxLobster = "picklishFaxLobster";
 string propFaxUsed = "_photocopyUsed";
 string propHipsterAdv = "_hipsterAdv";
+string propLastFortuneCookie = "picklishFortuneCookieDay";
 string propLevelMeCommand = "bcasc_preLevelMe";
 string propLibramSummons = "libramSummons";
 string propMineUnaccOnly = "bcasc_MineUnaccOnly";
@@ -145,6 +146,14 @@ boolean haveLegendaryWeapon() {
 
 boolean haveKGEOutfit() {
 	return haveItem($item[Knob Goblin elite pants]) || haveItem($item[Knob Goblin elite polearm]) || haveItem($item[Knob Goblin elite helm]);
+}
+
+boolean eatenFortuneCookieToday() {
+	return get_property(propLastFortuneCookie) == today_to_string();
+}
+
+void setFortuneCookieEatenToday() {
+	set_property(propLastFortuneCookie, today_to_string());
 }
 
 // Skills and effects
