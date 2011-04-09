@@ -892,6 +892,11 @@ void openDispensary() {
 		return;
 	}
 
+	if (guild_store_available()) {
+		if (my_class() == $class[accordion thief] || my_primestat() == $stat[mysticality])
+			return;
+	}
+
 	cli_execute("outfit save picklish");
 	cli_execute("maximize mainstat +outfit elite -ml -tie");
 	preppedAdventure(1, $location[cobb's knob barracks]);
