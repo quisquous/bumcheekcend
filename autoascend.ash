@@ -140,15 +140,6 @@ void useSpareZaps() {
 	if (!canZap())
 		return;
 
-	stat garnishAlignment(item thing) {
-		switch (thing) {
-		case $item[coconut shell]: return $stat[muscle];
-		case $item[little paper umbrella]: return $stat[mysticality];
-		case $item[magical ice cubes]: return $stat[moxie];
-		}
-		return $stat[none];
-	}
-
 	// Zap garnishes for better stat alignment.
 	foreach thing in $items[
 		coconut shell,

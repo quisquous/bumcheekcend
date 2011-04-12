@@ -164,6 +164,15 @@ boolean harvestCampground() {
 	return cli_execute("garden pick");
 }
 
+stat garnishAlignment(item thing) {
+	switch (thing) {
+	case $item[coconut shell]: return $stat[muscle];
+	case $item[little paper umbrella]: return $stat[mysticality];
+	case $item[magical ice cubes]: return $stat[moxie];
+	}
+	return $stat[none];
+}
+
 // Skills and effects
 
 int maxCocktailSummons() {
