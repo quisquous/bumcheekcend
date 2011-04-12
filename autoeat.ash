@@ -21,7 +21,7 @@ boolean loadMafiaDataFiles() {
 	if (!file_to_map("fullness.txt", mafiaFood))
 		return false;
 
-	if (!file_to_map("fullness.txt", mafiaDrink))
+	if (!file_to_map("inebriety.txt", mafiaDrink))
 		return false;
 	
 	dataFilesLoaded = true;
@@ -59,8 +59,9 @@ FoodList[int] findAllBest(FoodInfo[item] foods, int maxFullness) {
 	// So, create a second array of "just" the food items, so that we can
 	// sort by value and not destroy the information passed into this func.
 	boolean[item] foodKeys;
-	foreach thing in foods
+	foreach thing in foods {
 		foodKeys[thing] = true;
+	}
 	sort foodKeys by -foods[index].quality;
 
 	// Sparse array of best foods for a given fullness level.
@@ -79,7 +80,7 @@ FoodList[int] findAllBest(FoodInfo[item] foods, int maxFullness) {
 			if (!lastFoodBetter)
 				break;
 
-			if (thing.fullness != foodFullness)
+			if (thing.fullness != foodFullness && thing.inebriety != foodFullness)
 				continue;
 
 			// We are now considering this food, so reset the flag.
@@ -199,19 +200,94 @@ float foodStats(MafiaEntry entry)
 	return rangeToAverage(statString);
 }
 
-float foodQuality(MafiaEntry entry)
+// These ingredients require a turn to cook.
+boolean[item] fancyIngredients = $items[
+	boris's key lime,
+	bottle of calcutta emerald,
+	bottle of definit,
+	bottle of domesticated turkey,
+	bottle of jorge sinsonte,
+	bottle of lieutenant freeman,
+	bottle of pete's sake,
+	boxed champagne,
+	bubbling tempura batter,
+	coconut shell,
+	digital key lime,
+	dry noodles,
+	evil noodles,
+	globe of deep sauce,
+	grue egg,
+	jarlsberg's key lime,
+	knob frosting,
+	little paper umbrella,
+	magical ice cubes,
+	mushroom fermenting solution,
+	nauseating reagent,
+	scrumdiddlyumptious solution,
+	scrumptious reagent,
+	seaode,
+	secret blend of herbs and spices,
+	skewered cherry,
+	skewered jumbo olive,
+	skewered lime,
+	slug of rum,
+	slug of shochu,
+	slug of vodka,
+	sneaky pete's key lime,
+	star key lime,
+	tiny plastic sword,
+];
+
+int turnsToCook(item thing)
+{
+	// Break infinite loop.
+	if (thing == $item[flat dough])
+		return 0;
+
+	int[item] ingredientList = get_ingredients(thing);
+	if (count(ingredientList) > 0) {
+		int turnsToCook = 0;
+		boolean fancy = false;
+		foreach ingredient in ingredientList {
+			if (fancyIngredients contains ingredient)
+				fancy = true;
+			turnsToCook += turnsToCook(ingredient);
+		}
+
+		return turnsToCook + (fancy ? 1 : 0);
+	}
+
+	return 0;
+}
+
+float baseFoodQuality(MafiaEntry entry)
 {
 	// FIXME: Badass pie gets more stats on average.
 	float adv = rangeToAverage(entry.advrange);
 	float stats = foodStats(entry);
+
 	return adv + stats / statsPerAdventure();
 }
 
-float foodQuality(item thing)
+float baseFoodQuality(item thing)
 {
 	if (!loadMafiaDataFiles())
 		abort("Failed to load data files");
-	return foodQuality(mafiaFood[thing]);
+
+	if (mafiaFood contains thing)
+		return baseFoodQuality(mafiaFood[thing]);
+	else if (mafiaDrink contains thing)
+		return baseFoodQuality(mafiaDrink[thing]);
+
+	abort("Unknown item: " + thing);
+	return -1000.0;
+}
+
+float foodQuality(item thing, boolean useMilk, boolean freeToCraft)
+{
+	float base = baseFoodQuality(thing) + (useMilk ? 1.0 : 0.0);
+	float cost = turnsToCook(thing).to_float() / (thing.inebriety + thing.fullness).to_float();
+	return base - cost;
 }
 
 boolean[item] fiveSpleen = $items[
@@ -292,6 +368,7 @@ boolean[item] milkFoodList = $items[
 	single-serving herbal stuffing,
 	sleazy hi mein,
 	sneaky pete's key lime pie,
+	spaghetti con calaveras,
 	spaghetti with skullheads,
 	spicy noodles,
 	spooky hi mein,
@@ -373,6 +450,7 @@ boolean[item] otherDrinkList = $items[
 	a little sump'm sump'm,
 	around the world,
 	bilge wine,
+	blended frozen swill,
 	booze-soaked cherry,
 	caipifruta,
 	calle de miel,
@@ -381,6 +459,7 @@ boolean[item] otherDrinkList = $items[
 	ducha de oro,
 	fine wine,
 	flute of flat champagne,
+	fruity girl swill,
 	fuzzbump,
 	gibson,
 	gin and tonic,
@@ -411,6 +490,7 @@ boolean[item] otherDrinkList = $items[
 	red-headed corpse,
 	rockin' wagon,
 	roll in the hay,
+	russian ice,
 	salty dog,
 	screwdriver,
 	shot of flower schnapps,
@@ -428,6 +508,7 @@ boolean[item] otherDrinkList = $items[
 	teqiwila,
 	tequila sunrise,
 	tequila sunset,
+	tropical swill,
 	tobiko-infused sake,
 	vodka and tonic,
 	vodka gibson,
@@ -446,6 +527,9 @@ void initAutoEat() {
 }
 
 boolean getCock() {
+	if (!bcascStage("tavern"))
+		return false;
+
 	boolean checkCock() {
 		string kitchen = visit_url("campground.php?action=inspectkitchen");
 		if (contains_text(kitchen, "/cocktailkit.gif")) {
@@ -631,7 +715,26 @@ boolean createItem(int quantity, item thing) {
 	return retrieve_item(quantity, thing);
 }
 
-FoodInfo[item] getInfo(boolean[item] foodList, float milkMultiplier) {
+int createAndGetFullness(FoodList list, boolean useMilk, boolean freeToCraft) {
+	// We may not be able to create everything, so create the best items first.
+	boolean[item] foodKeys;
+	foreach thing in list.foodList
+		foodKeys[thing] = true;
+	sort foodKeys by -foodQuality(index, useMilk, freeToCraft);
+
+	int total = 0;
+	foreach thing in foodKeys {
+		// Assumption.
+		if (thing.fullness > 0 && thing.inebriety > 0)
+			abort("Internal error: createAndGetFullness");
+
+		int full = thing.fullness + thing.inebriety;
+		total += full * min(couldCreateQuantity(thing), list.foodList[thing]);
+	}
+	return total;
+}
+
+FoodInfo[item] getInfo(boolean[item] foodList, boolean useMilk, boolean freeToCraft) {
 	FoodInfo[item] foods;
 
 	foreach thing in foodList {
@@ -642,7 +745,7 @@ FoodInfo[item] getInfo(boolean[item] foodList, float milkMultiplier) {
 		if (quantity <= 0)
 			continue;
 
-		float quality = foodQuality(thing) + milkMultiplier * thing.fullness;
+		float quality = foodQuality(thing, useMilk, freeToCraft);
 		if (quality <= 0)
 			continue;
 
@@ -653,32 +756,33 @@ FoodInfo[item] getInfo(boolean[item] foodList, float milkMultiplier) {
 	return foods;
 }
 
-FoodInfo[item] getInfo(boolean[item] foodList) {
-	return getInfo(foodList, 0.0);
+boolean drinkItem(item thing) {
+	if (!createItem(1, thing))
+		return false;
+
+	if (thing.inebriety + my_inebriety() > inebriety_limit()) {
+		abort("Drinking " + thing + " would go over drunkeness limit.");
+	}
+
+	return drink(1, thing);
 }
 
 boolean autoDrink(boolean needStats, boolean needAdv) {
 	return false;
 
+	if (!getCock())
+		return false;
+
 	int totalDrunk = inebriety_limit() - my_inebriety();
 
 	if (totalDrunk <= 0)
 		return false;
-	
-	boolean drinkItem(item thing) {
-		debug("Trying to drink" + thing);
-		if (!createItem(1, thing))
-			return false;
 
-		abort("TEST DEBUG ABORT BEFORE DRINKING: " + thing);
-		return drink(1, thing);
-	}
-
-	boolean drinkBestItem(FoodList list) {
+	boolean drinkBestItem(FoodList list, boolean useOde, boolean freeToCraft) {
 		boolean[item] foodKeys;
 		foreach thing in list.foodList
 			foodKeys[thing] = true;
-		sort foodKeys by -foodQuality(index);
+		sort foodKeys by -foodQuality(index, useOde, freeToCraft);
 
 		foreach thing in foodKeys {
 			if (drinkItem(thing))
@@ -714,27 +818,89 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 	}
 
 	// Don't bother drinking unless we have garnishes.
-	// There's some special logic for pumpkin beer elsewhere.
+	// There's some special logic for day 1 pumpkin beer elsewhere.
 	if (cocktailSummonsRemaining() > 0) {
 		debug("TEMP: Still have summons remaining, no drinking: " + cocktailSummonsRemaining());
 		return false;
 	}
 
-	boolean useOde = true;
-	float odeMultiplier = useOde ? 1 : 0;
-	FoodInfo[item] odeDrinks = getInfo(odeDrinkList, odeMultiplier);
+	harvestCampground();
 
-	FoodList result = findBest(odeDrinks, totalDrunk);
+	boolean useOde = true;
+	boolean freeToCraft = false;
+	FoodInfo[item] odeDrinks = getInfo(odeDrinkList, useOde, freeToCraft);
+
+	FoodList result;
+
 	if (useOde) {
-		foreach thing in result.foodList {
-			if (!createItem(result.foodList[thing], thing)) {
-			}
+
+/*
+		// Assume that we'll be able to make as many 4-drunk awesome drinks as
+		// possible.  But, pick an offstat one just in case
+		boolean[item] extra;
+		extra[(my_primestat() == $stat[moxie] ? $item[gimlet] : $item[mae west]) = true;
+		foreach thing in extra {
+			float quality = foodQuality(thing, useOde, freeToCraft);
+			if (quality < 0)
+				continue;
+
+			if (thing.inebriety > totalDrunk)
+				continue;
+
+			int quantity = totalDrunk / thing.inebriety;
+
+			odeDrinks[thing].quantity = quantity;
+			odeDrinks[thing].quality = quality;
 		}
+		*/
+
+		int lastDrunk = 0;
+		int drunk = 0;
+		repeat {
+			lastDrunk = drunk;
+			result = findBest(odeDrinks, totalDrunk);
+			drunk = createAndGetFullness(result, useOde, freeToCraft);
+		} until (drunk == lastDrunk);
+
+		// Try to gather more cocktail ingredients naturally.
+		if (drunk != lastDrunk && !needAdv)
+			return false;
+
+		// if have hippy outfit	and are level 6
+		// ...and have garnishes
+		// ...and don't have every kind of bottle of booze
+		// then try doing the barrel full of barrels.
+
+		lastDrunk = 0;
+		drunk = 0;
+		repeat {
+			lastDrunk = drunk;
+			result = findBest(getInfo(odeDrinkList, useOde, freeToCraft), totalDrunk);
+			drunk = createAndGetFullness(result, useOde, freeToCraft);
+		} until (drunk == lastDrunk);
+
+		// Now, using *just* the items
+		FoodInfo[item] final;
+		foreach thing in result.foodList {
+			final[thing].quantity = result.foodList[thing];
+			final[thing].quality = foodQuality(thing, useOde, freeToCraft);
+		}
+
+		FoodList[int] bestDrinks = findAllBest(final, totalDrunk);
+
+		if (drunk != lastDrunk && !needAdv) {
+			// Sort drinks by quality.
+			// Drink until ode runs out once.
+		}
+	} else {
+		result = findBest(odeDrinks, totalDrunk);
 	}
+
+	// FIXME: Use ode, consider when to drink or not drink.
 
 	if (needStats && drinkBestStatItem(result))
 		return true;
-	if (needAdv && drinkBestItem(result))
+	if (needAdv && drinkBestItem(result, useOde, freeToCraft))
 		return true;
 
 	if (!needAdv)
@@ -743,12 +909,12 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 	debug("We need adventures, but couldn't drink anything awesome.");
 	abort("Whoa there.");
 
-	FoodList awesomeList = findBest(getInfo(odeDrinkList), totalDrunk);
-	if (drinkBestItem(awesomeList))
+	FoodList awesomeList = findBest(getInfo(odeDrinkList, useOde, freeToCraft), totalDrunk);
+	if (drinkBestItem(awesomeList, useOde, freeToCraft))
 		return true;
 
-	FoodList otherList = findBest(getInfo(otherDrinkList), totalDrunk);
-	if (drinkBestItem(otherList))
+	FoodList otherList = findBest(getInfo(otherDrinkList, useOde, freeToCraft), totalDrunk);
+	if (drinkBestItem(otherList, useOde, freeToCraft))
 		return true;
 
 	debug("Somehow we couldn't drink anything.");
@@ -776,16 +942,23 @@ boolean eatItem(item thing) {
 }
 
 boolean autoEat(boolean needStats, boolean needAdv) {
+	return false;
 	int totalFullness = fullness_limit() - my_fullness();
 
 	if (totalFullness <= 0)
 		return false;
 
-	boolean eatBestItem(FoodList list) {
+/*
+	// FIXME: Don't get an oven until we need it to cook something.
+	if (!getOven())
+		return false;
+*/
+
+	boolean eatBestItem(FoodList list, boolean useMilk, boolean freeToCraft) {
 		boolean[item] foodKeys;
 		foreach thing in list.foodList
 			foodKeys[thing] = true;
-		sort foodKeys by -foodQuality(index);
+		sort foodKeys by -foodQuality(index, useMilk, freeToCraft);
 
 		foreach thing in foodKeys {
 			if (eatItem(thing))
@@ -813,10 +986,10 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	}
 
 	boolean useMilk = couldCreateQuantity($item[milk of magnesium]) > 0;
-	float milkMultiplier = useMilk ? 1 : 0;
+	boolean freeToCraft = false;
 
-	FoodInfo[item] getMilkFoodInfo(float milkMultiplier) {
-		FoodInfo[item] milkFoods = getInfo(milkFoodList, milkMultiplier);
+	FoodInfo[item] getMilkFoodInfo(boolean useMilk, boolean freeToCraft) {
+		FoodInfo[item] milkFoods = getInfo(milkFoodList, useMilk, freeToCraft);
 
 		if (couldEatFortuneCookie() && !eatenFortuneCookieToday()) {
 			milkFoods[$item[fortune cookie]].quantity = 1;
@@ -826,7 +999,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		return milkFoods;
 	}
 
-	FoodInfo[item] milkFoods = getMilkFoodInfo(milkMultiplier);
+	FoodInfo[item] milkFoods = getMilkFoodInfo(useMilk, freeToCraft);
 
 	// Special items.  Insert them even if we can't make or eat them, under
 	// the assumption that we might be able to later.
@@ -837,7 +1010,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		painful penne pasta,
 		ravioli della hippy,
 	] {
-		float quality = foodQuality(thing) + milkMultiplier * thing.fullness;
+		float quality = foodQuality(thing, useMilk, freeToCraft);
 		if (quality < 0)
 			continue;
 
@@ -852,24 +1025,10 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		milkFoods[thing].quality = quality;
 	}
 
-	int createAndGetFullness(FoodList list) {
-		// We may not be able to create everything, so create the best items first.
-		boolean[item] foodKeys;
-		foreach thing in list.foodList
-			foodKeys[thing] = true;
-		sort foodKeys by -foodQuality(index);
-
-		int total = 0;
-		foreach thing in foodKeys {
-			total += thing.fullness * min(couldCreateQuantity(thing), list.foodList[thing]);
-		}
-		return total;
-	}
-
 	FoodList result = findBest(milkFoods, totalFullness);
 
 	if (useMilk) {
-		int fullness = createAndGetFullness(result);
+		int fullness = createAndGetFullness(result, useMilk, freeToCraft);
 		if (fullness != totalFullness) {
 			// We want to use milk, but wait on better food items.
 			if (!needAdv)
@@ -885,8 +1044,8 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 			int lastFullness;
 			repeat {
 				lastFullness = fullness;
-				result = findBest(getMilkFoodInfo(milkMultiplier), totalFullness);
-				fullness = createAndGetFullness(result);
+				result = findBest(getMilkFoodInfo(useMilk, freeToCraft), totalFullness);
+				fullness = createAndGetFullness(result, useMilk, freeToCraft);
 			} until (fullness == lastFullness);
 		}
 
@@ -903,30 +1062,32 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		boolean ateSomething = false;
 		foreach thing in result.foodList {
 			for count from 1 to result.foodList[thing]
-				ateSomething |= eatItem(thing);
+				if (eatItem(thing))
+					ateSomething = true;
 		}
 		if (!ateSomething)
 			abort("Used milk, but failed to eat anything!");
 
 		return ateSomething;
-	} else {
-		abort("Tried to use milk but couldn't create anything.");
 	}
 
 	if (needStats)
 		return eatBestStatItem(result);
-	if (needAdv && eatBestItem(result))
+	if (needAdv && eatBestItem(result, useMilk, freeToCraft))
 		return true;
+	
+	if (!needAdv)
+		return false;
 
 	debug("We need adventures, but couldn't eat anything awesome.");
 	abort("Whoa there.");
 
-	FoodList awesomeList = findBest(getInfo(milkFoodList), totalFullness);
-	if (eatBestItem(awesomeList))
+	FoodList awesomeList = findBest(getInfo(milkFoodList, useMilk, freeToCraft), totalFullness);
+	if (eatBestItem(awesomeList, useMilk, freeToCraft))
 		return true;
 
-	FoodList goodList = findBest(getInfo(otherFoodList), totalFullness);
-	if (eatBestItem(goodList))
+	FoodList otherList = findBest(getInfo(otherFoodList, useMilk, freeToCraft), totalFullness);
+	if (eatBestItem(otherList, useMilk, freeToCraft))
 		return true;
 
 	debug("Somehow we couldn't eat anything.");
@@ -1013,13 +1174,52 @@ void autoConsume(location loc) {
 	if (my_daycount() == 1 && my_inebriety() == 0 && stillAvailable()) {
 		tryCast($skill[mojomuscular melody]);
 		retrieve_item(4, $item[tonic water]);
-		use(1, $item[tonic water]);
-		use_skill(1, $skill[ode to booze]);
+		if (have_effect($effect[ode to booze]) < 3) {
+			tryTonic(50);
+			use_skill(1, $skill[ode to booze]);
+		}
 		cli_execute("garden pick");
+
+		// FIXME: only drink 2 if we have three stat-aligned garnishes.
 		cli_execute("drink 3 pumpkin beer");
 
 		// Hack: in case we levelled up, refresh current quests.
 		cli_execute("council");
+	}
+
+	if (my_daycount() == 1 && bcascStage("tavern") && !bcascStage("swill") && getCock()) {
+		boolean[item] drinks = $items[
+			blended frozen swill,
+			fruity girl swill,
+			tropical swill,
+		];
+
+		int totalDrunk = inebriety_limit() - my_inebriety();
+		// Conserve ode usage.
+		if (totalDrunk > 10)
+			totalDrunk = 8;
+
+		FoodList result = findBest(getInfo(drinks, false, false), totalDrunk);
+		int drunk = createAndGetFullness(result, false, false);
+		if (drunk == 0)
+			abort("Couldn't create anything?");
+
+		foreach thing in result.foodList {
+			createItem(result.foodList[thing], thing);
+		}
+
+		if (have_effect($effect[ode to booze]) < drunk) {
+			tryTonic(50);
+			use_skill(1, $skill[ode to booze]);
+		}
+		foreach thing in result.foodList {
+			int quantity = result.foodList[thing];
+			quantity = min(quantity, item_amount(thing));
+			for count from 1 to quantity
+				drinkItem(thing);
+		}
+
+		setBcascStageComplete("swill");
 	}
 
 	boolean needAdventures() {
