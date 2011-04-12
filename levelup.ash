@@ -18,4 +18,7 @@ void main(int goal, boolean needBaseStat) {
 	while (!hitGoal() && autoDrink(true, false)) {
 		debug("Drank something to try to level up to " + goal);
 	}
+
+	if (needBaseStat)
+		takeStatShower();
 }

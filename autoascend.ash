@@ -180,6 +180,8 @@ void endOfDay() {
 
 	tryTeaParty();
 
+	takeStatShower();
+
 	cli_execute("maximize adv");
 
 	trySoak();

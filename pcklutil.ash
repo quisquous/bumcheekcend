@@ -13,6 +13,7 @@ string propCampgroundCock = "picklishCampgroundCock";
 string propCampgroundOven = "picklishCampgroundOven";
 string propChefHave = "picklishHaveChef";
 string propChefMake = "bcasc_chef";
+string propClanHome = "picklishClanHome";
 string propCocktailSummons = "cocktailSummons";
 string propCounterScript = "counterScript";
 string propDoSideQuestNuns = "bcasc_doSideQuestNuns";
@@ -38,6 +39,7 @@ string propRomanticEncounters = "picklishRomanticEncounters";
 string propSemirareCounter = "semirareCounter";
 string propSemirareKGE = "picklishSemirareKGE";
 string propSemirareLast = "semirareLocation";
+string propShower = "_aprilShower";
 string propSideQuestLighthouseCompleted = "sidequestLighthouseCompleted";
 string propSideQuestNunsCompleted = "sidequestNunsCompleted";
 string propSideQuestOrchardCompleted = "sidequestOrchardCompleted";
@@ -50,6 +52,8 @@ string propWarFratMoney = "availableQuarters";
 string propWarHippyDefeated = "fratboysDefeated";
 string propWarHippyMoney = "availableDimes";
 string propWarSide = "bcasc_doWarAs";
+
+string clanBAFH = "90485";
 
 // Named KoLmafia counters
 
@@ -72,6 +76,49 @@ boolean bcascStage(string stage) {
 
 void setBcascStageComplete(string stage) {
 	set_property("bcasc_stage_" + stage, my_ascensions());
+}
+
+// Clan Swapping
+
+boolean whitelistedBy(string id) {
+	string clan = visit_url("clan_signup.php");
+	return contains_text(clan, "<option value=" + id + ">");
+}
+
+boolean homeClanAvailable() {
+	if (get_property(propClanHome) == "")
+		return false;
+	
+	return whitelistedBy(get_property(propClanHome));
+}
+
+boolean changeClan(string name, string id) {
+	debug("Changing clan to " + name);
+
+	if (!whitelistedBy(id)) {
+		debug("Not whitelisted, aborting");
+		return false;
+	}
+
+	string result = visit_url("showclan.php?pwd&whichclan=" + id + "&action=joinclan&confirm=yes&submit=Apply to this Clan", true);
+
+	if (!contains_text(result, "<b>Clan Hall</b>") && !contains_text(result, ">You can't apply to a clan you're already in")) {
+		abort("Unknown result when trying to change clans.");
+		return false;
+	}
+
+	return true;
+}
+
+boolean changeClanBAFH() {
+	return changeClan("BAFH", clanBAFH);
+}
+
+boolean changeClanHome() {
+	if (!homeClanAvailable())
+		return false;
+
+	return changeClan("home", get_property(propClanHome));
 }
 
 // Items
@@ -414,6 +461,36 @@ boolean poolTable(string type) {
 
 boolean stillAvailable() {
 	return visit_url("guild.php?guild=t").contains_text("Nash Crosby's Still");
+}
+
+boolean takeShower(string kind) {
+	if (get_property(propShower).to_boolean())
+		return false;
+
+	// My kingdom for a closure.
+	if (!homeClanAvailable())
+		return false;
+
+	if (!changeClanBAFH())
+		return false;
+
+	boolean result	= cli_execute("shower " + kind);
+	changeClanHome();
+
+	return result;
+}
+
+boolean takeStatShower() {
+	switch (my_primestat()) {
+	case $stat[muscle]:
+		return takeShower("warm");
+	case $stat[mysticality]:
+		return takeShower("lukewarm");
+	case $stat[moxie]:
+		return takeShower("cool");
+	}
+
+	return false;
 }
 
 boolean teaParty(item thing) {
