@@ -2793,6 +2793,9 @@ boolean bcascMining() {
 		return true;
 	}
 
+	if (!have_outfit("mining gear"))
+		return false;
+
 	string goalString = get_property("trapperOre");
 	item goal = to_item(goalString);
 
