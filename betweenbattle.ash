@@ -867,7 +867,8 @@ void getHellionCubes() {
 	if (bcascStage("friars") || olfactTarget() != $monster[hellion])
 		return;
 
-	int cubesNeeded = (estimatedRunDays - my_daycount()) * 2;
+	int cubesNeeded = (estimatedRunDays - my_daycount() - 1) * 2 + (fullness_limit() - my_fullness()) / 6;
+	
 	while (olfactTarget() == $monster[hellion] && item_amount($item[hellion cube]) < cubesNeeded) {
 		debug("Getting hellion cubes: " + item_amount($item[hellion cube]) + " / " + cubesNeeded);
 		preppedAdventure(1, $location[dark neck of the woods]);

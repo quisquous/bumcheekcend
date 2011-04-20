@@ -493,6 +493,10 @@ boolean takeStatShower() {
 	return false;
 }
 
+boolean takeHotShower() {
+	return takeShower("hot");
+}
+
 boolean teaParty(item thing) {
 	if (get_property(propTeaParty).to_boolean())
 		return false;
