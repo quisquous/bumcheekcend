@@ -411,28 +411,6 @@ void callBetweenBattleScript() {
 		cli_execute("call " + script);
 }
 
-//Use instead of adventure(1, location)
-boolean bumAdv1(location loc) {
-	//100% non-combat locations don't call the between battle script,
-	//so call it automatically. Also, don't call betweenBattle for these
-	//locations as we don't want to force healing in the Hidden Temple,
-	//for example.
-	if (loc.nocombats)
-		callBetweenBattleScript();
-	else
-		betweenBattle();
-	return adventure(1, loc);
-}
-
-//Use instead of adventure(1, location, filter)
-boolean bumAdv1(location loc, string filter) {
-	if (loc.nocombats)
-		callBetweenBattleScript();
-	else
-		betweenBattle();
-	return adventure(1, loc, filter);
-}
-
 //Use instead of visit_url if visiting the url has a chance of causing a combat.
 string bumAdvUrl(string url) {
 	betweenBattle();
@@ -1750,7 +1728,7 @@ boolean bcascBats1() {
 				// Adventure 1 turn at a time in case of screambats.
 				buMax("+10 stench res");
 				setFamiliar("items");
-				bumAdv1($location[Guano Junction]);
+				bumMiniAdv(1, $location[Guano Junction]);
 			}
 			if (cli_execute("use * sonar-in-a-biscuit")) {}
 		}
@@ -1887,7 +1865,7 @@ void bcascDailyDungeon() {
 	}
 	setFamiliar("");
 	while (!contains_text(visit_url("dungeon.php"), "reached the bottom")) {
-		bumAdv1($location[daily dungeon]);
+		bumMiniAdv(1, $location[daily dungeon]);
 	}
 	zapKeys();
 }
@@ -2891,7 +2869,7 @@ boolean bcascMacguffinPrelim() {
 	if (item_amount($item[your fathers macguffin diary]) == 0) {
 		print("BCC: Obtaining and Reading the Diary", "purple");
 		retrieve_item(1,$item[forged identification documents]);
-		bumAdv1(to_location(to_string(my_primestat()) + " vacation"));
+		bumMiniAdv(1, to_location(to_string(my_primestat()) + " vacation"));
 		use(1, $item[your fathers macguffin diary]);
 	}
 	
@@ -3588,7 +3566,7 @@ boolean bcascTeleportitisBurn() {
 			abort("Internal error.  Couldn't sort out telescope text.");
 		}
 		if (item_amount(goal) == 0)
-			bumAdv1(vacation);
+			bumMiniAdv(1, vacation);
 	}
 	if (have_effect($effect[Teleportitis]) == 0) return true;
 	bcascMining();
