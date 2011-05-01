@@ -1,5 +1,5 @@
 /*
-	bumcheekascend.ash v0.21
+	bumcheekascend.ash v0.22
 	A script to ascend a character from start to finish.
 	
 	0.1 - Spun initial release. Gets up to about level 10, haphazardly. 
@@ -152,6 +152,11 @@
 		- Don't use the scope if you've passed the mariachis.
 		- Added default options for those who can't work out the relay script. This is finally zero-setup again!
 		- Don't remove goals when getting a firecracker for pumpkin bomb. 
+	0.22- Allow 2-handed weapons or DFSS when you don't have a shield. 
+		- Use your CCS actions and be more robust to wandering monsters thanks to picklish.
+		- Dont fight the Boss Bat if there's rubble there. 
+		- Don't open the prok sack if you don't want to autosell the gems. 
+		- Myst ascension. Oh yes.
 */
 
 script "bumcheekascend.ash";
@@ -210,6 +215,39 @@ int i_a(string name) {
 	
 	//print("Checking for item "+name+", which it turns out I have "+a+" of.", "fuchsia");
 	return a;
+}
+
+
+boolean isExpectedMonster(string opp) {
+	location loc = my_location();
+
+	boolean haveOutfitEquipped(string outfit) {
+		boolean anyEquipped = false;
+		boolean allEquipped = true;
+		foreach key, thing in outfit_pieces(outfit) {
+			if (have_equipped(thing)) {
+				anyEquipped = true;
+			} else {
+				allEquipped = false;
+				break;
+			}
+		}
+
+		return anyEquipped && allEquipped;
+	}
+
+	//Fix up location appropriately. :(
+	if (loc == $location[wartime frat house]) {
+		if (haveOutfitEquipped("hippy disguise") || haveOutfitEquipped("war hippy fatigues"))
+			loc = $location[wartime frat house (hippy disguise)];
+	} else if (loc == $location[wartime hippy camp]) {
+		if (haveOutfitEquipped("frat boy ensemble") || haveOutfitEquipped("frat boy fatigues"))
+		loc = $location[wartime hippy camp (frat disguise)];
+	}
+
+	monster mon = opp.to_monster();
+	boolean expected = appearance_rates(loc) contains mon;
+	return expected;
 }
 
 string safe_visit_url(string url) {
@@ -424,9 +462,9 @@ boolean buMax(string maxme) {
 	
 	//Basically, we ALWAYS want -tie and -ml, for ALL classes. Otherwise we let an override happen. 
 	switch (my_primestat()) {
-		case $stat[Muscle] : 		cli_execute("maximize mainstat "+maxme+" +melee +shield -ml -tie +muscle experience"); break;
-		case $stat[Mysticality] : 	abort("This script does not support Mysticality classes."); break;
-		case $stat[Moxie] : 		cli_execute("maximize mainstat "+maxme+" -melee -ml -tie +moxie experience"); break;
+		case $stat[Muscle] : 		cli_execute("maximize mainstat "+maxme+" +melee "+((anHero()) ? "+shield" : "")+" -10 ml -tie +muscle experience"); break;
+		case $stat[Mysticality] : 	cli_execute("maximize mainstat "+maxme+" +10spell damage +5 mp regen min +5 mp regen max -10 ml -tie +mysticality experience"); break;
+		case $stat[Moxie] : 		cli_execute("maximize mainstat "+maxme+" -melee -10 ml -tie +moxie experience"); break;
 	}
 	return true;
 	/*
@@ -503,48 +541,180 @@ int cloversAvailable(boolean makeOneTenLeafClover) {
 }
 int cloversAvailable() { return cloversAvailable(false); }
 
-boolean isExpectedMonster(string opp) {
-	location loc = my_location();
-
-	boolean haveOutfitEquipped(string outfit) {
-		boolean anyEquipped = false;
-		boolean allEquipped = true;
-		foreach key, thing in outfit_pieces(outfit) {
-			if (have_equipped(thing)) {
-				anyEquipped = true;
-			} else {
-				allEquipped = false;
-				break;
+string consultMyst(int round, string opp, string text) {
+	boolean [skill] allMySkills() {
+		boolean [skill] allmyskills;
+		
+		foreach s in $skills[Spaghetti Spear, Ravioli Shurikens, Cannelloni Cannon, Stuffed Mortar Shell, Weapon of the Pastalord] {
+			if (have_skill(s)) { allmyskills[s] = true; }
+		}
+		return allmyskills;
+	}
+	
+	element elOfSpirit(effect e) {
+		switch (e) {
+			case $effect[Spirit of Cayenne]: return $element[hot]; break;
+			case $effect[Spirit of Peppermint]: return $element[cold]; break;
+			case $effect[Spirit of Garlic]: return $element[stench]; break;
+			case $effect[Spirit of Wormwood]: return $element[spooky]; break;
+			case $effect[Spirit of Bacon Grease]: return $element[sleaze]; break;
+		}
+		return $element[none];
+	}
+	
+	//Checks if the monster we're fighting is weak against element e.
+	int isWeak(element e) {
+		boolean [element] weakElements;
+ 
+		switch (monster_element()) {
+		   case $element[cold]:   weakElements = $elements[spooky, hot];    break;
+		   case $element[spooky]: weakElements = $elements[hot, stench];    break;
+		   case $element[hot]:    weakElements = $elements[stench, sleaze]; break;
+		   case $element[stench]: weakElements = $elements[sleaze, cold];   break;
+		   case $element[sleaze]: weakElements = $elements[cold, spooky];   break;
+		   default: return 1;
+		}
+		
+		if (weakElements contains e) {
+			return 2;
+		} else if (monster_element() == e) {
+			return 0;
+		} else {
+			return 1;
+		}
+		return 1;
+	}
+	int isWeak() {
+		foreach e in $effects[Spirit of Cayenne, Spirit of Peppermint, Spirit of Garlic, Spirit of Wormwood, Spirit of Bacon Grease] {
+			if (have_effect(e) > 0) {
+				return isWeak(elOfSpirit(e));
 			}
 		}
-
-		return anyEquipped && allEquipped;
+		return 1;
+	}
+	
+	//Returns which skill has the lowest MP in a given range of skills. 
+	skill lowestMP(boolean [skill] ss) {
+		int lowestMPCostSoFar = 999999;
+		skill skillToReturn = $skill[none];
+		
+		foreach s in ss {
+			if (mp_cost(s) < lowestMPCostSoFar) {
+				lowestMPCostSoFar = mp_cost(s);
+				skillToReturn = s;
+			}
+		}
+		return skillToReturn;
+	}
+	
+	float wtfpwnageExpected(skill s) {
+		float bAbs = numeric_modifier("Spell Damage");
+		float bPer = numeric_modifier("Spell Damage Percent")/100 + 1;
+		//Should multiply the bonuses below by bonus spell damage. 
+		float bCol = numeric_modifier("Cold Spell Damage");
+		float bHot = numeric_modifier("Hot Spell Damage");
+		float bSte = numeric_modifier("Stench Spell Damage");
+		float bSle = numeric_modifier("Sleaze Spell Damage");
+		float bSpo = numeric_modifier("Spooky Spell Damage");
+		float bElm = bCol+bHot+bSte+bSle+bSpo;
+		float myst = my_buffedstat($stat[Mysticality]);
+		print("BCC: These are the figures for "+to_string(s)+": Bonus: "+bAbs+" and "+bPer+"%//"+bCol+"/"+bHot+"/"+bSte+"/"+bSle+"/"+bSPo+"/El: "+bElm+"/Myst: "+myst, "purple");
+		
+		//Uses the above three functions to estimate the wtfpwnage from a given skill. 
+		switch (s) {
+			case $skill[Spaghetti Spear] :
+				return (2.5*bPer + min(5, bAbs) + bElm)*isWeak();
+			break;
+			case $skill[Ravioli Shurikens] :
+				return (5.5*bPer + 0.07*myst*bPer + min(25, bAbs) + bElm)*isWeak();
+			break;
+			case $skill[Cannelloni Cannon] :
+				return (12*bPer + 0.15*myst*bPer + min(40, bAbs) + bElm)*isWeak();
+			break;
+			case $skill[Stuffed Mortar Shell] :
+				return (40*bPer + 0.35*myst*bPer + min(55, bAbs) + bElm)*isWeak();
+			break;
+			case $skill[Weapon of the Pastalord] :
+				return (48*bPer + 0.35*myst*bPer + bAbs + bElm)*isWeak();
+			break;
+		}
+		return -1;
 	}
 
-	//Fix up location appropriately.  :(
-	if (loc == $location[wartime frat house]) {
-		if (haveOutfitEquipped("hippy disguise") || haveOutfitEquipped("war hippy fatigues"))
-			loc = $location[wartime frat house (hippy disguise)];
-	} else if (loc == $location[wartime hippy camp]) {
-		if (haveOutfitEquipped("frat boy ensemble") || haveOutfitEquipped("frat boy fatigues"))
-			loc = $location[wartime hippy camp (frat disguise)];
+	int hp = monster_hp();
+	print("BCC: Monster HP is "+hp, "purple");
+	int isWeak = isWeak();
+	int wtfpwn;
+	boolean [skill] oneShot;
+	boolean [skill] twoShot;
+	boolean [skill] threeShot;
+	boolean [skill] fourShot;
+	boolean oneShotHim = true;
+	string cast;
+	
+	foreach s in allMySkills() {
+		wtfpwn = wtfpwnageExpected(s);
+		
+		print("BCC: I expect "+wtfpwn+" damage from "+to_string(s), "purple");
+		if (wtfpwn > hp) {
+			//Then we can one-shot the monster with this skill.
+			oneShot[s] = true;
+		} else if (wtfpwn > hp/2) {
+			twoShot[s] = true;
+		} else if (wtfpwn > hp/3) {
+			threeShot[s] = true;
+		}
 	}
-
-	monster mon = opp.to_monster();
-	boolean expected = appearance_rates(loc) contains mon;
-	return expected;
+	
+	//If we can one-shot AND noodles/twoshot isn't cheaper, do that. 
+	
+	if (count(oneShot) > 0) {
+		if (have_skill($skill[Entangling Noodles])) {
+			if (count(twoShot) > 0) {
+				int mpOneShot = mp_cost(lowestMP(oneShot));
+				int mpTwoShot = mp_cost(lowestMP(twoShot));
+				if (mpOneShot > 3+2*mpTwoShot) {
+					print("BCC: We're actually NOT going to one-shot because noodles and then two shotting would be cheaper.", "purple");
+					oneShotHim = false;
+				}
+			}
+		}
+	}
+	
+	if (oneShotHim && count(oneShot) > 0) {
+		cast = to_string(lowestMP(oneShot));
+		print("BCC: We are going to one-shot with "+cast, "purple");
+		return "skill "+cast;
+	} else {
+		//Basically, we should cast noodles if we haven't already done this, and we're not going to one-shot the monster. 
+		if (contains_text(text, ">Entangling Noodles (")) {
+			return "skill Entangling Noodles";
+		}
+		if (count(twoShot) > 0) {
+			cast = to_string(lowestMP(twoShot));
+			print("BCC: We are going to two-shot with "+cast, "purple");
+			return "skill "+cast;
+		}
+		if (count(threeShot) > 0) {
+			cast = to_string(lowestMP(threeShot));
+			print("BCC: We are going to three-shot with "+cast, "purple");
+			return "skill "+cast;
+		}
+	}
+	abort("Please fight the remainder of the fight yourself.");
+	return "";
 }
 
 string consultBarrr(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return get_ccs_action(round);
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	if (round == 1) {
 		return "item the big book of pirate insults";
 	}
-	return get_ccs_action(round + 1);
+	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 string consultCyrus(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return get_ccs_action(round);
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	if (round == 1) {
 		if (bcasc_doWarAs == "frat") {
 			if(item_amount(to_item("antique hand mirror")) == 0)
@@ -558,12 +728,12 @@ string consultCyrus(int round, string opp, string text) {
 				return "item jam band flyers;item antique hand mirror";
 		}
 	}
-	return get_ccs_action(round + 1);
+	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 //This consult script is just to be used to sling !potions against 
 string consultDoD(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return get_ccs_action(round);
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	foreach pot, eff in allBangPotions() {
 		if (item_amount(pot) > 0) {
 			if (eff == $effect[none]) return "item "+pot;
@@ -571,11 +741,11 @@ string consultDoD(int round, string opp, string text) {
 		}
 	}
 	print("BCC: We've identified all the bang potions we have to hand.", "purple");
-	return get_ccs_action(round);
+	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 string consultGMOB(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return get_ccs_action(round);
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	if (contains_text(text, "Guy Made Of Bees")) {
 		print("BCC: We are fighting the GMOB!", "purple");
 		if (bcasc_doWarAs == "frat") {
@@ -585,15 +755,15 @@ string consultGMOB(int round, string opp, string text) {
 		}
 	}
 	print("BCC: We are not fighting the GMOB!", "purple");
-	return get_ccs_action(round);
+	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 string consultHeBo(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return get_ccs_action(round);
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	//If we're under the effect "Everything Looks Yellow", then ignore everything and attack.
 	if (have_effect($effect[Everything Looks Yellow]) > 0) {
 		print("BCC: We would LIKE to use a Yellow Ray somewhere in this zone, but we can't because Everything Looks Yellow.", "purple");
-		return get_ccs_action(round);
+		return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 	}
 
 	boolean isGremlin = contains_text(text, "A.M.C. gremlin") || contains_text(text, "batwinged gremlin") || contains_text(text, "erudite gremlin") || contains_text(text, "spider gremlin") || contains_text(text, "vegetable gremlin");
@@ -618,7 +788,7 @@ string consultHeBo(int round, string opp, string text) {
 			return "item pumpkin bomb";
 		} else {
 			print("BCC: We are trying to use the HeBoulder, but you don't have one (nor a pumpkin bomb), so I'm attacking.", "purple");
-			return get_ccs_action(round);
+			return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 		}
 	}
 	print("BCC: We are trying to use the HeBoulder, but this is not the right monster, so I'm attacking.", "purple");
@@ -626,17 +796,17 @@ string consultHeBo(int round, string opp, string text) {
 	if (my_familiar() == $familiar[He-Boulder] && have_effect($effect[Everything Looks Red]) == 0 && contains_text(text, "red eye"))
 		return "skill point at your opponent";
 	
-	return get_ccs_action(round);
+	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 string consultJunkyard(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return get_ccs_action(round);
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	boolean isRightMonster = false;
 	
 	//AMC Gremlins are useless. 
 	if (opp == $monster[a.m.c. gremlin]) {
 		if (item_amount($item[divine champagne popper]) > 0) return "item divine champagne popper";
-		return get_ccs_action(round);
+		return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 	} else {
 		//Check to see if the monster CAN carry the item we want. This comes straight from Zarqon's SmartStasis.ash. 
 		if (my_location() == to_location(get_property("currentJunkyardLocation"))) {
@@ -668,11 +838,11 @@ string consultJunkyard(int round, string opp, string text) {
 	} else {
 		print("BCC: This is the wrong monster.", "purple");
 	}
-	return get_ccs_action(round);
+	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 string consultRunaway(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return get_ccs_action(round);
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	if (round == 1 && have_skill($skill[Entangling Noodles])) { return "skill entangling noodles"; }
 	return "try to run away";
 }
@@ -691,6 +861,15 @@ void defaultMood(boolean castMojo) {
 			if (have_skill($skill[Patience of the Tortoise])) cli_execute("trigger lose_effect, Patience of the Tortoise, cast 1 Patience of the Tortoise");
 			if (have_skill($skill[Seal Clubbing Frenzy])) cli_execute("trigger lose_effect, Seal Clubbing Frenzy, cast 1 Seal Clubbing Frenzy");
 			if (my_level() > 9 && have_skill($skill[Rage of the Reindeer])) cli_execute("trigger lose_effect, Rage of the Reindeer, cast 1 Rage of the Reindeer");
+		break;
+		
+		case $stat[Mysticality] :
+			if (my_level() > 5) { cli_execute("trigger lose_effect, Butt-Rock Hair, use 5 hair spray"); }
+			if (my_level() > 5) { cli_execute("trigger lose_effect, Glittering Eyelashes, use 5 glittery mascara"); }
+			if (my_level() < 7 && castMojo && have_skill($skill[The Moxious Madrigal])) cli_execute("trigger lose_effect, The Moxious Madrigal, cast 1 The Moxious Madrigal");
+			if (have_skill($skill[The Magical Mojomuscular Melody])) cli_execute("trigger lose_effect, The Magical Mojomuscular Melody, cast 1 The Magical Mojomuscular Melody");
+			if (have_skill($skill[Moxie of the Mariachi])) cli_execute("trigger lose_effect, Mariachi Mood, cast 1 Moxie of the Mariachi");
+			if (have_skill($skill[Disco Aerobics])) cli_execute("trigger lose_effect, Disco State of Mind, cast 1 Disco Aerobics");
 		break;
 		
 		case $stat[Moxie] :
@@ -1086,7 +1265,14 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 		int extraMoxieNeeded = sMox - my_buffedstat(my_primestat());
 		if (extraMoxieNeeded <= 0) return true;
 		print("Need to Level up a bit to get at least "+sMox+" buffed Primestat This means getting "+extraMoxieNeeded+" Primestat.", "fuchsia");
-		sMox = my_basestat(my_primestat()) + extraMoxieNeeded;	
+		sMox = my_basestat(my_primestat()) + extraMoxieNeeded;
+		
+		if (my_primestat() == $stat[Mysticality]) {
+			//Because of the lack of need of +mainstat, we'll only care if we need 20 or more. 
+			extraMoxieNeeded = extraMoxieNeeded - 20;
+			print("BCC: But, we're a myst class, so we don't really mind about safe moxie that much. We'll only try to get "+sMox+" instead.", "fuchsia");
+			if (extraMoxieNeeded <= 0) return true;
+		}
 	}
 	cli_execute("goal clear; goal set "+sMox+" "+to_string(my_primestat()));
 
@@ -1134,6 +1320,51 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 							print("BCC: We have "+item_amount($item[disassembled clover])+" clovers and are using one to level.", "purple");
 							use(1, $item[disassembled clover]);
 							bumAdvClover(106);
+						}
+					}
+				}
+			
+				adventure(my_adventures(), $location[Haunted Gallery]);
+			}
+		break;
+		
+		case $stat[Mysticality] :
+			if (my_buffedstat($stat[Mysticality]) < 120) {
+				//If we're not level 2, then woods.php DEFINITELY won't be available. 
+				print("I need "+sMox+" base Mysticality (going to Temple)", "fuchsia");
+				if (my_level() >= 2) {
+					//Check for temple.gif, or we're not getting in. 
+					if (contains_text(visit_url("woods.php"), "temple.gif")) {
+						if (get_property("bcasc_dontLevelInTemple") == "true") abort("You don't want to level in the temple.");
+						setFamiliar("hipster");
+						adventure(my_adventures(), $location[Hidden Temple]);
+					} else {
+						adventure(my_adventures(), $location[Haunted Pantry], "consultMyst");
+					}
+				}
+			} else {
+				setMood("-");
+				setFamiliar("");
+				print("I need "+sMox+" base Mysticality (going to Gallery)", "fuchsia");
+				abort("needs doing");
+				
+				//Get as many clovers as possible. The !capture is so that it doesn't abort on failure. 
+				print("BCC: Attempting to get clovers to level with.", "purple");
+				cloversAvailable();
+				
+				//If we're above level 11, then use clovers as necessary. 
+				if (my_level() >= 10) {
+					if (cloversAvailable() > 1) {
+						print("BCC: Going to use clovers to level.", "purple");
+						//First, just quickly use all ten-leaf clovers we have. 
+						if (item_amount($item[ten-leaf clover]) > 0) {
+							cli_execute("use * ten-leaf clover");
+						}
+					
+						while (my_basestat($stat[Mysticality]) < sMox && item_amount($item[disassembled clover]) > 1) {
+							print("BCC: We have "+item_amount($item[disassembled clover])+" clovers and are using one to level.", "purple");
+							use(1, $item[disassembled clover]);
+							visit_url("adventure.php?snarfblat=106&confirm=on");
 						}
 					}
 				}
@@ -1284,7 +1515,9 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	//Because between battle scripts aren't called reliably, adventure one adventure at a time in a non-combat zone.
 	int numAdv = loc.nocombats ? 1 : my_adventures();
 	if (consultScript != "") {
-		if (adventure(numAdv, loc, consultScript)) {}
+		if (adventure(my_adventures(), loc, consultScript)) {}
+	} else if (my_primestat() == $stat[Mysticality]) {
+		if (adventure(my_adventures(), loc, "consultMyst")) {}
 	} else {
 		if (adventure(numAdv, loc)) {}
 	}
@@ -1297,6 +1530,33 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals) { bumAd
 boolean bumAdv(location loc, string maxme, string famtype) { bumAdv(loc, maxme, famtype, "", ""); }
 boolean bumAdv(location loc, string maxme) { bumAdv(loc, maxme, "", "", ""); }
 boolean bumAdv(location loc)               { bumAdv(loc, "", "", "", ""); }
+
+boolean bumMiniAdv(int adventures, location loc, string override) {
+	betweenBattle();
+	if (override != "") {
+		try {
+			adventure(adventures, loc, override);
+			boolean success = true;
+		} finally {
+			return success;
+		}
+	} else if (my_primestat() == $stat[Mysticality]) {
+		try {
+			adventure(adventures, loc, "consultMyst");
+			boolean success = true;
+		} finally {
+			return success;
+		}
+	} else {
+		try {
+			adventure(adventures, loc);
+			boolean success = true;
+		} finally {
+			return success;
+		}
+	}
+}
+boolean bumMiniAdv(int adventures, location loc) { return bumMiniAdv(adventures, loc, ""); }
 
 boolean bumUse(int n, item i) {
 	if (n > item_amount(i)) n = item_amount(i);
@@ -1402,10 +1662,17 @@ boolean bcascBats2() {
 	if (checkStage("bats2")) return true;
 	while (index_of(visit_url("questlog.php?which=1"), "I Think I Smell a Bat") > 0) {
 		if (cli_execute("use 3 sonar")) {}
+		
+		if (contains_text(visit_url("bathole.php"), "action=rubble")) {
+			cli_execute("set bcasc_stage_bats1 = 0");
+			bcascBats1();
+		}
+		
 		if (canMCD()) cli_execute("mcd 4");
 		bumAdv($location[Boss Bat's Lair], "", "meatboss", "1 Boss Bat bandana", "WTFPWNing the Boss Bat");
 		visit_url("council.php");
 	}
+	checkStage("bats1", true);
 	checkStage("bats2", true);
 	return true;
 }
@@ -1722,7 +1989,7 @@ boolean bcascFriarsSteel() {
 		cli_execute("mood execute; conditions clear");
 		visit_url("pandamonium.php?action=sven");
 		while (!logicPuzzleDone()) {
-			bumAdv1($location[Hey Deze Arena]);
+			bumMiniAdv(1, $location[Hey Deze Arena]);
 		}
 		int bog = 0, sti = 0, fla = 0, jim = 0;
 		if (item_amount($item[giant marshmallow]) > 0) { bog = to_int($item[giant marshmallow]); }
@@ -1819,7 +2086,7 @@ boolean bcascHoleInTheSky() {
 	cli_execute("conditions clear");
 	
 	while (i_a("star hat") == 0 || i_a("star crossbow") == 0 || i_a("richard's star key") == 0) {
-		bumAdv1($location[Hole in the Sky]);
+		bumMiniAdv(1, $location[Hole in the Sky]);
 		if (item_amount($item[star chart]) > 0) {
 			if (equipped_item($slot[hat]) != $item[star hat]) { (!retrieve_item(1, $item[star hat])); }
 			if (equipped_item($slot[weapon]) != $item[star crossbow]) { (!retrieve_item(1, $item[star crossbow])); }
@@ -1976,7 +2243,8 @@ boolean bcascKnobKing() {
 		
 		//Then we need the cake. 
 		if (!contains_text(visit_url("campground.php?action=inspectkitchen"), "Dramatic")) {
-			if (!use(1, to_item("Dramatic range"))) abort("You need a dramatic oven for this to work.");
+			if (!use(1, to_item("Dramatic range")))
+			if (!contains_text(visit_url("campground.php?action=inspectkitchen"), "Dramatic")) abort("You need a dramatic oven for this to work.");
 		}
 		
 		while (available_amount($item[Knob cake]) + creatable_amount($item[Knob cake]) == 0) {
@@ -1994,7 +2262,7 @@ boolean bcascKnobKing() {
 	
 		//Now the Knob Goblin King has 55 Attack, and we'll be fighting him with the MCD set to 7. So that's 55+7+7=69 Moxie we need. 
 		//Arbitrarily using 75 because will need the harem outfit equipped. 
-		if (item_amount($item[Knob cake]) == 0) {
+		if (item_amount($item[Knob cake]) > 0) {
 			buMax();
 			if (my_buffedstat(my_primestat()) >= 75) {
 				if (canMCD()) cli_execute("mcd 7");
@@ -2080,13 +2348,13 @@ boolean bcascLairFirstGate() {
 						setFamiliar("items");
 						setMood("i+");
 						while (!identifyBangPotions() && (bangPotionWeNeed() == "")) {
-							bumAdv1($location[Dungeons of Doom]);
+							bumMiniAdv(1, $location[Dungeons of Doom]);
 							cli_execute("use * dead mimic; use * large box; use * small box");
 						}
 							
 						//So at this point, we at least know WHICH bang potion we need, though we don't know whether we have it or not.
 						while (item_amount(bangPotionWeNeed().to_item()) == 0) {
-							bumAdv1($location[Dungeons of Doom]);
+							bumMiniAdv(1, $location[Dungeons of Doom]);
 							cli_execute("use * dead mimic; use * large box; use * small box");
 						}
 					}
@@ -2293,7 +2561,7 @@ boolean bcascMacguffinFinal() {
 						bumAdv($location[Middle Chamber], "", "", "choiceadv", "Getting another choice adventure", "-");
 					}
 				}
-				return bumAdv1($location[lower chambers]);
+				return bumMiniAdv(1,$location[lower chambers]);
 			}
 			
 			if (item_amount($item[ancient bronze token]) == 0 && item_amount($item[ancient bomb]) == 0 && !pyrstep("Step 1 / 3: get a token.","4"))
@@ -2488,7 +2756,7 @@ boolean bcascMacguffinPalindome() {
 			
 			//Get the Mega Gem
 			while (i_a("mega gem") == 0 && my_adventures() > 0)
-				bumAdv1($location[laboratory]);
+				bumMiniAdv(1, $location[laboratory]);
 		}
 		
 		if (i_a("mega gem") == 0) abort("That's weird. You don't have the Mega Gem.");
@@ -2498,7 +2766,7 @@ boolean bcascMacguffinPalindome() {
 		cli_execute("conditions clear;");
 		buMax("+equip Talisman o' Nam +equip Mega Gem");
 		setFamiliar("meatboss");
-		bumAdv1($location[palindome]);
+		bumMiniAdv(1, $location[palindome]);
 		if (item_amount($item[Staff of Fats]) == 0) abort("Looks like Dr. Awkward opened a can of whoop-ass on you. Try fighting him manually.");
 	}
 	
@@ -2541,7 +2809,7 @@ boolean bcascMacguffinPrelim() {
 	if (item_amount($item[ballroom key]) == 0) abort("You'll need to open the Ballroom");
 	while (!contains_text(visit_url("manor.php"),"sm8b.gif")) {
 		print("BCC: Opening the Spookyraven Cellar", "purple");
-		adventure(my_adventures(), $location[haunted ballroom]);
+		bumMiniAdv(my_adventures(), $location[haunted ballroom]);
 		betweenBattle();
 	}
 
@@ -2653,7 +2921,7 @@ boolean bcascMacguffinPyramid() {
 				if (my_meat() < 1000) abort("You need 1000 meat for a can of black paint");
 				cli_execute("buy can of black paint");
 			}
-			bumAdv1($location[desert (ultrahydrated)]);
+			bumMiniAdv(1, $location[desert (ultrahydrated)]);
 		}
 		
 		//This part deals with meeting Gnasir for the second time and/or using the black paint if you didn't do it the first time. 
@@ -2662,7 +2930,7 @@ boolean bcascMacguffinPyramid() {
 				cli_execute("buy can of black paint");
 			}
 			print("BCC: Painting Gnasir's Door", "purple");
-			bumAdv1($location[desert (ultrahydrated)]);
+			bumMiniAdv(1, $location[desert (ultrahydrated)]);
 		}
 		
 		//Now we need the worm riding manual. So get it.
@@ -2719,9 +2987,9 @@ boolean bcascManorBilliards() {
 				cli_execute("goal clear");
 				cli_execute("goal set 1 Spookyraven library key");
 				buMax();
-				if (adventure(have_effect($effect[Chalky Hand]), $location[Haunted Billiards Room])) {}
+				if (bumMiniAdv(have_effect($effect[Chalky Hand]), $location[Haunted Billiards Room])) {}
 			} else {
-				bumAdv1($location[Haunted Billiards Room]);
+				bumMiniAdv(1, $location[Haunted Billiards Room]);
 			}
 		}
 	}
@@ -2772,7 +3040,8 @@ boolean bcascMeatcar() {
 			use(item_amount($item[gnollish toolbox]), $item[gnollish toolbox]);
 			while (creatable_amount($item[bitchin' meatcar]) == 0) {
 				use(item_amount($item[gnollish toolbox]), $item[gnollish toolbox]);
-				bumAdv1($location[Degrassi Knoll]);
+				if (my_adventures() == 0) abort("No Adventures");
+				bumMiniAdv(1, $location[Degrassi Knoll]);
 			}
 		}
 		cli_execute("make meatcar");
@@ -3021,7 +3290,7 @@ boolean bcascPirateFledges() {
 			while (!contains_text(visit_url("questlog.php?which=1"), "I Rate, You Rate")) {
 				if (my_adventures() == 0) { abort("You're out of adventures."); }
 				print("BCC: Adventuring once at a time to meet the Cap'm for the first time.", "purple");
-				bumAdv1($location[Barrrney's Barrr], "consultBarrr");
+				bumMiniAdv(1, $location[Barrrney's Barrr], "consultBarrr");
 			}
 			
 			//Check whether we've completed the beer pong quest.
@@ -3036,6 +3305,7 @@ boolean bcascPirateFledges() {
 					print("BCC: Using the Cap'm's Map and fighting the Giant Crab", "purple");
 					use(1, $item[Cap'm Caronch's Map]);
 					run_combat();
+					if (have_effect($effect[Beaten Up]) > 0) abort("Uhoh. Please use the map and fight the crab manually.");
 				} else {
 					abort("For some reason we don't have the map even though we should have.");
 				}
@@ -3049,7 +3319,7 @@ boolean bcascPirateFledges() {
 			while (numPirateInsults() < 7) {
 				print("BCC: Adventuring one turn at a time to get 7 insults. Currently, we have "+numPirateInsults()+" insults.", "purple");
 				if (my_adventures() == 0) { abort("You're out of adventures."); }
-				bumAdv1($location[Barrrney's Barrr], "consultBarrr");
+				bumMiniAdv(1, $location[Barrrney's Barrr], "consultBarrr");
 			}
 			
 			print("BCC: Currently, we have "+numPirateInsults()+" insults. This is enough to continue with beer pong.", "purple");
@@ -3085,7 +3355,7 @@ boolean bcascPirateFledges() {
 			if (i_a("Cap'm Caronch's dentures") > 0) {
 				cli_execute("outfit swash");
 				print("BCC: Giving the dentures back to the Cap'm.", "purple");
-				while (available_amount($item[Cap'm Caronch's dentures]) > 0) bumAdv1($location[Barrrney's Barrr]);
+				while (available_amount($item[Cap'm Caronch's dentures]) > 0) bumMiniAdv(1, $location[Barrrney's Barrr]);
 			}
 			
 			print("BCC: Now going to do the beer pong adventure. This is HIGHLY experimental. Pausing to let you read this.", "purple");
@@ -3224,7 +3494,7 @@ boolean bcascTeleportitisBurn() {
 	if (have_effect($effect[Teleportitis]) == 0) return true;
 	bcascDailyDungeon();
 	if (have_effect($effect[Teleportitis]) == 0) return true;
-	adventure(have_effect($effect[Teleportitis]), $location[Haunted Kitchen]);
+	bumMiniAdv(have_effect($effect[Teleportitis]), $location[Haunted Kitchen]);
 	return true;
 }
 
@@ -3352,9 +3622,9 @@ boolean bcascToot() {
     if (checkStage("toot")) return true;
     visit_url("tutorial.php?action=toot");
     if (item_amount($item["letter from King Ralph XI"]) > 0) use(1, $item[letter from King Ralph XI]);
-    if (item_amount($item["pork elf goodies sack"]) > 0) use(1, $item[pork elf goodies sack]);
 	
 	if (get_property("bcasc_sellgems") == "true") {
+		if (item_amount($item["pork elf goodies sack"]) > 0) use(1, $item[pork elf goodies sack]);
 		foreach stone in $items[hamethyst, baconstone, porquoise] autosell(item_amount(stone), stone);
 	}
 	if (i_a("stolen accordion") == 0 && i_a("Rock and Roll Legend") == 0 && i_a("Squeezebox of the Ages") == 0 && i_a("The Trickster's Trikitixa") == 0) {
@@ -3401,7 +3671,7 @@ boolean bcascWand() {
 				bumAdv($location[Greater-Than Sign], "", "itemsnc", "1 choiceadv", "Getting Teleportitis", "-");
 			}
 			cli_execute("set choiceAdventure3 = 3");
-			bumAdv1($location[Greater-Than Sign]);
+			bumMiniAdv(1, $location[Greater-Than Sign]);
 			if (i_a("plus sign") > 0) { if (cli_execute("use plus sign")) {} }
 		}
 		
@@ -3629,7 +3899,7 @@ void bcs12() {
 							altered = true;
 							run_combat();
 						} else  {
-							bumAdv1($location[barn]);
+							bumMiniAdv(1,$location[barn]);
 						}
 					} until (altered || contains_text(url,"no more ducks here."));
 					
@@ -3676,7 +3946,7 @@ void bcs12() {
 				
 				//Put on the outfit and adventure, printing debug information each time. 
 				buMax("+outfit "+bcasc_warOutfit);
-				while (my_adventures() > 0 && bumAdv1($location[themthar hills])) {
+				while (my_adventures() > 0 && bumMiniAdv(1, $location[themthar hills])) {
 					print("BCC: Nunmeat retrieved: "+get_property("currentNunneryMeat")+" Estimated adventures remaining: "+estimated_advs(), "green");
 				}
 				
@@ -3931,9 +4201,7 @@ void bumcheekcend() {
 }
 
 void main() {
-	run_combat();
-
-	if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.21</b>") == -1) {
+	if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.22</b>") == -1) {
 		print("There is a new version available - go download the next version of bumcheekascend.ash at the sourceforge page, linked from http://kolmafia.us/showthread.php?t=4963!", "red");
 	}
 	
