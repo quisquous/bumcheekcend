@@ -1816,7 +1816,7 @@ boolean bcascChasm() {
 
 boolean bcascCyrpt() {
 	boolean stageDone(string name) {
-		if (get_revision() < 9260) abort("You need to update your Mafia to handle the cyrpt. A revision of at least 9260 is required. This script is only ever supported for a latest daily build.");
+		if (get_revision() < 9260 && get_revision() > 0) abort("You need to update your Mafia to handle the cyrpt. A revision of at least 9260 is required. This script is only ever supported for a latest daily build.");
 		print("The "+name+" is at "+get_property("cyrpt"+name+"Evilness")+"/50 Evilness...", "purple");
 		return (get_property("cyrpt"+name+"Evilness") == 0);
 	}
