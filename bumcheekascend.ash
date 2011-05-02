@@ -1835,6 +1835,7 @@ boolean bcascCyrpt() {
 	
 	if (!contains_text(visit_url("questlog.php?which=2"), "defeated the Bonerdagon")) {
 		if (my_buffedstat(my_primestat()) > 101) {
+			set_property("choiceAdventure527", "1");
 			bumAdv($location[Haert of the Cyrpt], "", "meatboss");
 			visit_url("council.php");
 			if (item_amount($item[chest of the Bonerdagon]) > 0) {
