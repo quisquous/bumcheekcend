@@ -75,6 +75,9 @@ FoodList[int] findAllBest(FoodInfo[item] foods, int maxFullness) {
 		int foodCount = 0;
 		boolean lastFoodBetter = true;
 		foreach thing in foodKeys {
+			if (foods[thing].quantity <= 0)
+				continue;
+
 			// If the last food of this fullness level did not result in
 			// an improvement, then no other food at this fullness could.
 			if (!lastFoodBetter)
