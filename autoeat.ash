@@ -764,6 +764,8 @@ FoodInfo[item] getInfo(boolean[item] foodList, boolean useMilk, boolean freeToCr
 }
 
 boolean drinkItem(item thing) {
+	debug("Trying to drink " + thing);
+	abort("Oops");
 	if (!createItem(1, thing))
 		return false;
 
@@ -775,8 +777,6 @@ boolean drinkItem(item thing) {
 }
 
 boolean autoDrink(boolean needStats, boolean needAdv) {
-	return false;
-
 	if (!getCock())
 		return false;
 
@@ -837,15 +837,15 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 	boolean freeToCraft = false;
 	FoodInfo[item] odeDrinks = getInfo(odeDrinkList, useOde, freeToCraft);
 
+	// FIXME: If running out of adventures, but entirely drunk, then make nightcap.
+
 	FoodList result;
 
 	if (useOde) {
-
-/*
 		// Assume that we'll be able to make as many 4-drunk awesome drinks as
 		// possible.  But, pick an offstat one just in case
 		boolean[item] extra;
-		extra[(my_primestat() == $stat[moxie] ? $item[gimlet] : $item[mae west]) = true;
+		extra[(my_primestat() == $stat[moxie] ? $item[gimlet] : $item[mae west])] = true;
 		foreach thing in extra {
 			float quality = foodQuality(thing, useOde, freeToCraft);
 			if (quality < 0)
@@ -859,7 +859,6 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 			odeDrinks[thing].quantity = quantity;
 			odeDrinks[thing].quality = quality;
 		}
-		*/
 
 		int lastDrunk = 0;
 		int drunk = 0;
