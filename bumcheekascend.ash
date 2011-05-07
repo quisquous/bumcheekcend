@@ -1351,6 +1351,7 @@ void setMood(string combat) {
 	}
 }
 
+boolean levelMeInnerLoop(int sMox);
 boolean levelMe(int sMox, boolean needBaseStat) {
 	print("BCC: levelMe("+sMox+", "+to_string(needBaseStat)+") called.", "fuchsia");
 	if (have_effect($effect[Beaten Up]) > 0) {
@@ -1384,7 +1385,6 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 			if (extraMoxieNeeded <= 0) return true;
 		}
 	}
-	cli_execute("goal clear; goal set "+sMox+" "+to_string(my_primestat()));
 
 	string command = get_property("bcasc_preLevelMe");
 	if (command != "") {
@@ -1392,6 +1392,15 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 		if (my_basestat(my_primestat()) >= sMox)
 			return true;
 	}
+
+	// Adventuring can abort sometimes, so recheck if conditions were met.
+	while (my_basestat(my_primestat()) < sMox) {
+		levelMeInnerLoop(sMox);
+	}
+}
+
+boolean levelMeInnerLoop(int sMox) {
+	cli_execute("goal clear; goal set "+sMox+" "+to_string(my_primestat()));
 
 	switch (my_primestat()) {
 		case $stat[Muscle] :
