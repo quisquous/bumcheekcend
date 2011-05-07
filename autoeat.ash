@@ -720,21 +720,23 @@ boolean createItem(int quantity, item thing) {
 	return retrieve_item(quantity, thing);
 }
 
-int createAndGetFullness(FoodList list, boolean useMilk, boolean freeToCraft) {
-	// We may not be able to create everything, so create the best items first.
-	boolean[item] foodKeys;
-	foreach thing in list.foodList
-		foodKeys[thing] = true;
-	sort foodKeys by -foodQuality(index, useMilk, freeToCraft);
-
+int createAndGetFullness(FoodList list) {
 	int total = 0;
-	foreach thing in foodKeys {
+	foreach thing in list.foodList {
 		// Assumption.
 		if (thing.fullness > 0 && thing.inebriety > 0)
 			abort("Internal error: createAndGetFullness");
 
+		// Try to create as many as we can.
+		int quantity = couldCreateQuantity(thing);
+		while (quantity > 0) {
+			if (createItem(quantity, thing))
+				break;
+			quantity = quantity - 1;
+		}
+
 		int full = thing.fullness + thing.inebriety;
-		total += full * min(couldCreateQuantity(thing), list.foodList[thing]);
+		total += full * min(item_amount(thing), list.foodList[thing]);
 	}
 	return total;
 }
@@ -864,7 +866,7 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 		repeat {
 			lastDrunk = drunk;
 			result = findBest(odeDrinks, totalDrunk);
-			drunk = createAndGetFullness(result, useOde, freeToCraft);
+			drunk = createAndGetFullness(result);
 		} until (drunk == lastDrunk);
 
 		// Try to gather more cocktail ingredients naturally.
@@ -881,7 +883,7 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 		repeat {
 			lastDrunk = drunk;
 			result = findBest(getInfo(odeDrinkList, useOde, freeToCraft), totalDrunk);
-			drunk = createAndGetFullness(result, useOde, freeToCraft);
+			drunk = createAndGetFullness(result);
 		} until (drunk == lastDrunk);
 
 		// Now, using *just* the items
@@ -990,7 +992,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		return false;
 	}
 
-	boolean useMilk = couldCreateQuantity($item[milk of magnesium]) > 0;
+	boolean useMilk = couldCreateQuantity($item[milk of magnesium]) > 0 || have_effect($effect[got milk]) >= totalFullness;
 	boolean freeToCraft = false;
 
 	FoodInfo[item] getMilkFoodInfo(boolean useMilk, boolean freeToCraft) {
@@ -1033,7 +1035,8 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	FoodList result = findBest(milkFoods, totalFullness);
 
 	if (useMilk) {
-		int fullness = createAndGetFullness(result, useMilk, freeToCraft);
+		int fullness = createAndGetFullness(result);
+		debug("Fullness: " + fullness);
 		if (fullness != totalFullness) {
 			// We want to use milk, but wait on better food items.
 			if (!needAdv)
@@ -1050,7 +1053,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 			repeat {
 				lastFullness = fullness;
 				result = findBest(getMilkFoodInfo(useMilk, freeToCraft), totalFullness);
-				fullness = createAndGetFullness(result, useMilk, freeToCraft);
+				fullness = createAndGetFullness(result);
 			} until (fullness == lastFullness);
 		}
 
@@ -1206,7 +1209,7 @@ void autoConsume(location loc) {
 			totalDrunk = 8;
 
 		FoodList result = findBest(getInfo(drinks, false, false), totalDrunk);
-		int drunk = createAndGetFullness(result, false, false);
+		int drunk = createAndGetFullness(result);
 		if (drunk == 0)
 			abort("Couldn't create anything?");
 
