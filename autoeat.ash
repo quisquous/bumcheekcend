@@ -1057,12 +1057,11 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		if (fullness == 0)
 			return false;
 
-		if (have_effect($effect[got milk]) == 0) {
-			retrieve_item(1, $item[milk of magnesium]);
+		// FIXME: What if milk is going to run out?
+		if (have_effect($effect[got milk]) < fullness) {
+			createItem(1, $item[milk of magnesium]);
 			use(1, $item[milk of magnesium]);
 		}
-
-		// FIXME: What if milk is going to run out?
 
 		boolean ateSomething = false;
 		foreach thing in result.foodList {
