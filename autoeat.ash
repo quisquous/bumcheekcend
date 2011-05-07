@@ -756,7 +756,7 @@ FoodInfo[item] getInfo(boolean[item] foodList, boolean useMilk, boolean freeToCr
 		if (quality <= 0)
 			continue;
 
-		foods[thing].quantity = item_amount(thing) + creatable_amount(thing);
+		foods[thing].quantity = quantity;
 		foods[thing].quality = quality;
 	}
 
