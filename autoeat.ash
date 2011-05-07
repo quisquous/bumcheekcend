@@ -949,17 +949,14 @@ boolean eatItem(item thing) {
 }
 
 boolean autoEat(boolean needStats, boolean needAdv) {
-	return false;
 	int totalFullness = fullness_limit() - my_fullness();
 
 	if (totalFullness <= 0)
 		return false;
 
-/*
 	// FIXME: Don't get an oven until we need it to cook something.
 	if (!getOven())
 		return false;
-*/
 
 	boolean eatBestItem(FoodList list, boolean useMilk, boolean freeToCraft) {
 		boolean[item] foodKeys;
@@ -1237,8 +1234,8 @@ void autoConsume(location loc) {
 	}
 
 	autoSpleen(needAdventures());
-	autoEat(false, needAdventures());
 	autoDrink(false, needAdventures());
+	autoEat(false, needAdventures());
 
 	int totalFullness = fullness_limit() - my_fullness();
 	// Do this last, in case we auto-ate a fortune cookie with milk.
