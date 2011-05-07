@@ -655,22 +655,24 @@ int couldCreateQuantity(item thing) {
 		return my_meat() / 150 + item_amount(thing);
 	}
 
-	int quantity = creatable_amount(thing);
-
 	// Break infinite loops in ingredient lists.
 	if (thing == $item[flat dough])
 		return item_amount(thing) + purchasableAmount(thing);
 
 	// Maybe recursively try to create this thing?
 	int[item] ingredientList = get_ingredients(thing);
+	int quantity;
 	if (count(ingredientList) > 0) {
-		int quantity = 10000;
+		// Set to some impossible value.
+		quantity = 10000;
 
 		foreach ingredient in ingredientList {
 			quantity = min(quantity, couldCreateQuantity(ingredient));
 			if (quantity == 0)
 				break;
 		}
+	} else {
+		quantity = creatable_amount(thing);
 	}
 
 	quantity += item_amount(thing) + purchasableAmount(thing);
