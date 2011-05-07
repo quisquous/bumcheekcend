@@ -1057,6 +1057,12 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		if (fullness == 0)
 			return false;
 
+		debug("Preparing to eat for the day with milk");
+		foreach thing in result.foodList {
+			debug("Considering: " + thing + "," + result.foodList[thing]);
+		}
+		wait(10);
+
 		// FIXME: What if milk is going to run out?
 		if (have_effect($effect[got milk]) < fullness) {
 			createItem(1, $item[milk of magnesium]);
