@@ -564,7 +564,7 @@ boolean getOven() {
 
 	if (get_property(propCampgroundOven) || checkOven())
 		return true;
-	if (my_meat() < 1000)
+	if (my_meat() < 3000 || my_level() < 5)
 		return false;
 
 	retrieve_item(1, $item[dramatic range]);
