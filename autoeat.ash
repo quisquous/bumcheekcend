@@ -876,6 +876,7 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 		// ...and have garnishes
 		// ...and don't have every kind of bottle of booze
 		// then try doing the barrel full of barrels.
+		getBaseBooze();
 
 		lastDrunk = 0;
 		drunk = 0;

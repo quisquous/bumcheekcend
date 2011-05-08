@@ -6,6 +6,7 @@ string propAutoHpMin = "hpAutoRecovery";
 string propAutoHpTarget = "hpAutoRecoveryTarget";
 string propAutoMpMin = "mpAutoRecovery";
 string propAutoMpTarget = "mpAutoRecoveryTarget";
+string propBarrelGoal = "barrelGoal";
 string propBatTurns = "picklishBatTurns";
 string propBetweenBattleScript = "betweenBattleScript";
 string propBlessingReceived = "friarsBlessingReceived";
