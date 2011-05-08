@@ -579,6 +579,7 @@ boolean canConsume(item thing) {
 int[item] npcCost;
 npcCost[$item[bowl of rye sprouts]] = 300;
 npcCost[$item[cob of corn]] = 300;
+npcCost[$item[fermenting powder]] = 70;
 npcCost[$item[flat dough]] = 50;
 npcCost[$item[fortune cookie]] = 40;
 npcCost[$item[gnollish casserole dish]] = 150;
@@ -598,12 +599,23 @@ npcCost[$item[taco shell]] = 80;
 npcCost[$item[tomato]] = 70;
 npcCost[$item[wad of dough]] = 50;
 
+int[item] recipeMultiplier;
+recipeMultiplier[$item[bottle of rum]] = 3;
+recipeMultiplier[$item[bottle of tequila]] = 3;
+recipeMultiplier[$item[bottle of whiskey]] = 3;
+recipeMultiplier[$item[bottle of gin]] = 3;
+recipeMultiplier[$item[bottle of vodka]] = 3;
+recipeMultiplier[$item[boxed wine]] = 3;
+recipeMultiplier[$item[bottle of sake]] = 3;
+recipeMultiplier[$item[pumpkin beer]] = 3;
+
 int purchasableAmount(item thing) {
 	if (!is_npc_item(thing))
 		return 0;
 
 	switch (thing) {
 	case $item[fortune cookie]:
+	case $item[fermenting powder]:
 		return my_meat() / npcCost[thing];
 
 	case $item[grapes]:
@@ -671,6 +683,11 @@ int couldCreateQuantity(item thing) {
 			if (quantity == 0)
 				break;
 		}
+
+		// Some recipes produce multiple items.
+		int mult = recipeMultiplier[thing];
+		if (mult > 0)
+			quantity *= mult;
 	} else {
 		quantity = creatable_amount(thing);
 	}
