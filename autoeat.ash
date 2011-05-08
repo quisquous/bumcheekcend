@@ -58,11 +58,13 @@ FoodList[int] findAllBest(FoodInfo[item] foods, int maxFullness) {
 	// WTF WTF WTF.  Sort destroys the association between keys and values.
 	// So, create a second array of "just" the food items, so that we can
 	// sort by value and not destroy the information passed into this func.
-	boolean[item] foodKeys;
+	item[int] foodKeys;
+	int count = 0;
 	foreach thing in foods {
-		foodKeys[thing] = true;
+		foodKeys[count] = thing;
+		count = count + 1;
 	}
-	sort foodKeys by -foods[index].quality;
+	sort foodKeys by -foods[value].quality;
 
 	// Sparse array of best foods for a given fullness level.
 	FoodList[int] bestFood;
@@ -74,7 +76,8 @@ FoodList[int] findAllBest(FoodInfo[item] foods, int maxFullness) {
 
 		int foodCount = 0;
 		boolean lastFoodBetter = true;
-		foreach thing in foodKeys {
+		foreach thingIdx in foodKeys {
+			item thing = foodKeys[thingIdx];
 			if (foods[thing].quantity <= 0)
 				continue;
 
@@ -782,7 +785,6 @@ FoodInfo[item] getInfo(boolean[item] foodList, boolean useMilk, boolean freeToCr
 
 boolean drinkItem(item thing) {
 	debug("Trying to drink " + thing);
-	abort("Oops");
 	if (!createItem(1, thing))
 		return false;
 
@@ -893,6 +895,7 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 		// ...and have garnishes
 		// ...and don't have every kind of bottle of booze
 		// then try doing the barrel full of barrels.
+		if (drunk != totalDrunk)
 		getBaseBooze();
 
 		lastDrunk = 0;
@@ -911,6 +914,31 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 		}
 
 		FoodList[int] bestDrinks = findAllBest(final, totalDrunk);
+
+		foreach thing in bestDrinks[totalDrunk].foodList {
+			debug("Considering: " + thing + "," + bestDrinks[totalDrunk].foodList[thing]);
+		}
+		wait(10);
+
+		if (drunk == totalDrunk) {
+			// FIXME: more robust accordion thief song casting
+			cli_execute("shrug madrigal");
+			while (have_effect($effect[ode to booze]) < totalDrunk) {
+				use_skill(1, $skill[ode to booze]);
+			}
+
+			FoodList result = bestDrinks[totalDrunk];
+
+			boolean drankSomething = false;
+
+			foreach thing in result.foodList {
+				for count from 1 to result.foodList[thing]
+					if (drinkItem(thing))
+						drankSomething = true;
+			}
+
+			return drankSomething;
+		}
 
 		if (drunk != lastDrunk && !needAdv) {
 			// Sort drinks by quality.
