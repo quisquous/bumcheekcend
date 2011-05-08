@@ -2761,7 +2761,7 @@ boolean bcascMacguffinHiddenCity() {
 				
 				//Explore the square in question
 				print("Exploring square : "+(squareNum + 1)+" / 25");
-				string url = visit_url("hiddencity.php?which="+squareNum);
+				string url = bumAdvUrl("hiddencity.php?which="+squareNum);
 				bumRunCombat();
 				print("BCC: Finished the combat. Let's carry on.", "purple");
 				find_all();
