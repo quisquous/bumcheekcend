@@ -366,13 +366,6 @@ void burnExcessMp(location loc)
 	}
 }
 
-void getBaseBooze() {
-	// Yay, magic property numbers.
-	set_property(propBarrelGoal, 2);
-
-
-}
-
 void useRedRay(location loc) {
 	if (have_effect($effect[everything looks red]) > 0)
 		return;

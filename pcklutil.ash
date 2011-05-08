@@ -446,6 +446,11 @@ float statsForFamiliar(familiar fam, location loc) {
 	return 0.0;
 }
 
+void getBaseBooze() {
+	// Yay, magic property numbers.
+	set_property(propBarrelGoal, 2);
+}
+
 // Miscellaneous actions
 
 void getPresent() {
