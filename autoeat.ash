@@ -1004,10 +1004,12 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 
 		FoodList[int] bestDrinks = findAllBest(final, totalDrunk);
 
-		foreach thing in bestDrinks[totalDrunk].foodList {
-			debug("Considering: " + thing + "," + bestDrinks[totalDrunk].foodList[thing]);
+		if (drunk > 0) {
+			foreach thing in bestDrinks[totalDrunk].foodList {
+				debug("Considering: " + thing + "," + bestDrinks[totalDrunk].foodList[thing]);
+			}
+			wait(10);
 		}
-		wait(10);
 
 		if (drunk == totalDrunk) {
 			castOde(totalDrunk);
@@ -1060,9 +1062,9 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 
 			return drankSomething;
 		}
-	
-		abort("Tried to drink something, but couldn't create anything?");
 
+		// FIXME: consider other drink list as well
+		abort("Tried to drink something, but couldn't create anything?");
 	} else {
 		result = findBest(odeDrinks, totalDrunk);
 	}
@@ -1130,6 +1132,10 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		sort foodKeys by -foodQuality(index, useMilk, freeToCraft);
 
 		foreach thing in foodKeys {
+			if (!createItem(1, thing))
+				continue;
+			debug("Eating best item: " + thing);
+			wait(20);
 			if (eatItem(thing))
 				return true;
 		}
@@ -1255,7 +1261,6 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		return false;
 
 	debug("We need adventures, but couldn't eat anything awesome.");
-	abort("Whoa there.");
 
 	FoodList awesomeList = findBest(getInfo(milkFoodList, useMilk, freeToCraft), totalFullness);
 	if (eatBestItem(awesomeList, useMilk, freeToCraft))
