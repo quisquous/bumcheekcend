@@ -1290,10 +1290,12 @@ boolean autoSpleen(boolean force) {
 	foreach thing in fourSpleen {
 		if (spleenLeft() < 4)
 			break;
-		if (item_amount(thing) == 0)
-			continue;
-		usedSomething = true;
-		use(1, thing);
+		while (item_amount(thing) > 0) {
+			if (spleenLeft() < 4)
+				break;
+			usedSomething = true;
+			use(1, thing);
+		}
 	}
 
 	// Postpone wads if there's a remote chance we could get a mojo filter.
@@ -1304,14 +1306,20 @@ boolean autoSpleen(boolean force) {
 	if (!useWads || my_level() < 6 || spleenLeft() == 0)
 		return usedSomething;
 
+	boolean shouldUseWad() {
+		return spleenLeft() == 0 || spleenLeft() % 4 == 0;
+	}
+
 	// FIXME: Sort wads by stat relevance
 	foreach thing in allWads {
-		if (spleenLeft() == 0 || spleenLeft() % 4 == 0)
+		if (!shouldUseWad())
 			break;
-		if (item_amount(thing) == 0)
-			continue;
-		usedSomething = true;
-		use(1, thing);
+		while (item_amount(thing) > 0) {
+			if (!shouldUseWad())
+				break;
+			usedSomething = true;
+			use(1, thing);
+		}
 	}
 
 	return usedSomething;
