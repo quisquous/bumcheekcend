@@ -1025,10 +1025,44 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 			return drankSomething;
 		}
 
-		if (drunk != lastDrunk && !needAdv) {
-			// Sort drinks by quality.
-			// Drink until ode runs out once.
+		if (!needAdv)
+			return false;
+
+		// If we need adventures, but can't fill up entirely, then drink
+		// one ode's worth.
+
+		// FIXME: maybe need to consider not having a RnR legend here.
+
+		castOde(1);
+		int odeTurns = have_effect($effect[ode to booze]);
+
+		if (odeTurns == 0) {
+			debug("Failed to cast ode, so just drinking one thing");
+			return drinkBestItem(result, false, freeToCraft);
 		}
+
+		debug("Couldn't find drinks for " + totalDrunk + " drunkenness.");
+		debug("Trying to drink up to " + odeTurns + " turns of ode.");
+
+		for tryDrunk from odeTurns downto 1 {
+			FoodList result = bestDrinks[tryDrunk];
+			if (createAndGetFullness(result) != tryDrunk)
+				continue;
+
+			debug("Found enough to drink " + tryDrunk + " drunkenness.");
+
+			boolean drankSomething = false;
+			foreach thing in result.foodList {
+				for count from 1 to result.foodList[thing]
+					if (drinkItem(thing))
+						drankSomething = true;
+			}
+
+			return drankSomething;
+		}
+	
+		abort("Tried to drink something, but couldn't create anything?");
+
 	} else {
 		result = findBest(odeDrinks, totalDrunk);
 	}
