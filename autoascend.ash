@@ -24,6 +24,34 @@ boolean needTelescopeItem(item thing)
 	return false;
 }
 
+void finishDailyCasts() {
+	boolean safeUseSkill(int count, skill s) {
+		if (count <= 0 || !have_skill(s))
+			return false;
+		
+		return use_skill(count, s);
+	}
+	boolean safeUseSkill(skill s) {
+		return safeUseSkill(1, s);
+	}
+
+
+	while (mp_cost($skill[summon party favor]) < 30) {
+		if (!safeUseSkill($skill[summon party favor]))
+			break;
+	}
+
+	safeUseSkill($skill[summon alice's army cards]);
+	safeUseSkill($skill[summon hilarious objects]);
+	safeUseSkill($skill[summon tasteful items]);
+
+	safeUseSkill(cocktailSummonsRemaining(), $skill[advanced cocktail crafting]);
+	if (my_meat() > 10000) {
+		safeUseSkill(noodleSummonsRemaining(), $skill[pastamastery]);
+		safeUseSkill(reagentSummonsRemaining(), $skill[advanced saucecrafting]);
+	}
+}
+
 void useSpareZaps() {
 	// Mostly copypasta from an internal bumcheekascend.ash function.
 	// This should be made public in the main script.
@@ -175,6 +203,8 @@ void endOfDay() {
 	for i from 1 to 3 {
 		poolTable("mys");
 	}
+
+	finishDailyCasts();
 
 	harvestCampground();
 
