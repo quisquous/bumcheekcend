@@ -883,11 +883,7 @@ boolean drinkNightcap() {
 	debug("Drinking " + thing + " for nightcap");
 	wait(60);
 
-	cli_execute("shrug madrigal");
-	while (have_effect($effect[ode to booze]) < thing.inebriety) {
-		use_skill(1, $skill[ode to booze]);
-	}
-
+	castOde(thing.inebriety);
 	return unsafeDrinkItem(thing);
 }
 
@@ -1014,11 +1010,7 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 		wait(10);
 
 		if (drunk == totalDrunk) {
-			// FIXME: more robust accordion thief song casting
-			cli_execute("shrug madrigal");
-			while (have_effect($effect[ode to booze]) < totalDrunk) {
-				use_skill(1, $skill[ode to booze]);
-			}
+			castOde(totalDrunk);
 
 			FoodList result = bestDrinks[totalDrunk];
 

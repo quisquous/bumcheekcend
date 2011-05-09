@@ -359,6 +359,24 @@ boolean tryTonic(int neededMP) {
 	return use(1, $item[tonic water]);
 }
 
+boolean castOde(int turns) {
+	if (have_skill($skill[ode to booze]))
+		return false;
+
+	if (have_effect($effect[ode to booze]) == 0) {
+		// FIXME: check number of accordion thief songs and shrug one
+		cli_execute("shrug madrigal");
+	}
+
+	while (have_effect($effect[ode to booze]) < turns) {
+		tryTonic(mp_cost($skill[ode to booze]));
+		if (!use_skill(1, $skill[ode to booze]))
+			return false;
+	}
+
+	return true;
+}
+
 // Adventuring
 
 boolean canAdventure() {
