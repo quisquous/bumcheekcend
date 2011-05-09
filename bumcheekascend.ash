@@ -470,27 +470,27 @@ boolean buMax() { buMax(""); }
 
 boolean bumMiniAdv(int adventures, location loc, string override) {
 	betweenBattle();
-	if (override != "") {
-		try {
-			adventure(adventures, loc, override);
-			boolean success = true;
-		} finally {
-			return success;
-		}
-	} else if (my_primestat() == $stat[Mysticality]) {
-		try {
-			adventure(adventures, loc, "consultMyst");
-			boolean success = true;
-		} finally {
-			return success;
-		}
-	} else {
-		try {
-			adventure(adventures, loc);
-			boolean success = true;
-		} finally {
-			return success;
-		}
+
+	if (my_primestat() == $stat[Mysticality] && override == "")
+		return bumMiniAdv(adventures, loc, "consultMyst");
+
+	try {
+		if (loc.nocombats) {
+			for i from 1 to adventures {
+				callBetweenBattleScript();
+				if (override == "")
+					adventure(1, loc);
+				else
+					adventure(1, loc, override);
+			}
+		} else
+			if (override == "")
+				adventure(1, loc);
+			else
+				adventure(1, loc, override);
+		boolean success = true;
+	} finally {
+		return success;
 	}
 }
 boolean bumMiniAdv(int adventures, location loc) { return bumMiniAdv(adventures, loc, ""); }
