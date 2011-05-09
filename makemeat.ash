@@ -98,6 +98,7 @@ void process_inventory() {
 	// Sell all
 	foreach thing in $items[
 		1337 7r0uz0rz,
+		abominable snowcone,
 		a butt tuba,
 		amulet of extreme plot significance,
 		armgun,
@@ -155,6 +156,7 @@ void process_inventory() {
 		hot katana blade,
 		hot plate,
 		huge spoon,
+		ice-cold willer,
 		infernal fife,
 		infernal insoles,
 		ironic battle spoon,
