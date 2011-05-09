@@ -360,7 +360,7 @@ boolean tryTonic(int neededMP) {
 }
 
 boolean castOde(int turns) {
-	if (have_skill($skill[ode to booze]))
+	if (!have_skill($skill[ode to booze]))
 		return false;
 
 	if (have_effect($effect[ode to booze]) == 0) {
