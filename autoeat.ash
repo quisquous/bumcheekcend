@@ -1077,6 +1077,7 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 	if (!needAdv)
 		return false;
 
+	// FIXME: Consider going and getting milk or goat cheese.
 	debug("We need adventures, but couldn't drink anything awesome.");
 	abort("Whoa there.");
 
@@ -1369,7 +1370,6 @@ void autoConsume(location loc) {
 		cli_execute("council");
 	}
 
-/*
 	if (my_daycount() == 1 && bcascStage("tavern") && !bcascStage("swill") && getCock()) {
 		boolean[item] drinks = $items[
 			blended frozen swill,
@@ -1391,10 +1391,8 @@ void autoConsume(location loc) {
 			createItem(result.foodList[thing], thing);
 		}
 
-		if (have_effect($effect[ode to booze]) < drunk) {
-			tryTonic(50);
-			use_skill(1, $skill[ode to booze]);
-		}
+		castOde(drunk);
+
 		foreach thing in result.foodList {
 			int quantity = result.foodList[thing];
 			quantity = min(quantity, item_amount(thing));
@@ -1404,7 +1402,6 @@ void autoConsume(location loc) {
 
 		setBcascStageComplete("swill");
 	}
-*/
 
 	boolean needAdventures() {
 		return my_adventures() < 10;
