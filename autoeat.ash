@@ -39,6 +39,21 @@ record FoodList {
 	float totalQuality;
 };
 
+item[int] sortByQuality(FoodInfo[item] foods) {
+	item[int] sortedFoods;
+	int count = 0;
+	foreach thing in foods {
+		sortedFoods[count] = thing;
+		count = count + 1;
+	}
+	sort sortedFoods by -foods[value].quality;
+	return sortedFoods;
+}
+
+item getOffstatSuperCockDrink() {
+	return my_primestat() == $stat[moxie] ? $item[gimlet] : $item[mae west];
+}
+
 // For a given max fullness level and set of foods, return the optimal menu.
 FoodList[int] findAllBest(FoodInfo[item] foods, int maxFullness) {
 	// Deciding what to eat is the bounded knapsack problem.  Given that
@@ -783,16 +798,97 @@ FoodInfo[item] getInfo(boolean[item] foodList, boolean useMilk, boolean freeToCr
 	return foods;
 }
 
-boolean drinkItem(item thing) {
+boolean unsafeDrinkItem(item thing) {
 	debug("Trying to drink " + thing);
+
 	if (!createItem(1, thing))
 		return false;
 
+	return drink(1, thing);
+}
+
+boolean drinkItem(item thing) {
 	if (thing.inebriety + my_inebriety() > inebriety_limit()) {
 		abort("Drinking " + thing + " would go over drunkeness limit.");
 	}
 
-	return drink(1, thing);
+	return unsafeDrinkItem(thing);
+}
+
+
+void summonRemainingGarnishes() {
+	int quantity = cocktailSummonsRemaining();
+
+	tryTonic(quantity * 10);
+	use_skill(quantity, $skill[advanced cocktailcrafting]);
+}
+
+item createNightcap() {
+	summonRemainingGarnishes();
+	harvestCampground();
+
+	// Merge all drink lists, find the best item.
+	boolean[item] drinkList;
+	foreach thing in odeDrinkList
+		drinkList[thing] = true;
+	foreach thing in otherDrinkList
+		drinkList[thing] = true;
+
+	// FIXME
+	boolean useOde = true;
+	boolean freeToCraft = false;
+
+	FoodInfo[item] foods = getInfo(drinkList, useOde, freeToCraft);
+	item[int] sorted = sortByQuality(foods);
+
+	// Try for a minimum of a supercock drink.
+	item best = sorted[0];
+	float bestQuality = foods[best].quality;
+	item desired = getOffstatSuperCockDrink();
+	float baselineQuality = foodQuality(desired, useOde, freeToCraft);
+	if (bestQuality < baselineQuality) {
+		// We couldn't make one, so are probably missing base booze?
+		// This could be smarter.
+
+		getBaseBooze();
+		foods = getInfo(drinkList, useOde, freeToCraft);
+		sorted = sortByQuality(foods);
+	}
+	
+	if (haveItem(sorted[0]))
+		return sorted[0];
+
+	if (my_adventures() == 0)
+		abort("FIXME: implement inigo's");
+
+	if (stills_available() < 2)
+		abort("FIXME: implement night cap without still");
+
+	foreach key in sorted {
+		item thing = sorted[key];
+		debug("Creating " + thing + " for nightcap");
+		if (createItem(1, thing))
+			return thing;
+	}
+
+	abort("Unable to create any nightcap.");
+	return $item[none];
+}
+
+boolean drinkNightcap() {
+	item thing = createNightcap();
+	if (thing == $item[none])
+		abort("Unknown nightcap");
+
+	debug("Drinking " + thing + " for nightcap");
+	wait(60);
+
+	cli_execute("shrug madrigal");
+	while (have_effect($effect[ode to booze]) < thing.inebriety) {
+		use_skill(1, $skill[ode to booze]);
+	}
+
+	return unsafeDrinkItem(thing);
 }
 
 boolean autoDrink(boolean needStats, boolean needAdv) {
@@ -836,11 +932,8 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 	}
 
 	if (needAdv && cocktailSummonsRemaining() > 0) {
-		int quantity = cocktailSummonsRemaining();
-
 		debug("We need adventures, so summoning garnishes.");
-		tryTonic(quantity * 10);
-		use_skill(quantity, $skill[advanced cocktailcrafting]);
+		summonRemainingGarnishes();
 	}
 
 	// Don't bother drinking unless we have garnishes.
@@ -864,7 +957,7 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 		// Assume that we'll be able to make as many 4-drunk awesome drinks as
 		// possible.  But, pick an offstat one just in case
 		boolean[item] extra;
-		extra[(my_primestat() == $stat[moxie] ? $item[gimlet] : $item[mae west])] = true;
+		extra[getOffstatSuperCockDrink()] = true;
 		foreach thing in extra {
 			float quality = foodQuality(thing, useOde, freeToCraft);
 			if (quality < 0)
@@ -1286,6 +1379,11 @@ void autoConsume(location loc) {
 	autoSpleen(needAdventures());
 	autoDrink(false, needAdventures());
 	autoEat(false, needAdventures());
+
+	if (my_fullness() == fullness_limit() && my_inebriety() == inebriety_limit() && needAdventures()) {
+		debug("Creating nightcap");
+		createNightcap();
+	}
 
 	int totalFullness = fullness_limit() - my_fullness();
 	// Do this last, in case we auto-ate a fortune cookie with milk.

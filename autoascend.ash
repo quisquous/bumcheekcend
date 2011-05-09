@@ -201,10 +201,14 @@ void main() {
 		cli_execute("call bumcheekascend.ash");
 	} finally {
 		debug("Script failed");
-	}
 
-	if (my_inebriety() > inebriety_limit()) {
-		endOfDay();
-		return;
+		if (my_fullness() == fullness_limit() && my_inebriety() == inebriety_limit() && my_adventures() == 0) {
+			drinkNightcap();
+		}
+
+		if (my_inebriety() > inebriety_limit()) {
+			endOfDay();
+			return;
+		}
 	}
 }
