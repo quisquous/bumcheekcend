@@ -3415,7 +3415,11 @@ boolean bcascPirateFledges() {
 			
 			//Need to use the blueprints.
 			if (index_of(visit_url("questlog.php?which=1"), "Caronch has given you a set of blueprints") > 0) {
-				if ((in_muscle_sign() || i_a("frilly skirt") > 0) && i_a("hot wing") >= 3) {
+				if ((in_muscle_sign() || i_a("frilly skirt") > 0)) {
+					if (item_amount($item[hot wing]) < 3) {
+						bumAdv($location[pandamonium slums], "", "items", "3 hot wing", "Getting 3 hot wings for the blueprints", "+i");
+					}
+
 					print("BCC: Using the skirt and hot wings to burgle the Frat House...", "purple");
 					cli_execute("checkpoint");
 					cli_execute("equip frilly skirt");
