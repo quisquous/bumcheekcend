@@ -718,6 +718,10 @@ boolean couldCreate(item thing) {
 	return couldCreateQuantity(thing) > 0;
 }
 
+boolean haveMilk() {
+	return couldCreateQuantity($item[milk of magnesium]) > 0 || have_effect($effect[got milk]) >= fullness_limit() - my_fullness();
+}
+
 boolean createItem(int quantity, item thing) {
 	if (item_amount(thing) >= quantity)
 		return true;
@@ -1160,7 +1164,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 		return false;
 	}
 
-	boolean useMilk = couldCreateQuantity($item[milk of magnesium]) > 0 || have_effect($effect[got milk]) >= totalFullness;
+	boolean useMilk = haveMilk();
 	boolean freeToCraft = false;
 
 	FoodInfo[item] getMilkFoodInfo(boolean useMilk, boolean freeToCraft) {
@@ -1413,8 +1417,17 @@ void autoConsume(location loc) {
 	}
 
 	autoSpleen(needAdventures());
-	autoDrink(false, needAdventures());
-	autoEat(false, needAdventures());
+
+	// If there's no milk, it's easier to scrounge up food a little at a time,
+	// so it makes sense to eat first.  If we have milk, it's easier to find
+	// 2-3 drinks than 15 fullness, so drink first.
+	if (haveMilk()) {
+		autoDrink(false, needAdventures());
+		autoEat(false, needAdventures());
+	} else {
+		autoEat(false, needAdventures());
+		autoDrink(false, needAdventures());
+	}
 
 	if (my_fullness() == fullness_limit() && my_inebriety() == inebriety_limit() && needAdventures()) {
 		debug("Creating nightcap");
