@@ -466,8 +466,14 @@ float statsForFamiliar(familiar fam, location loc) {
 }
 
 void getBaseBooze() {
+	debug("Adventuring to get some base booze");
+
 	// Yay, magic property numbers.
 	set_property(propBarrelGoal, 2);
+
+	// FIXME: Verify that barrels are smashed.  What if adventuring aborts?
+	// Save 2 adventures for crafting.
+	adventure(my_adventures() - 2, $location[barrel full of barrels]);
 }
 
 // Miscellaneous actions
