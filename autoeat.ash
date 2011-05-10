@@ -1047,7 +1047,7 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 
 	// FIXME: maybe need to consider not having a RnR legend here.
 	int maxOde = 10;
-	int odeCasts = inebriety_limit() / maxOde;
+	int odeCasts = (inebriety_limit() + maxOde - 1) / maxOde;
 	int minOde = inebriety_limit() / odeCasts;
 
 	minOde = min(minOde, totalDrunk);
