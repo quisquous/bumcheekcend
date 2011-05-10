@@ -204,13 +204,24 @@ void endOfDay() {
 		poolTable("mys");
 	}
 
+	debug("Checking for missing amazing ideas");
+	boolean missingAmazingIdea = false;
+	for i from 5060 to 5073 {
+		if (get_property("unknownRecipe" + i) == "true") {
+			debug("Missing " + to_item(i));
+			missingAmazingIdea = true;
+		}
+	}
+	if (missingAmazingIdea)
+		takeShower("hot");
+	else
+		takeStatShower();
+
 	finishDailyCasts();
 
 	harvestCampground();
 
 	tryTeaParty();
-
-	takeStatShower();
 
 	cli_execute("maximize adv");
 
