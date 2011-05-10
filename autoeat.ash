@@ -891,6 +891,16 @@ boolean drinkNightcap() {
 	return unsafeDrinkItem(thing);
 }
 
+boolean[item] mergeItemList(boolean[item] list1, boolean[item] list2) {
+	boolean[item] itemList;
+	foreach thing in list1 
+		itemList[thing] = true;
+	foreach thing in list2 
+		itemList[thing] = true;
+
+	return itemList;
+}
+
 boolean autoDrink(boolean needStats, boolean needAdv) {
 	if (!getCock())
 		return false;
@@ -945,159 +955,130 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 
 	harvestCampground();
 
+	// FIXME: support not using/having ode
 	boolean useOde = true;
 	boolean freeToCraft = false;
-	FoodInfo[item] odeDrinks = getInfo(odeDrinkList, useOde, freeToCraft);
 
-	// FIXME: If running out of adventures, but entirely drunk, then make nightcap.
+	FoodInfo[item] odeDrinks = getInfo(odeDrinkList, useOde, freeToCraft);
 
 	FoodList result;
 
-	if (useOde) {
-		// Assume that we'll be able to make as many 4-drunk awesome drinks as
-		// possible.  But, pick an offstat one just in case
-		boolean[item] extra;
-		extra[getOffstatSuperCockDrink()] = true;
-		foreach thing in extra {
-			float quality = foodQuality(thing, useOde, freeToCraft);
-			if (quality < 0)
-				continue;
+	// Assume that we'll be able to make as many 4-drunk awesome drinks as
+	// possible.  But, pick an offstat one just in case
+	boolean[item] extra;
+	extra[getOffstatSuperCockDrink()] = true;
+	foreach thing in extra {
+		float quality = foodQuality(thing, useOde, freeToCraft);
+		if (quality < 0)
+			continue;
 
-			if (thing.inebriety > totalDrunk)
-				continue;
+		if (thing.inebriety > totalDrunk)
+			continue;
 
-			int quantity = totalDrunk / thing.inebriety;
+		int quantity = totalDrunk / thing.inebriety;
 
-			odeDrinks[thing].quantity = quantity;
-			odeDrinks[thing].quality = quality;
-		}
-
-		int lastDrunk = 0;
-		int drunk = 0;
-		repeat {
-			lastDrunk = drunk;
-			result = findBest(odeDrinks, totalDrunk);
-			drunk = createAndGetFullness(result);
-		} until (drunk == lastDrunk);
-
-		// Try to gather more cocktail ingredients naturally.
-		if (drunk != lastDrunk && !needAdv)
-			return false;
-
-		// if have hippy outfit	and are level 6
-		// ...and have garnishes
-		// ...and don't have every kind of bottle of booze
-		// then try doing the barrel full of barrels.
-		if (drunk != totalDrunk)
-		getBaseBooze();
-
-		lastDrunk = 0;
-		drunk = 0;
-		repeat {
-			lastDrunk = drunk;
-			result = findBest(getInfo(odeDrinkList, useOde, freeToCraft), totalDrunk);
-			drunk = createAndGetFullness(result);
-		} until (drunk == lastDrunk);
-
-		// Now, using *just* the items
-		FoodInfo[item] final;
-		foreach thing in result.foodList {
-			final[thing].quantity = result.foodList[thing];
-			final[thing].quality = foodQuality(thing, useOde, freeToCraft);
-		}
-
-		FoodList[int] bestDrinks = findAllBest(final, totalDrunk);
-
-		if (drunk > 0) {
-			foreach thing in bestDrinks[totalDrunk].foodList {
-				debug("Considering: " + thing + "," + bestDrinks[totalDrunk].foodList[thing]);
-			}
-			wait(10);
-		}
-
-		if (drunk == totalDrunk) {
-			castOde(totalDrunk);
-
-			FoodList result = bestDrinks[totalDrunk];
-
-			boolean drankSomething = false;
-
-			foreach thing in result.foodList {
-				for count from 1 to result.foodList[thing]
-					if (drinkItem(thing))
-						drankSomething = true;
-			}
-
-			return drankSomething;
-		}
-
-		if (!needAdv)
-			return false;
-
-		// If we need adventures, but can't fill up entirely, then drink
-		// one ode's worth.
-
-		// FIXME: maybe need to consider not having a RnR legend here.
-
-		castOde(1);
-		int odeTurns = have_effect($effect[ode to booze]);
-
-		if (odeTurns == 0) {
-			debug("Failed to cast ode, so just drinking one thing");
-			return drinkBestItem(result, false, freeToCraft);
-		}
-
-		debug("Couldn't find drinks for " + totalDrunk + " drunkenness.");
-		debug("Trying to drink up to " + odeTurns + " turns of ode.");
-
-		for tryDrunk from odeTurns downto 1 {
-			FoodList result = bestDrinks[tryDrunk];
-			if (createAndGetFullness(result) != tryDrunk)
-				continue;
-
-			debug("Found enough to drink " + tryDrunk + " drunkenness.");
-
-			boolean drankSomething = false;
-			foreach thing in result.foodList {
-				for count from 1 to result.foodList[thing]
-					if (drinkItem(thing))
-						drankSomething = true;
-			}
-
-			return drankSomething;
-		}
-
-		// FIXME: consider other drink list as well
-		abort("Tried to drink something, but couldn't create anything?");
-	} else {
-		result = findBest(odeDrinks, totalDrunk);
+		odeDrinks[thing].quantity = quantity;
+		odeDrinks[thing].quality = quality;
 	}
 
-	// FIXME: Use ode, consider when to drink or not drink.
+	int lastDrunk = 0;
+	int drunk = 0;
+	repeat {
+		lastDrunk = drunk;
+		result = findBest(odeDrinks, totalDrunk);
+		drunk = createAndGetFullness(result);
+	} until (drunk == lastDrunk);
 
-	if (needStats && drinkBestStatItem(result))
+	// Try to gather more cocktail ingredients naturally.
+	if (drunk != lastDrunk && !needAdv)
+		return false;
+
+	// if have hippy outfit	and are level 6
+	// ...and have garnishes
+	// ...and don't have every kind of bottle of booze
+	// then try doing the barrel full of barrels.
+	if (drunk != totalDrunk)
+		getBaseBooze();
+
+	lastDrunk = 0;
+	drunk = 0;
+	repeat {
+		lastDrunk = drunk;
+		result = findBest(getInfo(odeDrinkList, useOde, freeToCraft), totalDrunk);
+		drunk = createAndGetFullness(result);
+	} until (drunk == lastDrunk);
+
+	// Now, using *just* the items that we've created.
+	FoodInfo[item] final;
+	foreach thing in result.foodList {
+		final[thing].quantity = item_amount(thing);
+		final[thing].quality = foodQuality(thing, useOde, freeToCraft);
+	}
+
+	FoodList[int] bestDrinks = findAllBest(final, totalDrunk);
+
+	boolean drinkIfExists(FoodList list, int tryDrunk) {
+		if (createAndGetFullness(list) != tryDrunk)
+			return false;
+
+		debug("Found enough to drink to " + tryDrunk + " drunkenness.");
+		foreach thing in list.foodList {
+			debug("Considering: " + thing + "," + list.foodList[thing]);
+		}
+		wait(10);
+		castOde(tryDrunk);
+
+		boolean drankSomething = false;
+		foreach thing in list.foodList {
+			for count from 1 to list.foodList[thing]
+				if (drinkItem(thing))
+					drankSomething = true;
+		}
+
+		return drankSomething;
+	}
+
+	// Entirely fill drunkenness?
+	if (drinkIfExists(bestDrinks[totalDrunk], totalDrunk))
 		return true;
-	if (needAdv && drinkBestItem(result, useOde, freeToCraft))
-		return true;
+
+	// At this point, maybe we can try to fill one ode's worth with any drinks
+	// that will fit in our optimal diet?
+
+	// FIXME: maybe need to consider not having a RnR legend here.
+	int maxOde = 10;
+	int odeCasts = inebriety_limit() / maxOde;
+	int minOde = inebriety_limit() / odeCasts;
+
+	minOde = min(minOde, totalDrunk);
+	maxOde = min(maxOde, totalDrunk);
+
+	for tryDrunk from maxOde downto minOde {
+		if (drinkIfExists(bestDrinks[tryDrunk], tryDrunk))
+			return true;
+	}
 
 	if (!needAdv)
 		return false;
 
-	// FIXME: Consider going and getting milk or goat cheese.
-	debug("We need adventures, but couldn't drink anything awesome.");
-	abort("Whoa there.");
+	debug("We need adventures, but couldn't drink just awesome things.");
 
-	FoodList awesomeList = findBest(getInfo(odeDrinkList, useOde, freeToCraft), totalDrunk);
-	if (drinkBestItem(awesomeList, useOde, freeToCraft))
-		return true;
+	boolean[item] fullDrinkList = mergeItemlist(odeDrinkList, otherDrinkList);
+	bestDrinks = findAllBest(getInfo(fullDrinkList, useOde, freeToCraft), maxOde);
 
-	FoodList otherList = findBest(getInfo(otherDrinkList, useOde, freeToCraft), totalDrunk);
-	if (drinkBestItem(otherList, useOde, freeToCraft))
-		return true;
+	for tryDrunk from minOde to maxOde {
+		if (drinkIfExists(bestDrinks[tryDrunk], tryDrunk))
+			return true;
+	}
 
-	debug("Somehow we couldn't drink anything.");
+	debug("Couldn't even fill an ode with *any* drinks.  Let's just drink what we have.");
+
+	for tryDrunk from minOde downto 1 {
+		if (drinkIfExists(bestDrinks[tryDrunk], tryDrunk))
+			return true;
+	}
+
 	return false;
-
 }
 
 boolean couldEatFortuneCookie() {
