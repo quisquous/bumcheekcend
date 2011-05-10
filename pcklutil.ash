@@ -369,6 +369,7 @@ boolean castOde(int turns) {
 	}
 
 	while (have_effect($effect[ode to booze]) < turns) {
+		// FIXME: Consider casting mojo here.
 		tryTonic(mp_cost($skill[ode to booze]));
 		if (!use_skill(1, $skill[ode to booze]))
 			return false;

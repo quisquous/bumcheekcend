@@ -1366,14 +1366,28 @@ void autoConsume(location loc) {
 	if (my_daycount() == 1 && my_inebriety() == 0 && stillAvailable()) {
 		tryCast($skill[mojomuscular melody]);
 		retrieve_item(4, $item[tonic water]);
-		if (have_effect($effect[ode to booze]) < 3) {
-			tryTonic(50);
-			use_skill(1, $skill[ode to booze]);
-		}
+		summonRemainingGarnishes();
+
+		castOde(3);
+
 		cli_execute("garden pick");
 
+		if (have_skill($skill[summon alice's army cards]))
+			use_skill(1, $skill[summon alice's army cards]);
+
 		// FIXME: only drink 2 if we have three stat-aligned garnishes.
-		cli_execute("drink 3 pumpkin beer");
+		if (have_effect($effect[ode to booze]) >= 6) {
+			for count from 1 to 3
+				drinkItem($item[pumpkin beer]);
+			drinkItem($item[natto sake]);
+		} else if (have_effect($effect[ode to booze]) >= 5) {
+			for count from 1 to 2
+				drinkItem($item[pumpkin beer]);
+			drinkItem($item[natto sake]);
+		} else {
+			for count from 1 to 3
+				drinkItem($item[pumpkin beer]);
+		}
 
 		// Hack: in case we levelled up, refresh current quests.
 		cli_execute("council");
