@@ -863,11 +863,41 @@ void killKing() {
 	}
 }
 
+void getGoatCheese() {
+	if (bcascStage("goatlet") || olfactTarget() != $monster[dairy goat])
+		return;
+
+	// Assume the last day can be taken care of with war food.
+	int cheeseNeeded = (estimatedRunDays - my_daycount() - 1) * 2 + (fullness_limit() - my_fullness()) / 6;
+
+	foreach thing in $items[
+		hellion cube,
+		hell broth,
+		hell ramen,
+		knob sausage,
+		sauce of the ages,
+		spaghetti with skullheads,
+		knob mushroom,
+		himalayan hidalgo sauce,
+		gnocchetti di nietzsche,
+	] {
+		cheeseNeeded -= item_amount(thing);
+	}
+
+	while (olfactTarget() == $monster[dairy goat] && item_amount($item[goat cheese]) < cheeseNeeded) {
+		debug("Getting goat cheese: " + item_amount($item[goat cheese]) + " / " + cheeseNeeded);
+		preppedAdventure(1, $location[goatlet]);
+	}
+}
+
 void getHellionCubes() {
 	if (bcascStage("friars") || olfactTarget() != $monster[hellion])
 		return;
 
-	int cubesNeeded = (estimatedRunDays - my_daycount() - 1) * 2 + (fullness_limit() - my_fullness()) / 6;
+	// If we show up on day 2, assume we need 4 hellion cubes.  This should
+	// get us to the goatlet where we can get more milk and cheese.
+	int goatCheeseDay = 3;
+	int cubesNeeded = (goatCheeseDay - my_daycount()) * 2 + (fullness_limit() - my_fullness()) / 6;
 	
 	while (olfactTarget() == $monster[hellion] && item_amount($item[hellion cube]) < cubesNeeded) {
 		debug("Getting hellion cubes: " + item_amount($item[hellion cube]) + " / " + cubesNeeded);
@@ -1093,6 +1123,7 @@ void main() {
 	if (my_level() < 6)
 		useRedRay(my_location());
 	getHellionCubes();
+	getGoatCheese();
 	openDispensary();
 
 	betweenBattleInternal(my_location());

@@ -3688,6 +3688,7 @@ boolean bcascTrapper() {
 		visit_url("trapper.php");
 	}
 	if (index_of(visit_url("trapper.php"), "you'll need some kind of protection from the cold") > 0) {
+		checkStage("goatlet", true);
 		if (have_skill($skill[Northern Exposure])) {
 			print("BCC: Visiting the trapper with your passive skill Northern Exposure to get the quest done.", "purple");
 			visit_url("trapper.php");
@@ -3706,6 +3707,7 @@ boolean bcascTrapper() {
 		}
 	}
 	if (index_of(visit_url("questlog.php?which=2"), "learned how to hunt Yetis") > 0) {
+		checkStage("goatlet", true);
 		checkStage("trapper", true);
 		return true;
 	}
