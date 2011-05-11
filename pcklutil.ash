@@ -359,23 +359,34 @@ boolean tryTonic(int neededMP) {
 	return use(1, $item[tonic water]);
 }
 
-boolean castOde(int turns) {
-	if (!have_skill($skill[ode to booze]))
+boolean castSong(int turns, skill songSkill, effect songEffect) {
+	if (turns <= 0)
+		return true;
+
+	if (have_effect(songEffect) > turns)
+		return true;
+
+	if (!have_skill(songSkill))
 		return false;
 
-	if (have_effect($effect[ode to booze]) == 0) {
+	if (have_effect(songEffect) == 0) {
 		// FIXME: check number of accordion thief songs and shrug one
 		cli_execute("shrug madrigal");
 	}
 
-	while (have_effect($effect[ode to booze]) < turns) {
-		// FIXME: Consider casting mojo here.
-		tryTonic(mp_cost($skill[ode to booze]));
-		if (!use_skill(1, $skill[ode to booze]))
+	while (have_effect(songEffect) < turns) {
+		tryTonic(mp_cost(songSkill));
+		if (!use_skill(1, songSkill))
 			return false;
 	}
+}
 
-	return true;
+boolean castOde(int turns) {
+	return castSong(turns, $skill[ode to booze], $effect[ode to booze]);
+}
+
+boolean castInigos(int turns) {
+	return castSong(turns, $skill[inigo's incantation of inspiration], $effect[inigo's incantation of inspiration]);
 }
 
 // Adventuring

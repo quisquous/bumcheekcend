@@ -756,6 +756,15 @@ boolean createItem(int quantity, item thing) {
 			return false;
 	}
 
+	// FIXME: better heuristic, check for innabox
+	if (my_meat() > 10000 && thing.inebriety > 0) {
+		int turns = turnsToCook(thing) * (remaining - item_amount(thing));
+		if (turns > 0) {
+			debug("Casting inigo's for this drink");
+			castInigos(turns);
+		}
+	}
+
 	return retrieve_item(quantity, thing);
 }
 
