@@ -175,13 +175,16 @@ boolean needOlfaction(location loc) {
 	// TODO(picklish) - don't depend on CSS settings here.
 	switch (loc) {
 	case $location[8-bit realm]:
-	case $location[dungeons of doom]:
 	case $location[goatlet]:
 	case $location[haunted ballroom]:
 		return true;
 	case $location[dark neck of the woods]:
 	case $location[pandamonium slums]:
 		return item_amount($item[hellion cube]) <= 10;
+	case $location[dungeons of doom]:
+		// This is hacky, but it is too close to the goatlet, where we really
+		// olfaction.
+		return bcascStage("goatlet");
 	}
 
 	return false;
