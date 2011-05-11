@@ -723,36 +723,33 @@ boolean haveMilk() {
 }
 
 boolean createItem(int quantity, item thing) {
-	if (item_amount(thing) >= quantity)
+	int remaining = quantity - item_amount(thing);
+	if (remaining <= 0)
 		return true;
 
 	// FIXME: use Inigo's here.
 
 	switch (thing) {
 	case $item[jabanero pepper]:
-		hermit(quantity, $item[jabanero pepper]);
+		hermit(remaining, $item[jabanero pepper]);
 		break;
 	case $item[dry noodles]:
 		if (have_skill($skill[pastamastery])) {
-			int noodles = item_amount($item[dry noodles]);
-			if (noodles < quantity) {
-				use_skill(quantity - noodles, $skill[pastamastery]);
-			}
+			use_skill(remaining, $skill[pastamastery]);
 		}
 		break;
 	case $item[scrumptious reagent]:
 		if (have_skill($skill[advanced saucecrafting])) {
-			int reagents = item_amount($item[scrumptious reagent]);
-			if (reagents < quantity) {
-				use_skill(quantity - reagents, $skill[advanced saucecrafting]);
-			}
+			use_skill(remaining, $skill[advanced saucecrafting]);
 		}
 	}
 
 	// Maybe recursively try to create this thing?
 	int[item] ingredientList = get_ingredients(thing);
 	foreach ingredient in ingredientList {
-		if (!createItem(ingredientList[ingredient] * quantity, ingredient))
+		int mult = recipeMultiplier[thing] > 0 ? recipeMultiplier[thing] : 1;
+		int subQuantity = (remaining + mult - 1) / mult;
+		if (!createItem(ingredientList[ingredient] * subQuantity, ingredient))
 			return false;
 	}
 
