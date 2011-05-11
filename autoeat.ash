@@ -952,7 +952,6 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 	// Don't bother drinking unless we have garnishes.
 	// There's some special logic for day 1 pumpkin beer elsewhere.
 	if (cocktailSummonsRemaining() > 0) {
-		debug("TEMP: Still have summons remaining, no drinking: " + cocktailSummonsRemaining());
 		return false;
 	}
 
@@ -961,64 +960,6 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 	// FIXME: support not using/having ode
 	boolean useOde = true;
 	boolean freeToCraft = false;
-
-	FoodInfo[item] odeDrinks = getInfo(odeDrinkList, useOde, freeToCraft);
-
-	FoodList result;
-
-	// Assume that we'll be able to make as many 4-drunk awesome drinks as
-	// possible.  But, pick an offstat one just in case
-	boolean[item] extra;
-	extra[getOffstatSuperCockDrink()] = true;
-	foreach thing in extra {
-		float quality = foodQuality(thing, useOde, freeToCraft);
-		if (quality < 0)
-			continue;
-
-		if (thing.inebriety > totalDrunk)
-			continue;
-
-		int quantity = totalDrunk / thing.inebriety;
-
-		odeDrinks[thing].quantity = quantity;
-		odeDrinks[thing].quality = quality;
-	}
-
-	int lastDrunk = 0;
-	int drunk = 0;
-	repeat {
-		lastDrunk = drunk;
-		result = findBest(odeDrinks, totalDrunk);
-		drunk = createAndGetFullness(result);
-	} until (drunk == lastDrunk);
-
-	// Try to gather more cocktail ingredients naturally.
-	if (drunk != lastDrunk && !needAdv)
-		return false;
-
-	// if have hippy outfit	and are level 6
-	// ...and have garnishes
-	// ...and don't have every kind of bottle of booze
-	// then try doing the barrel full of barrels.
-	if (drunk != totalDrunk)
-		getBaseBooze();
-
-	lastDrunk = 0;
-	drunk = 0;
-	repeat {
-		lastDrunk = drunk;
-		result = findBest(getInfo(odeDrinkList, useOde, freeToCraft), totalDrunk);
-		drunk = createAndGetFullness(result);
-	} until (drunk == lastDrunk);
-
-	// Now, using *just* the items that we've created.
-	FoodInfo[item] final;
-	foreach thing in result.foodList {
-		final[thing].quantity = item_amount(thing);
-		final[thing].quality = foodQuality(thing, useOde, freeToCraft);
-	}
-
-	FoodList[int] bestDrinks = findAllBest(final, totalDrunk);
 
 	boolean drinkIfExists(FoodList list, int tryDrunk) {
 		if (createAndGetFullness(list) != tryDrunk)
@@ -1041,43 +982,95 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 		return drankSomething;
 	}
 
-	// Entirely fill drunkenness?
-	if (drinkIfExists(bestDrinks[totalDrunk], totalDrunk))
-		return true;
+	boolean tryList(FoodInfo[item] drinkList, int totalDrunk) {
+		int lastDrunk = 0;
+		int drunk = 0;
+		FoodList result;
 
-	// At this point, maybe we can try to fill one ode's worth with any drinks
-	// that will fit in our optimal diet?
+		repeat {
+			lastDrunk = drunk;
+			result = findBest(drinkList, totalDrunk);
+			drunk = createAndGetFullness(result);
+		} until (drunk == lastDrunk);
 
-	// FIXME: maybe need to consider not having a RnR legend here.
-	int maxOde = 10;
-	int odeCasts = (inebriety_limit() + maxOde - 1) / maxOde;
-	int minOde = inebriety_limit() / odeCasts;
+		// Now, using *just* the items that we've created.
+		FoodInfo[item] final;
+		foreach thing in result.foodList {
+			final[thing].quantity = min(item_amount(thing), drinkList[thing].quantity);
+			final[thing].quality = drinkList[thing].quality;
+		}
 
-	minOde = min(minOde, totalDrunk);
-	maxOde = min(maxOde, totalDrunk);
+		FoodList[int] bestDrinks = findAllBest(final, totalDrunk);
 
-	for tryDrunk from maxOde downto minOde {
-		if (drinkIfExists(bestDrinks[tryDrunk], tryDrunk))
+		if (drinkIfExists(bestDrinks[totalDrunk], totalDrunk))
 			return true;
+
+		// FIXME: maybe need to consider not having a RnR legend here.
+		int maxOde = 10;
+		int odeCasts = (inebriety_limit() + maxOde - 1) / maxOde;
+		int minOde = inebriety_limit() / odeCasts;
+
+		minOde = min(minOde, totalDrunk);
+		maxOde = min(maxOde, totalDrunk);
+
+		for tryDrunk from maxOde downto minOde {
+			if (drinkIfExists(bestDrinks[tryDrunk], tryDrunk))
+				return true;
+		}
+
+		return false;
 	}
+
+	FoodInfo[item] odeDrinks = getInfo(odeDrinkList, useOde, freeToCraft);
+
+	// Assume that we'll be able to make as many 4-drunk awesome drinks as
+	// possible.  But, pick an offstat one just in case
+	boolean[item] extra;
+	extra[getOffstatSuperCockDrink()] = true;
+	foreach thing in extra {
+		float quality = foodQuality(thing, useOde, freeToCraft);
+		if (quality < 0)
+			continue;
+
+		if (thing.inebriety > totalDrunk)
+			continue;
+
+		int quantity = totalDrunk / thing.inebriety;
+
+		odeDrinks[thing].quantity = quantity;
+
+		// Slightly less than actual quality, in case we can actually make
+		// a real supercock drink of the same quality.
+		odeDrinks[thing].quality = quality - 0.1;
+	}
+
+	if (tryList(odeDrinks, totalDrunk))
+		return true;
 
 	if (!needAdv)
 		return false;
 
+	// if have hippy outfit	and are level 6
+	// ...and have garnishes
+	// ...and don't have every kind of bottle of booze
+	// then try doing the barrel full of barrels.
+	getBaseBooze();
+
+	if (tryList(odeDrinks, totalDrunk))
+		return true;
+
 	debug("We need adventures, but couldn't drink just awesome things.");
 
 	boolean[item] fullDrinkList = mergeItemlist(odeDrinkList, otherDrinkList);
-	bestDrinks = findAllBest(getInfo(fullDrinkList, useOde, freeToCraft), maxOde);
+	FoodInfo[item] fullDrinkInfo = getInfo(fullDrinkList, useOde, freeToCraft);
 
-	for tryDrunk from minOde to maxOde {
-		if (drinkIfExists(bestDrinks[tryDrunk], tryDrunk))
-			return true;
-	}
+	if (tryList(fullDrinkInfo, totalDrunk))
+		return true;
 
-	debug("Couldn't even fill an ode with *any* drinks.  Let's just drink what we have.");
+	debug("Couldn't fill an ode, so just drink anything!");
 
-	for tryDrunk from minOde downto 1 {
-		if (drinkIfExists(bestDrinks[tryDrunk], tryDrunk))
+	for tryDrunk from totalDrunk downto 1 {
+		if (tryList(fullDrinkInfo, totalDrunk))
 			return true;
 	}
 
@@ -1192,7 +1185,6 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 
 	if (useMilk) {
 		int fullness = createAndGetFullness(result);
-		debug("Fullness: " + fullness);
 		if (fullness != totalFullness) {
 			// We want to use milk, but wait on better food items.
 			if (!needAdv)
