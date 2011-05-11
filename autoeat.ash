@@ -1327,15 +1327,15 @@ boolean autoSpleen(boolean force) {
 		return usedSomething;
 
 	boolean shouldUseWad() {
-		return spleenLeft() == 0 || spleenLeft() % 4 == 0;
+		return spleenLeft() % 4 != 0;
 	}
 
 	// FIXME: Sort wads by stat relevance
 	foreach thing in allWads {
-		if (!shouldUseWad())
+		if (!shouldUseWad() && !force || spleenLeft() == 0)
 			break;
 		while (item_amount(thing) > 0) {
-			if (!shouldUseWad())
+			if (!shouldUseWad() && !force || spleenLeft() == 0)
 				break;
 			usedSomething = true;
 			use(1, thing);
