@@ -752,7 +752,7 @@ boolean createItem(int quantity, item thing) {
 	// Maybe recursively try to create this thing?
 	int[item] ingredientList = get_ingredients(thing);
 	foreach ingredient in ingredientList {
-		if (!createItem(ingredientList[ingredient], ingredient))
+		if (!createItem(ingredientList[ingredient] * quantity, ingredient))
 			return false;
 	}
 
@@ -766,13 +766,10 @@ int createAndGetFullness(FoodList list) {
 		if (thing.fullness > 0 && thing.inebriety > 0)
 			abort("Internal error: createAndGetFullness");
 
-		// Try to create as many as we can.
-		int quantity = couldCreateQuantity(thing);
-		while (quantity > 0) {
-			if (createItem(quantity, thing))
-				break;
-			quantity = quantity - 1;
-		}
+		int quantity = min(list.foodList[thing], couldCreateQuantity(thing));
+
+		// This could fail, so we'll check item_amount below.
+		createItem(quantity, thing);
 
 		int full = thing.fullness + thing.inebriety;
 		total += full * min(item_amount(thing), list.foodList[thing]);
