@@ -7,6 +7,7 @@ string propAutoHpTarget = "hpAutoRecoveryTarget";
 string propAutoMpMin = "mpAutoRecovery";
 string propAutoMpTarget = "mpAutoRecoveryTarget";
 string propBarrelGoal = "barrelGoal";
+string propBarrelLayout = "barrelLayout";
 string propBatTurns = "picklishBatTurns";
 string propBetweenBattleScript = "betweenBattleScript";
 string propBlessingReceived = "friarsBlessingReceived";
@@ -24,6 +25,7 @@ string propFaxBlooper = "picklishFaxBlooper";
 string propFaxLobster = "picklishFaxLobster";
 string propFaxUsed = "_photocopyUsed";
 string propHipsterAdv = "_hipsterAdv";
+string propLastBarrelSmash = "picklishBarrelSmashDay";
 string propLastFortuneCookie = "picklishFortuneCookieDay";
 string propLevelMeCommand = "bcasc_preLevelMe";
 string propLibramSummons = "libramSummons";
@@ -202,6 +204,14 @@ boolean eatenFortuneCookieToday() {
 
 void setFortuneCookieEatenToday() {
 	set_property(propLastFortuneCookie, today_to_string());
+}
+
+boolean smashedBarrelsToday() {
+	return get_property(propLastBarrelSmash) == today_to_string();
+}
+
+void setSmashedBarrelsToday() {
+	set_property(propLastBarrelSmash, today_to_string());
 }
 
 boolean harvestCampground() {
@@ -476,15 +486,65 @@ float statsForFamiliar(familiar fam, location loc) {
 	return 0.0;
 }
 
+boolean boozeBarrelsBusted() {
+	if (smashedBarrelsToday())
+		return true;
+
+	string barrelLayout = get_property(propBarrelLayout);
+	int secondRowOffset = 3;
+
+	int boozeColumn = -1;
+
+	for column from 0 to 2 {
+		int char = secondRowOffset + column;
+		if (barrelLayout.substring(char, char + 1) == "B")
+			boozeColumn = column;
+	}
+
+	if (boozeColumn == -1)
+		return false;
+
+	string result = visit_url("barrel.php");
+
+	boolean[int] barrel;
+	for i from 1 to 36 {
+		string barrelUrl = "barrel.php?smash=" + i + "&";
+		barrel[i] = contains_text(result, barrelUrl);
+	}
+
+	boolean[int] secondRowIndices = $ints[13, 14, 19, 20];
+
+	boolean[int] group;
+	for g from 0 to 2 {
+		boolean remaining = false;
+		foreach index in secondRowIndices {
+			if (barrel[index + 2 * g]) {
+				remaining = true;
+				break;
+			}
+		}
+		group[g] = remaining;
+	}
+
+	if (!group[boozeColumn])
+		setSmashedBarrelsToday();
+	
+	return group[boozeColumn];
+}
+
 void getBaseBooze() {
+	if (boozeBarrelsBusted())
+		return;
+
 	debug("Adventuring to get some base booze");
 
 	// Yay, magic property numbers.
 	set_property(propBarrelGoal, 2);
 
-	// FIXME: Verify that barrels are smashed.  What if adventuring aborts?
-	// Save 2 adventures for crafting.
-	adventure(my_adventures() - 2, $location[barrel full of barrels]);
+	while (!boozeBarrelsBusted()) {
+		// Save 2 adventures for crafting.
+		adventure(my_adventures() - 2, $location[barrel full of barrels]);
+	}
 }
 
 // Miscellaneous actions
