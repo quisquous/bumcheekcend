@@ -611,6 +611,7 @@ npcCost[$item[orange]] = 70;
 npcCost[$item[peach]] = 300;
 npcCost[$item[pear]] = 300;
 npcCost[$item[plum]] = 300;
+npcCost[$item[soda water]] = 70;
 npcCost[$item[skewer]] = 80;
 npcCost[$item[strawberry]] = 70;
 npcCost[$item[taco shell]] = 80;
@@ -627,6 +628,23 @@ recipeMultiplier[$item[boxed wine]] = 3;
 recipeMultiplier[$item[bottle of sake]] = 3;
 recipeMultiplier[$item[pumpkin beer]] = 3;
 
+boolean[item] requiresStill = $items[
+	bottle of calcutta emerald,
+	bottle of definit,
+	bottle of domesticated turkey,
+	bottle of jorge sinsonte,
+	bottle of lieutenant freeman,
+	bottle of ooze-o,
+	bottle of pete's sake,
+	boxed champagne,
+	cocktail onion,
+	kiwi,
+	kumquat,
+	raspberry,
+	tangerine,
+	tonic water,
+];
+
 int purchasableAmount(item thing) {
 	if (!is_npc_item(thing))
 		return 0;
@@ -634,6 +652,7 @@ int purchasableAmount(item thing) {
 	switch (thing) {
 	case $item[fortune cookie]:
 	case $item[fermenting powder]:
+	case $item[soda water]:
 		return my_meat() / npcCost[thing];
 
 	case $item[grapes]:
@@ -696,16 +715,28 @@ int couldCreateQuantity(item thing) {
 		// Set to some impossible value.
 		quantity = 10000;
 
+		int stillUses = 0;
+
 		foreach ingredient in ingredientList {
 			quantity = min(quantity, couldCreateQuantity(ingredient));
 			if (quantity == 0)
 				break;
+
+			// Note: currently all recipes involving multiple still ingredients
+			// combine them in the same step.  If this ever changes, we'll need
+			// to return something more complex from couldCreateQuantity.
+			stillUses = stillUses + (requiresStill[ingredient] ? 1 : 0);
 		}
 
 		// Some recipes produce multiple items.
 		int mult = recipeMultiplier[thing];
 		if (mult > 0)
 			quantity *= mult;
+
+		if (stillUses > 0) {
+			quantity = min(stills_available() / stillUses, quantity);
+		}
+
 	} else {
 		quantity = creatable_amount(thing);
 	}
