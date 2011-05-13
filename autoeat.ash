@@ -645,6 +645,13 @@ boolean[item] requiresStill = $items[
 	tonic water,
 ];
 
+boolean hippyStore() {
+	if (!have_outfit("filthy hippy disguise"))
+		return false;
+
+	return hippy_store_available() || my_level() >= 12 && get_property(propSideQuestOrchardCompleted) != "none";
+}
+
 int purchasableAmount(item thing) {
 	if (!is_npc_item(thing))
 		return 0;
@@ -662,21 +669,31 @@ int purchasableAmount(item thing) {
 	case $item[orange]:
 	case $item[strawberry]:
 	case $item[tomato]:
-		if (!hippy_store_available() || !have_outfit("filthy hippy disguise"))
+		if (!hippyStore())
 			return 0;
 		return my_meat() / npcCost[thing];
 
 	case $item[peach]:
 	case $item[pear]:
 	case $item[plum]:
-		// FIXME
-		return 0;
+		if (!hippyStore())
+			return 0;
+		if (get_property(propSideQuestOrchardCompleted) == "none")
+			return 0;
+		if (get_property(propCurrentHippyStore) != hippyStoreHippy)
+			return 0;
+		return my_meat() / npcCost[thing];
 
 	case $item[bowl of rye sprouts]:
 	case $item[cob of corn]:
 	case $item[juniper berries]:
-		// FIXME
-		return 0;
+		if (!hippyStore())
+			return 0;
+		if (get_property(propSideQuestOrchardCompleted) == "none")
+			return 0;
+		if (get_property(propCurrentHippyStore) != hippyStoreFrat)
+			return 0;
+		return my_meat() / npcCost[thing];
 
 	case $item[gnollish pie tin]:
 	case $item[wad of dough]:

@@ -18,6 +18,7 @@ string propChefMake = "bcasc_chef";
 string propClanHome = "picklishClanHome";
 string propCocktailSummons = "cocktailSummons";
 string propCounterScript = "counterScript";
+string propCurrentHippyStore = "currentHippyStore";
 string propDoSideQuestNuns = "bcasc_doSideQuestNuns";
 string propDoSideQuestOrchard = "bcasc_doSideQuestOrchard";
 string propFaxArt = "picklishFaxArt";
@@ -55,6 +56,9 @@ string propWarFratMoney = "availableQuarters";
 string propWarHippyDefeated = "fratboysDefeated";
 string propWarHippyMoney = "availableDimes";
 string propWarSide = "bcasc_doWarAs";
+
+string hippyStoreFrat = "fratBoy";
+string hippyStoreHippy = "hippy";
 
 string clanBAFH = "90485";
 
