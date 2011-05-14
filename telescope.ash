@@ -56,6 +56,8 @@ gateText["gates of the suc rose"] = $effect[sugar rush];
 gateText["gate that is not a gate"] = $effect[teleportitis];
 gateText["locked gate"] = $effect[locks like the raven];
 
+boolean[item] otherLairItems = $items[wand of nagamar];
+
 // For a given effect, all the items that always give that effect.
 // If an effect is not listed, it must be specially handled (e.g. DoD).
 // Yummy Tummy Bean can give wussiness and rainy soul miasma, but it's not
@@ -78,58 +80,64 @@ gateItems[$effect[tamarind torment]] = $items[tamarind-flavored chewing gum];
 gateItems[$effect[woad warrior]] = $items[pygmy pygment];
 gateItems[$effect[wussiness]] = $items[wussiness potion];
 
+boolean[item, item] multipartItems;
+multipartItems[$item[wand of nagamar]] = $items[wa, nd];
+multipartItems[$item[wa]] = $items[ruby w, metallic a];
+multipartItems[$item[nd]] = $items[lowercase n, heavy d];
+multipartItems[$item[ng]] = $items[lowercase n, original g];
+
 // Information to help adventure for a given item.
 record telescopeItemLoc {
     location loc;
     // Whether the item can be obtained in a non-combat adventure.
     boolean nonCombat;
-    // List of all items required to make this item.
-    boolean[item] subItems;
 };
 
 telescopeItemLoc[item] obtainInfo;
-obtainInfo[$item[pygmy pygment]] = new telescopeItemLoc($location[hidden city]);
-obtainInfo[$item[wussiness potion]] = new telescopeItemLoc($location[pandamonium slums]);
-obtainInfo[$item[gremlin juice]] = new telescopeItemLoc($location[post-war junkyard]);
 obtainInfo[$item[adder bladder]] = new telescopeItemLoc($location[black forest]);
 obtainInfo[$item[angry farmer candy]] = new telescopeItemLoc($location[giant's castle]);
-obtainInfo[$item[thin black candle]] = new telescopeItemLoc($location[giant's castle]);
-obtainInfo[$item[super-spiky hair gel]] = new telescopeItemLoc($location[fantasy airship]);
-obtainInfo[$item[black no. 2]] = new telescopeItemLoc($location[black forest]);
-obtainInfo[$item[mick's icyvapohotness rub]] = new telescopeItemLoc($location[giant's castle]);
-obtainInfo[$item[frigid ninja stars]] = new telescopeItemLoc($location[ninja snowmen]);
-obtainInfo[$item[spider web]] = new telescopeItemLoc($location[back alley]);
-obtainInfo[$item[sonar-in-a-biscuit]] = new telescopeItemLoc($location[guano junction]);
-obtainInfo[$item[black pepper]] = new telescopeItemLoc($location[black forest]);
-obtainInfo[$item[pygmy blowgun]] = new telescopeItemLoc($location[hidden city]);
-obtainInfo[$item[meat vortex]] = new telescopeItemLoc($location[orc chasm]);
-obtainInfo[$item[chaos butterfly]] = new telescopeItemLoc($location[giant's castle]);
-obtainInfo[$item[photoprotoneutron torpedo]] = new telescopeItemLoc($location[fantasy airship]);
-obtainInfo[$item[fancy bath salts]] = new telescopeItemLoc($location[haunted bathroom]);
-obtainInfo[$item[inkwell]] = new telescopeItemLoc($location[haunted library]);
-obtainInfo[$item[hair spray]] = new telescopeItemLoc();
-obtainInfo[$item[disease]] = new telescopeItemLoc($location[knob harem]);
-obtainInfo[$item[bronzed locust]] = new telescopeItemLoc($location[desert (ultrahydrated)]);
-obtainInfo[$item[knob goblin firecracker]] = new telescopeItemLoc($location[outskirts of the knob]);
-obtainInfo[$item[powdered organs]] = new telescopeItemLoc($location[middle chamber]);
-obtainInfo[$item[leftovers of indeterminate origin]] = new telescopeItemLoc($location[haunted kitchen]);
-obtainInfo[$item[mariachi g-string]] = new telescopeItemLoc($location[south of the border]);
-obtainInfo[$item[ng]] = new telescopeItemLoc($location[none], false, $items[lowercase n, original g]);
-obtainInfo[$item[plot hole]] = new telescopeItemLoc($location[giant's castle]);
-obtainInfo[$item[baseball]] = new telescopeItemLoc($location[guano junction]);
-obtainInfo[$item[razor-sharp can lid]] = new telescopeItemLoc($location[haunted pantry]);
-obtainInfo[$item[tropical orchid]] = new telescopeItemLoc($location[mysticality vacation], true);
-obtainInfo[$item[stick of dynamite]] = new telescopeItemLoc($location[muscle vacation], true);
 obtainInfo[$item[barbed-wire fence]] = new telescopeItemLoc($location[moxie vacation], true);
-obtainInfo[$item[lowercase n]] = new telescopeItemLoc($location[orc chasm]);
-obtainInfo[$item[original g]] = new telescopeItemLoc($location[giant's castle]);
-obtainInfo[$item[marzipan skull]] = new telescopeItemLoc($location[south of the border]);
-obtainInfo[$item[meleegra pills]] = new telescopeItemLoc($location[south of the border], true);
+obtainInfo[$item[baseball]] = new telescopeItemLoc($location[guano junction]);
+obtainInfo[$item[black no. 2]] = new telescopeItemLoc($location[black forest]);
+obtainInfo[$item[black pepper]] = new telescopeItemLoc($location[black forest]);
+obtainInfo[$item[bronzed locust]] = new telescopeItemLoc($location[desert (ultrahydrated)]);
+obtainInfo[$item[chaos butterfly]] = new telescopeItemLoc($location[giant's castle]);
+obtainInfo[$item[disease]] = new telescopeItemLoc($location[knob harem]);
+obtainInfo[$item[fancy bath salts]] = new telescopeItemLoc($location[haunted bathroom]);
+obtainInfo[$item[frigid ninja stars]] = new telescopeItemLoc($location[ninja snowmen]);
+obtainInfo[$item[gremlin juice]] = new telescopeItemLoc($location[post-war junkyard]);
+obtainInfo[$item[hair spray]] = new telescopeItemLoc();
 obtainInfo[$item[handsomeness potion]] = new telescopeItemLoc($location[south of the border], false);
-obtainInfo[$item[pickle-flavored chewing gum]] = new telescopeItemLoc($location[south of the border], true);
+obtainInfo[$item[heavy d]] = new telescopeItemLoc($location[giant's castle]);
+obtainInfo[$item[inkwell]] = new telescopeItemLoc($location[haunted library]);
 obtainInfo[$item[jabanero-flavored chewing gum]] = new telescopeItemLoc($location[south of the border], true);
-obtainInfo[$item[tamarind-flavored chewing gum]] = new telescopeItemLoc($location[south of the border], true);
+obtainInfo[$item[knob goblin firecracker]] = new telescopeItemLoc($location[outskirts of the knob]);
+obtainInfo[$item[leftovers of indeterminate origin]] = new telescopeItemLoc($location[haunted kitchen]);
 obtainInfo[$item[lime-and-chile-flavored chewing gum]] = new telescopeItemLoc($location[south of the border], true);
+obtainInfo[$item[lowercase n]] = new telescopeItemLoc($location[orc chasm]);
+obtainInfo[$item[mariachi g-string]] = new telescopeItemLoc($location[south of the border]);
+obtainInfo[$item[marzipan skull]] = new telescopeItemLoc($location[south of the border]);
+obtainInfo[$item[meat vortex]] = new telescopeItemLoc($location[orc chasm]);
+obtainInfo[$item[meleegra pills]] = new telescopeItemLoc($location[south of the border], true);
+obtainInfo[$item[metallic a]] = new telescopeItemLoc($location[fantasy airship]);
+obtainInfo[$item[mick's icyvapohotness rub]] = new telescopeItemLoc($location[giant's castle]);
+obtainInfo[$item[original g]] = new telescopeItemLoc($location[giant's castle]);
+obtainInfo[$item[photoprotoneutron torpedo]] = new telescopeItemLoc($location[fantasy airship]);
+obtainInfo[$item[pickle-flavored chewing gum]] = new telescopeItemLoc($location[south of the border], true);
+obtainInfo[$item[plot hole]] = new telescopeItemLoc($location[giant's castle]);
+obtainInfo[$item[powdered organs]] = new telescopeItemLoc($location[middle chamber]);
+obtainInfo[$item[pygmy blowgun]] = new telescopeItemLoc($location[hidden city]);
+obtainInfo[$item[pygmy pygment]] = new telescopeItemLoc($location[hidden city]);
+obtainInfo[$item[razor-sharp can lid]] = new telescopeItemLoc($location[haunted pantry]);
+obtainInfo[$item[ruby w]] = new telescopeItemLoc($location[pandamonium slums]);
+obtainInfo[$item[sonar-in-a-biscuit]] = new telescopeItemLoc($location[guano junction]);
+obtainInfo[$item[spider web]] = new telescopeItemLoc($location[back alley]);
+obtainInfo[$item[stick of dynamite]] = new telescopeItemLoc($location[muscle vacation], true);
+obtainInfo[$item[super-spiky hair gel]] = new telescopeItemLoc($location[fantasy airship]);
+obtainInfo[$item[tamarind-flavored chewing gum]] = new telescopeItemLoc($location[south of the border], true);
+obtainInfo[$item[thin black candle]] = new telescopeItemLoc($location[giant's castle]);
+obtainInfo[$item[tropical orchid]] = new telescopeItemLoc($location[mysticality vacation], true);
+obtainInfo[$item[wussiness potion]] = new telescopeItemLoc($location[pandamonium slums]);
 
 // bcascStage holds the stage that must be completed before a location is
 // available.  This array must contain all locations referenced in obtainInfo.
@@ -182,11 +190,11 @@ boolean[item] bangPotions = $items[
 // Usable items contains any item that can trivially be used to turn into other
 // items.
 boolean[item, item] usableItems;
-usableItems[$item[pile of candy]] = $items[angry farmer candy, marzipan skull, tasty fun good rice candy, yummy tummy bean];
-usableItems[$item[large box]] = bangPotions;
-usableItems[$item[small box]] = bangPotions;
-usableItems[$item[canopic jar]] = $items[powdered organs];
 usableItems[$item[black picnic basket]] = $items[black pepper];
+usableItems[$item[canopic jar]] = $items[powdered organs];
+usableItems[$item[large box]] = bangPotions;
+usableItems[$item[pile of candy]] = $items[angry farmer candy, marzipan skull, tasty fun good rice candy, yummy tummy bean];
+usableItems[$item[small box]] = bangPotions;
 
 boolean[monster] getMonstersForItem(location loc, item thing) {
     boolean[monster] droppers;
@@ -217,8 +225,15 @@ int telescopeUpgrades() {
     return get_property("telescopeUpgrades").to_int();
 }
 
-string telescopeText(int i) {
-    return get_property("telescope" + i);
+string telescopeTextAtLevel(int level) {
+    return to_lower_case(get_property("telescope" + level));
+}
+
+item telescopeItemAtLevel(int level) {
+    string str = telescopeTextAtLevel(level);
+    if (!(telescopeText contains str))
+        abort("Unknown telescope string: " + str);
+    return telescopeText[str];
 }
 
 boolean locationAvailable(location loc) {
@@ -230,9 +245,64 @@ boolean locationAvailable(location loc) {
     return false;
 }
 
-boolean[item] telescopeItemsNeeded() {
-    // FIXME: implement
-    return $items[];
+int[item] telescopeItemsNeeded() {
+    int[item] needed;
+
+    void needItem(int quantity, item thing) {
+        if (needed contains thing)
+            needed[thing] = needed[thing] + quantity;
+        else
+            needed[thing] = quantity - item_amount(thing);
+
+        // Because we can't modify the keys of an array during a foreach, add
+        // all the keys for subitems ahead of time in case we need to break
+        // down an item into its needed components.
+        void setSubItemsNeeded(item thing) {
+            if (!(multipartItems contains thing))
+                return;
+            foreach subItem in multipartItems[thing] {
+                if (needed contains subItem)
+                    continue;
+                needItem(0, subItem);
+            }
+        }
+        setSubItemsNeeded(thing);
+    }
+
+    for level from 1 to telescopeUpgrades() {
+        item thing = telescopeItemAtLevel(level);
+        needItem(1, thing);
+    }
+
+    foreach thing in otherLairItems {
+        needItem(1, thing);
+    }
+
+    // Break into subitems, if not already acquired.
+    foreach thing in needed {
+        void processSubItems(item thing) {
+            if (!(multipartItems contains thing))
+                return;
+            if (needed[thing] <= 0)
+                return;
+
+            int subItemQuantity = needed[thing];
+            needed[thing] = 0;
+            foreach subItem in multipartItems[thing] {
+                needItem(subItemQuantity, subItem);
+                processSubItems(subItem);
+            }
+        }
+        processSubItems(thing);
+    }
+
+    foreach thing in needed {
+        if (needed[thing] > 0)
+            continue;
+        remove needed[thing];
+    }
+
+    return needed;
 }
 
 boolean needTelescopeItem(item thing) {
@@ -240,12 +310,24 @@ boolean needTelescopeItem(item thing) {
 }
 
 void sanityCheck() {
+    boolean verifyItem(item thing) {
+        if (obtainInfo contains thing)
+            return true;
+        if (!(multipartItems contains thing))
+            return false;
+
+        foreach subItem in multipartItems[thing] {
+            if (!verifyItem(subItem))
+                return false;
+        }
+
+        return true;
+    }
+
     foreach str in telescopeText {
         item thing = telescopeText[str];
-        if (obtainInfo contains thing)
-            continue;
-
-        abort("No information about how to obtain " + thing);
+        if (!verifyItem(thing))
+            abort("No information about how to obtain " + thing);
     }
 
     foreach e in gateItems {
@@ -276,6 +358,13 @@ void sanityCheck() {
                 abort("Couldn't find any monsters for " + thing + " in " + loc);
         }
     }
+
+    foreach thing in otherLairItems {
+        if (!verifyItem(thing))
+            abort("No information about how to obtain " + thing);
+    }
+
+    telescopeItemsNeeded();
 }
 
 void main() {
