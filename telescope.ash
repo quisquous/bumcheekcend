@@ -406,7 +406,8 @@ record CombatOptions {
     int[item] items;
 };
 
-record CombatResults {
+record CombatPlan {
+    location loc;
     float expectedTurns;
     boolean useYellowRay;
     boolean useNonCombat;
@@ -515,8 +516,10 @@ float chanceForItemPerEncounter(monster mob, item thing, float itemModifier) {
     // FIXME: Initiative and pickpocketing.
     foreach dropIdx, rec in item_drops_array(mob) {
         float rate = rec.rate;
-        if (rate <= 0)
+        if (rate <= 0) {
+            abort("Negative drop rate for " + thing + " from " + mob);
             return 0;
+        }
 
         float baseRate = rate / 100.0; 
         float adjustedRate = baseRate * (1.0 + itemModifier);
@@ -524,6 +527,7 @@ float chanceForItemPerEncounter(monster mob, item thing, float itemModifier) {
         return cappedRate;
     }
 
+    abort("No drop rate for " + thing + " from " + mob);
     return 0;
 }
 
@@ -606,6 +610,9 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         float nonCombatChance = nonCombatRate * (1.0 - combatFrequency);
         float chancePerTurn = nonCombatChance + combatChance;
 
+        if (chancePerTurn == 0)
+            abort("Illegal location/item combination.  Chance per turn should never be zero");
+
         return chancePerTurn;
     }
 
@@ -643,8 +650,6 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
             float itemModifier = maxItemDrop(options);
             float itemChance = chanceForItemPerEncounter(mob, thing, itemModifier);
             float combatChance = combatChance(loc, thing, options, combatModifier, nonCombatRate, mob);
-            if (combatChance <= 0 || itemChance <= 0)
-                abort("Bogus chance");
 
             // Average number of turns to get item while olfacting.
             float combatTurns = (1.0 - itemChance) / combatChance;
@@ -688,9 +693,6 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
             return olfactionTurns(loc, thing, options, combatModifier, nonCombatRate);
 
         float combatChance = combatChance(loc, thing, options, combatModifier, nonCombatRate, $monster[none]);
-        if (combatChance == 0)
-            return 0;
-
         float combatTurns = 1.0 / combatChance;
 
         if (options.useFax) {
