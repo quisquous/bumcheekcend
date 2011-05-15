@@ -135,7 +135,7 @@ obtainInfo[$item[spider web]] = new telescopeItemLoc($location[back alley]);
 obtainInfo[$item[stick of dynamite]] = new telescopeItemLoc($location[muscle vacation], true);
 obtainInfo[$item[super-spiky hair gel]] = new telescopeItemLoc($location[fantasy airship]);
 obtainInfo[$item[tamarind-flavored chewing gum]] = new telescopeItemLoc($location[south of the border], true);
-obtainInfo[$item[thin black candle]] = new telescopeItemLoc($location[giant's castle]);
+obtainInfo[$item[thin black candle]] = new telescopeItemLoc($location[giant's castle], true);
 obtainInfo[$item[tropical orchid]] = new telescopeItemLoc($location[mysticality vacation], true);
 obtainInfo[$item[wussiness potion]] = new telescopeItemLoc($location[pandamonium slums]);
 
@@ -317,6 +317,44 @@ boolean needTelescopeItem(item thing) {
     return telescopeItemsNeeded() contains thing;
 }
 
+float baseCombatFrequency(location loc) {
+    foreach mob, freq in appearance_rates(loc) {
+        if (mob == $monster[none]) {
+            return 1.0 - (freq / 100.0);
+        }
+    }
+
+    if (!loc.nocombats)
+        abort("Couldn't find mob in " + loc + ", but there should be combats.");
+
+    return 0;
+}
+
+float combatFrequency(location loc, float combatModifier) {
+    float combatFreq = baseCombatFrequency(loc);
+    return max(min(combatFreq + combatModifier, 1), 0);
+}
+
+int monsterCount(location loc) {
+    int mobCount = 0;
+
+    foreach mob, freq in appearance_rates(loc) {
+        if (mob == $monster[none] || freq < 0)
+            continue;
+
+        mobCount += 1;
+    }
+
+    return mobCount;
+}
+
+// Monster frequency, not taking into account noncombats
+float baseMonsterFrequency(location loc, int banished) {
+    int mobCount = monsterCount(loc);
+    int adjusted = max(mobCount - banished, 1);
+    return 1.0 / adjusted;
+}
+
 // http://kol.coldfront.net/thekolwiki/index.php/On_the_Trail
 float[int] trailedFreq;
 trailedFreq[1] = 1.0000;
@@ -329,43 +367,373 @@ trailedFreq[7] = 0.4927;
 trailedFreq[8] = 0.4464;
 trailedFreq[9] = 0.4071;
 
-float encounterChance(location loc, monster target, float combatModifier, boolean olfact, boolean popper) {
+// Olfacted monster frequency, not taking into account noncombats
+float monsterFrequencyOlfacted(location loc, int banished) {
+    // FIXME: This doesn't handle special olfacted mobs like the astronomer.
+    int mobCount = monsterCount(loc);
+    int adjusted = max(mobCount - banished, 1);
+    if (!(trailedFreq contains adjusted))
+        abort("Unhandled number of mobs: " + adjusted);
+    return trailedFreq[adjusted];
+}
 
-    float combatFreq = 1.0;
-    boolean targetFound = false;
-    int mobCount = 0;
+// Monster frequency with some other monster olfacted, not taking into account noncombats
+float monsterFrequencyOlfactedOther(location loc, int banished) {
+    int mobCount = monsterCount(loc);
+    int adjusted = max(mobCount - banished, 1);
+    if (adjusted == 1)
+        return 1;
+    if (!(trailedFreq contains adjusted))
+        abort("Unhandled number of mobs: " + adjusted);
 
-    foreach mob, freq in appearance_rates(loc) {
-        if (mob == $monster[none]) {
-            combatFreq = 1.0 - (freq / 100.0);
-            continue;
+    float olfactFreq = trailedFreq[adjusted];
+    float remainingFreq = 1.0 - olfactFreq;
+    return remainingFreq / (adjusted - 1);
+}
+
+float monsterFrequency(location loc, monster target, monster olfact, int banishedCount) {
+    if (olfact == target)
+        return monsterFrequencyOlfacted(loc, banishedCount);
+    else if (olfact != $monster[none])
+        return monsterFrequencyOlfactedOther(loc, banishedCount);
+    return baseMonsterFrequency(loc, banishedCount);
+}
+
+record CombatOptions {
+    boolean useYellowRay;
+    boolean useOlfaction;
+    boolean useFax;
+    int[item] items;
+};
+
+record CombatResults {
+    float expectedTurns;
+    boolean useYellowRay;
+    boolean useNonCombat;
+    monster olfactTarget;
+};
+
+int maxFamiliarWeightModifier(CombatOptions options) {
+    int weight = 0;
+    if (have_skill($skill[amphibian sympathy]))
+        weight += 5;
+    if (have_skill($skill[empathy of the newt]))
+        weight += 5;
+    if (have_skill($skill[leash of linguini]))
+        weight += 5;
+    if (dispensary_available())
+        weight += 5;
+
+    // FIXME: possibly consider familiar equipment (sugar shield?)
+    // FIXME: pool table buff?
+    // FIXME: one-shot items
+    return weight;
+}
+
+boolean noncombatSong() {
+    // FIXME: implement
+    return true;
+}
+
+float maxItemDrop(CombatOptions options) {
+    // FIXME: Run through all potential item drop familiars
+    // FIXME: Consider inventory items.
+    // FIXME: Consider equipment;
+    // FIXME: Consider if we're trying to subtract combat here and don't use hound
+
+    float bonus = 0;
+
+    float fairyDropBonus(float weight) {
+        float bonus = square_root(55 * weight) + weight - 3;
+        return bonus / 100.0;
+    }
+
+    if (have_familiar($familiar[hound dog])) {
+        int baseWeight = familiar_weight($familiar[hound dog]);
+        int weight = baseWeight + maxFamiliarWeightModifier(options);
+        bonus += fairyDropBonus(weight * 1.25);
+    }
+
+    if (have_skill($skill[mad looting skillz]))
+        bonus += 0.2;
+    if (have_skill($skill[leon's phat loot]))
+        bonus += 0.2;
+    if (dispensary_available())
+        bonus += 0.15;
+    if (have_skill($skill[natural born scrabbler]))
+        bonus += 0.05;
+    if (have_skill($skill[powers of observatiogn]))
+        bonus += 0.1;
+
+    return bonus;
+}
+
+float maxPlusCombat(CombatOptions options) {
+    int modifiers = 0;
+    if (item_amount($item[monster bait]) > 0)
+        modifiers += 1;
+    if (have_skill($skill[cantata of confrontation]))
+        modifiers += 1;
+    if (have_skill($skill[musk of the moose]))
+        modifiers += 1;
+    if (noncombatSong())
+        modifiers -= 1;
+
+    float combat = modifiers * 0.05;
+
+    if (have_familiar($familiar[hound dog])) {
+        int baseWeight = familiar_weight($familiar[hound dog]);
+        int weight = baseWeight + maxFamiliarWeightModifier(options);
+        int cappedWeight = min(weight, 30);
+
+        combat += floor(cappedWeight / 6.0) / 100.0;
+    }
+
+    // FIXME: one-shot items
+    // FIXME: soft cap at 25%
+    return combat;
+}
+
+float maxMinusCombat(CombatOptions options) {
+    int modifiers = 0;
+    if (item_amount($item[ring of conflict]) > 0)
+        modifiers += 1;
+    if (have_skill($skill[sonata of sneakiness]))
+        modifiers += 1;
+    if (have_skill($skill[smooth movement]))
+        modifiers += 1;
+    if (noncombatSong())
+        modifiers += 1;
+
+    // FIXME: one-shot items
+    // FIXME: soft cap at 25%
+    float noncombat = modifiers * -0.05;
+    return noncombat;
+}
+
+float chanceForItemPerEncounter(monster mob, item thing, float itemModifier) {
+    // FIXME: Initiative and pickpocketing.
+    foreach dropIdx, rec in item_drops_array(mob) {
+        float rate = rec.rate;
+        if (rate <= 0)
+            return 0;
+
+        float baseRate = rate / 100.0; 
+        float adjustedRate = baseRate * (1.0 + itemModifier);
+        float cappedRate = max(min(adjustedRate, 1.0), 0.0);
+        return cappedRate;
+    }
+
+    return 0;
+}
+
+float chancePerNonCombat(location loc, item thing) {
+    if (!(obtainInfo contains thing))
+        return 0;
+
+    telescopeItemLoc info = obtainInfo[thing];
+    if (info.loc != loc)
+        return 0;
+
+    if (!info.nonCombat)
+        return 0;
+
+    if (!(numberOfNonCombats contains loc))
+        return 0;
+
+    int count = numberOfNonCombats[loc];
+    if (count == 0)
+        return 0;
+
+    return 1.0 / count; 
+}
+
+float turnsToGetItem(location loc, item thing, CombatOptions options) {
+
+    int banishedCount(CombatOptions options) {
+        return options.items contains $item[divine champagne popper] ? 1 : 0;
+    }
+
+    // If you get a combat in loc, what are the chances that it will be
+    // a monster that will drop thing?
+    float monsterChance(location loc, item thing, CombatOptions options) {
+        boolean[monster] mobs = getMonstersForItem(loc, thing);
+        int banished = banishedCount(options);
+
+        float totalChance = 0;
+        foreach mob in mobs {
+            float mobChance = monsterFrequency(loc, mob, $monster[none], banished);
+            totalChance += mobChance;
         }
 
-        if (freq <= 0)
+        return totalChance;
+    }
+
+    float yellowRayTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
+
+        if (options.useFax)
+            return 1.0;
+
+        // When using a yellow ray, the chance to get an item per turn is the
+        // chance that we get a monster or the chance that we get a noncombat
+        // with that item.  These are all independent chances.
+
+        // In reality, the odds are slightly better to get a monster given the
+        // queue, but that's more complicated to model.
+        // http://kol.coldfront.net/thekolwiki/index.php/Adventure_Queue
+        float combatFrequency = combatFrequency(loc, combatModifier);
+        float monsterChance = monsterChance(loc, thing, options) * combatFrequency;
+        float nonCombatChance = nonCombatRate * (1.0 - combatFrequency);
+        float totalChance = monsterChance + nonCombatChance;
+
+        return totalChance > 0 ? 1.0 / totalChance : 0;
+    }
+
+    float combatChance(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, monster olfactionTarget) {
+        boolean[monster] mobs = getMonstersForItem(loc, thing);
+
+        float itemModifier = maxItemDrop(options);
+        float combatFrequency = combatFrequency(loc, combatModifier);
+        float combatChance = 0;
+        int banished = banishedCount(options);
+
+        foreach mob in mobs {
+            float mobChance = monsterFrequency(loc, mob, olfactionTarget, banished);
+            float itemChance = chanceForItemPerEncounter(mob, thing, itemModifier);
+            combatChance += mobchance * itemChance * combatFrequency;
+        }
+
+        float nonCombatChance = nonCombatRate * (1.0 - combatFrequency);
+        float chancePerTurn = nonCombatChance + combatChance;
+
+        return chancePerTurn;
+    }
+
+    float olfactionTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
+        boolean[monster] mobs = getMonstersForItem(loc, thing);
+
+        float combatFrequency = combatFrequency(loc, combatModifier);
+        float nonCombatChance = nonCombatRate * (1.0 - combatFrequency);
+
+        // If we're trying to olfact, we can model this as x turns of chances
+        // to get the item via noncombat prior to olfaction, 1 combat with the
+        // monster where we olfact, and then some y turns under olfaction.
+        // With a fax, x = 0.
+
+        // Turns including the initial olfaction combat.
+        float turnsThroughOlfaction;
+        float monsterChance;
+        if (options.useFax) {
+            turnsThroughOlfaction = 1.0;
+            monsterChance = 1.0;
+        } else {
+            monsterChance = monsterChance(loc, thing, options) * combatFrequency;
+            if (monsterChance == 0)
+                abort("Unexpected monster chance");
+
+            turnsThroughOlfaction = 1.0 / monsterChance;
+        }
+
+        // FIXME: This assumes that we'll olfact the first thing that can drop
+        // this item and that there's an equal chance to see any of them.
+
+        float totalTurns = 0;
+        foreach mob in mobs {
+            // Item drop chance during the olfaction-gaining combat.
+            float itemModifier = maxItemDrop(options);
+            float itemChance = chanceForItemPerEncounter(mob, thing, itemModifier);
+            float combatChance = combatChance(loc, thing, options, combatModifier, nonCombatRate, mob);
+            if (combatChance <= 0 || itemChance <= 0)
+                abort("Bogus chance");
+
+            // Average number of turns to get item while olfacting.
+            float combatTurns = (1.0 - itemChance) / combatChance;
+            float turns = combatTurns + turnsThroughOlfaction;
+
+            if (nonCombatChance == 0 || turnsThroughOlfaction == 1) {
+                totalTurns += turns;
+                continue;
+            }
+
+            // Consider the chance of getting the item in a noncombat prior
+            // to olfacting.
+            float p = 1.0;
+            int turnCount = 1;
+            float expected = 0;
+            while (p > 0.00001) {
+                // Chance of noncombat with the item on this turn.
+                expected += nonCombatChance * turnCount * p;
+                // Chance of combat with this monster on this turn.
+                expected += monsterChance * (combatTurns + turnCount) * p;
+
+                // Remaining probability.
+                p *= 1.0 - (monsterChance + nonCombatChance);
+
+                turnCount += 1;
+            }
+
+            totalTurns += expected;
+        }
+
+        return totalTurns / count(mobs);
+    }
+
+
+    float turnsWithModifier(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
+
+        if (options.useYellowRay)
+            return yellowRayTurns(loc, thing, options, combatModifier, nonCombatRate);
+
+        if (options.useOlfaction)
+            return olfactionTurns(loc, thing, options, combatModifier, nonCombatRate);
+
+        float combatChance = combatChance(loc, thing, options, combatModifier, nonCombatRate, $monster[none]);
+        if (combatChance == 0)
+            return 0;
+
+        float combatTurns = 1.0 / combatChance;
+
+        if (options.useFax) {
+            boolean[monster] mobs = getMonstersForItem(loc, thing);
+    
+            float bestItemChance = 0;
+    
+            foreach mob in mobs {
+                float itemModifier = maxItemDrop(options);
+                float itemChance = chanceForItemPerEncounter(mob, thing, itemModifier);
+                if (itemChance > bestItemChance)
+                    bestItemChance = itemChance;
+            }
+
+            return bestItemChance + (1.0 - bestItemChance) * (combatTurns + 1.0);
+        }
+
+        return combatTurns;
+    }
+
+    float maxCombat = maxPlusCombat(options);
+    float minCombat = maxMinusCombat(options);
+    float nonCombatRate = chancePerNonCombat(loc, thing);
+
+    float minTurns = turnsWithModifier(loc, thing, options, maxCombat, nonCombatRate);
+
+    if (nonCombatRate > 0) {
+        float minCombatTurns = turnsWithModifier(loc, thing, options, minCombat, nonCombatRate);
+        minTurns = min(minTurns, minCombatTurns);
+    }
+
+    return minTurns;
+}
+
+boolean canYellowRay(monster mob, item thing) {
+    foreach dropIdx, rec in item_drops_array(mob) {
+        if (rec.drop != thing)
             continue;
 
-        mobCount += 1;
-        targetFound |= (mob == target);
+        return (rec.type != "c" && rec.type != "p" && rec.type == "b");
     }
 
-    if (!targetFound)
-        abort("Couldn't find " + target + " in " + loc);
-
-    if (popper)
-        mobCount = max(mobCount - 1, 1);
-
-    float targetFreq;
-    
-    if (olfact) {
-        if (!(trailedFreq contains mobCount))
-            abort("Unhandled number of mobs: " + mobCount);
-        targetFreq = trailedFreq[mobCount];
-    } else {
-        targetFreq = 1.0 / mobCount;
-    }
-
-    float adjustedCombatFreq = max(min(combatFreq + combatModifier, 1), 0);
-    return targetFreq * adjustedCombatFreq / combatFreq;
+    return false;
 }
 
 void sanityCheck() {
@@ -417,10 +785,9 @@ void sanityCheck() {
                 abort("Couldn't find any monsters for " + thing + " in " + loc);
 
             foreach mob in droppers {
-                float freq = encounterChance(loc, mob, 0, false, false);
-                if (freq > 0)
-                    continue;
-                abort("No chance of finding " + mob + " in " + loc);
+                float itemDrop = chanceForItemPerEncounter(mob, thing, 0);
+                if (itemDrop <= 0)
+                    abort("No chance of getting " + thing + " from " + mob);
             }
         }
     }
