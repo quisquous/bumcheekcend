@@ -515,6 +515,9 @@ float maxMinusCombat(CombatOptions options) {
 float chanceForItemPerEncounter(monster mob, item thing, float itemModifier) {
     // FIXME: Initiative and pickpocketing.
     foreach dropIdx, rec in item_drops_array(mob) {
+		if (rec.drop != thing)
+			continue;
+
         float rate = rec.rate;
         if (rate <= 0) {
             abort("Negative drop rate for " + thing + " from " + mob);
