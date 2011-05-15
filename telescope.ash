@@ -246,6 +246,7 @@ boolean locationAvailable(location loc) {
 }
 
 int[item] telescopeItemsNeeded() {
+    // FIXME: If defeated the naughty sorceress, return nothing.
     int[item] needed;
 
     void needItem(int quantity, item thing) {
@@ -269,7 +270,14 @@ int[item] telescopeItemsNeeded() {
         setSubItemsNeeded(thing);
     }
 
-    for level from 1 to telescopeUpgrades() {
+    // FIXME: Set initial level based on tower climb.
+    int initialLevel = 1;
+    // FIXME: This check is not wholly correct.
+    if (item_amount($item[huge mirror shard]) > 0) {
+        initialLevel = 2;
+    }
+
+    for level from initialLevel to telescopeUpgrades() {
         item thing = telescopeItemAtLevel(level);
         needItem(1, thing);
     }
@@ -307,6 +315,57 @@ int[item] telescopeItemsNeeded() {
 
 boolean needTelescopeItem(item thing) {
     return telescopeItemsNeeded() contains thing;
+}
+
+// http://kol.coldfront.net/thekolwiki/index.php/On_the_Trail
+float[int] trailedFreq;
+trailedFreq[1] = 1.0000;
+trailedFreq[2] = 0.8800;
+trailedFreq[3] = 0.7763;
+trailedFreq[4] = 0.6872;
+trailedFreq[5] = 0.6110;
+trailedFreq[6] = 0.5470;
+trailedFreq[7] = 0.4927;
+trailedFreq[8] = 0.4464;
+trailedFreq[9] = 0.4071;
+
+float encounterChance(location loc, monster target, float combatModifier, boolean olfact, boolean popper) {
+
+    float combatFreq = 1.0;
+    boolean targetFound = false;
+    int mobCount = 0;
+
+    foreach mob, freq in appearance_rates(loc) {
+        if (mob == $monster[none]) {
+            combatFreq = 1.0 - (freq / 100.0);
+            continue;
+        }
+
+        if (freq <= 0)
+            continue;
+
+        mobCount += 1;
+        targetFound |= (mob == target);
+    }
+
+    if (!targetFound)
+        abort("Couldn't find " + target + " in " + loc);
+
+    if (popper)
+        mobCount = max(mobCount - 1, 1);
+
+    float targetFreq;
+    
+    if (olfact) {
+        if (!(trailedFreq contains mobCount))
+            abort("Unhandled number of mobs: " + mobCount);
+        targetFreq = trailedFreq[mobCount];
+    } else {
+        targetFreq = 1.0 / mobCount;
+    }
+
+    float adjustedCombatFreq = max(min(combatFreq + combatModifier, 1), 0);
+    return targetFreq * adjustedCombatFreq / combatFreq;
 }
 
 void sanityCheck() {
@@ -356,6 +415,13 @@ void sanityCheck() {
             boolean[monster] droppers = getMonstersForItem(loc, thing);
             if (count(droppers) == 0)
                 abort("Couldn't find any monsters for " + thing + " in " + loc);
+
+            foreach mob in droppers {
+                float freq = encounterChance(loc, mob, 0, false, false);
+                if (freq > 0)
+                    continue;
+                abort("No chance of finding " + mob + " in " + loc);
+            }
         }
     }
 
@@ -364,7 +430,13 @@ void sanityCheck() {
             abort("No information about how to obtain " + thing);
     }
 
-    telescopeItemsNeeded();
+    for level from 1 to telescopeUpgrades() {
+        // This will abort for unknown strings.
+        item thing = telescopeItemAtLevel(level);
+
+        if (!verifyItem(thing))
+            abort("Unknown telescope item: " + thing);
+    }
 }
 
 void main() {
