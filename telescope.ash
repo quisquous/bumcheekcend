@@ -848,20 +848,20 @@ void sanityCheck() {
         print("Yellow ray turns: " + yellowRayTurns);
         print("Yellow ray fax turns: " + yellowRayFaxTurns);
 
-        if (baseTurns < olfactTurns)
-            abort("Olfacting slower than non-olfacting for " + thing + " from " + loc);
+		void compare(item thing, location loc, string strSlow, float slow, string strFast, float fast) {
+			float epsilon = 0.001;
 
-        if (olfactTurns < yellowRayTurns)
-            abort("Yellow ray slower than olfacting for " + thing + " from " + loc);
+			if (fast - epsilon < slow)
+				return;
 
-        if (baseTurns < baseFaxTurns)
-            abort("Base faxing slower for " + thing + " from " + loc);
+			abort(strFast + " slower than " + strSlow + " for " + thing + " from " + loc);
+		}
 
-        if (olfactTurns < olfactFaxTurns)
-            abort("Olfact faxing slower for " + thing + " from " + loc);
-
-        if (yellowRayTurns < yellowRayFaxTurns)
-            abort("Yellow ray faxing slower for " + thing + " from " + loc);
+		compare(thing, loc, "base", baseTurns, "olfact", olfactTurns);
+		compare(thing, loc, "olfact", olfactTurns, "yellowRay", yellowRayTurns);
+		compare(thing, loc, "base", baseTurns, "baseFax", baseFaxTurns);
+		compare(thing, loc, "olfact", olfactTurns, "olfactFax", olfactFaxTurns);
+		compare(thing, loc, "yellowRay", yellowRayTurns, "yellowRayFax", yellowRayFaxTurns);
     }
 
     foreach thing in otherLairItems {
