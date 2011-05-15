@@ -781,17 +781,84 @@ void sanityCheck() {
         if (obtainInfo[thing].nonCombat) {
             if (!(numberOfNonCombats contains loc))
                 abort("No noncombat info for " + loc);
-        } else {
-            boolean[monster] droppers = getMonstersForItem(loc, thing);
-            if (count(droppers) == 0)
-                abort("Couldn't find any monsters for " + thing + " in " + loc);
-
-            foreach mob in droppers {
-                float itemDrop = chanceForItemPerEncounter(mob, thing, 0);
-                if (itemDrop <= 0)
-                    abort("No chance of getting " + thing + " from " + mob);
-            }
+            continue;
         }
+
+        boolean[monster] droppers = getMonstersForItem(loc, thing);
+        if (count(droppers) == 0)
+            abort("Couldn't find any monsters for " + thing + " in " + loc);
+
+        foreach mob in droppers {
+            float itemDrop = chanceForItemPerEncounter(mob, thing, 0);
+            if (itemDrop <= 0)
+                abort("No chance of getting " + thing + " from " + mob);
+        }
+
+        // Run through trying to get the item using a variety of methods.
+        // Make sure there's a sane number of turns to get each one.
+        // Additionally, olfacting should never be slower than not,
+        // and using a yellow ray should always be faster than olfacting.
+        // Faxing should always be faster than not-faxing.
+
+        CombatOptions baseOptions;
+        float baseTurns = turnsToGetItem(loc, thing, baseOptions);
+        if (baseTurns == 0)
+            abort("Unknown base turns to get item " + thing + " from " + loc);
+
+        CombatOptions olfactOptions;
+        olfactOptions.useOlfaction = true;
+        float olfactTurns = turnsToGetItem(loc, thing, olfactOptions);
+        if (olfactTurns == 0)
+            abort("Unknown olfact turns to get item " + thing + " from " + loc);
+
+        CombatOptions yellowRayOptions;
+        yellowRayOptions.useYellowRay = true;
+        float yellowRayTurns = turnsToGetItem(loc, thing, yellowRayOptions);
+        if (yellowRayTurns == 0)
+            abort("Unknown yellow ray turns to get item " + thing + " from " + loc);
+
+        CombatOptions baseFaxOptions;
+        baseFaxOptions.useFax = true;
+        float baseFaxTurns = turnsToGetItem(loc, thing, baseFaxOptions);
+        if (baseFaxTurns == 0)
+            abort("Unknown base fax turns to get item " + thing + " from " + loc);
+
+        CombatOptions olfactFaxOptions;
+        olfactFaxOptions.useOlfaction = true;
+        olfactFaxOptions.useFax = true;
+        float olfactFaxTurns = turnsToGetItem(loc, thing, olfactFaxOptions);
+        if (olfactFaxTurns == 0)
+            abort("Unknown olfact fax turns to get item " + thing + " from " + loc);
+
+        CombatOptions yellowRayFaxOptions;
+        yellowRayFaxOptions.useYellowRay = true;
+        yellowRayFaxOptions.useFax = true;
+        float yellowRayFaxTurns = turnsToGetItem(loc, thing, yellowRayFaxOptions);
+        if (yellowRayFaxTurns == 0)
+            abort("Unknown yellow ray fax turns to get item " + thing + " from " + loc);
+
+        print("Item info for " + thing + " [" + loc + "]", "purple");
+        print("Base turns: " + baseTurns);
+        print("Base fax turns: " + baseFaxTurns);
+        print("Olfact turns: " + olfactTurns);
+        print("Olfact fax turns: " + olfactFaxTurns);
+        print("Yellow ray turns: " + yellowRayTurns);
+        print("Yellow ray fax turns: " + yellowRayFaxTurns);
+
+        if (baseTurns < olfactTurns)
+            abort("Olfacting slower than non-olfacting for " + thing + " from " + loc);
+
+        if (olfactTurns < yellowRayTurns)
+            abort("Yellow ray slower than olfacting for " + thing + " from " + loc);
+
+        if (baseTurns < baseFaxTurns)
+            abort("Base faxing slower for " + thing + " from " + loc);
+
+        if (olfactTurns < olfactFaxTurns)
+            abort("Olfact faxing slower for " + thing + " from " + loc);
+
+        if (yellowRayTurns < yellowRayFaxTurns)
+            abort("Yellow ray faxing slower for " + thing + " from " + loc);
     }
 
     foreach thing in otherLairItems {
