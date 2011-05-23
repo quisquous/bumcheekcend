@@ -228,7 +228,22 @@ void endOfDay() {
 	trySoak();
 }
 
+void dailyReadMessages() {
+	if (checkPropToday(propLastReadMessages))
+		return;
+
+	string result = visit_url("messages.php?box=Inbox");
+	if (!contains_text(result, "sendmessage.php")) {
+		abort("Failed to read messages");
+	}
+
+	setPropToday(propLastReadMessages);
+}
+
 void main() {
+
+	dailyReadMessages();
+
 	if (my_inebriety() > inebriety_limit()) {
 		endOfDay();
 		return;

@@ -1136,7 +1136,7 @@ boolean eatItem(item thing) {
 			return false;
 
 		if (thing == $item[fortune cookie])
-			setFortuneCookieEatenToday();
+			setPropToday(propLastFortuneCookie);
 
 		return true;
 	}
@@ -1195,7 +1195,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	FoodInfo[item] getMilkFoodInfo(boolean useMilk, boolean freeToCraft) {
 		FoodInfo[item] milkFoods = getInfo(milkFoodList, useMilk, freeToCraft);
 
-		if (couldEatFortuneCookie() && !eatenFortuneCookieToday()) {
+		if (couldEatFortuneCookie() && !checkPropToday(propLastFortuneCookie)) {
 			milkFoods[$item[fortune cookie]].quantity = 1;
 			milkFoods[$item[fortune cookie]].quality = 1000;
 		}

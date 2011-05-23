@@ -28,6 +28,7 @@ string propFaxUsed = "_photocopyUsed";
 string propHipsterAdv = "_hipsterAdv";
 string propLastBarrelSmash = "picklishBarrelSmashDay";
 string propLastFortuneCookie = "picklishFortuneCookieDay";
+string propLastReadMessages = "picklishReadMessages";
 string propLevelMeCommand = "bcasc_preLevelMe";
 string propLibramSummons = "libramSummons";
 string propMineUnaccOnly = "bcasc_MineUnaccOnly";
@@ -202,20 +203,12 @@ boolean haveKGEOutfit() {
 	return haveItem($item[Knob Goblin elite pants]) || haveItem($item[Knob Goblin elite polearm]) || haveItem($item[Knob Goblin elite helm]);
 }
 
-boolean eatenFortuneCookieToday() {
-	return get_property(propLastFortuneCookie) == today_to_string();
+boolean checkPropToday(string prop) {
+	return get_property(prop) == today_to_string();
 }
 
-void setFortuneCookieEatenToday() {
-	set_property(propLastFortuneCookie, today_to_string());
-}
-
-boolean smashedBarrelsToday() {
-	return get_property(propLastBarrelSmash) == today_to_string();
-}
-
-void setSmashedBarrelsToday() {
-	set_property(propLastBarrelSmash, today_to_string());
+boolean setPropToday(string prop) {
+	set_property(prop, today_to_string());
 }
 
 boolean harvestCampground() {
@@ -491,7 +484,7 @@ float statsForFamiliar(familiar fam, location loc) {
 }
 
 boolean boozeBarrelsBusted() {
-	if (smashedBarrelsToday())
+	if (checkPropToday(propLastBarrelSmash))
 		return true;
 
 	string barrelLayout = get_property(propBarrelLayout);
@@ -531,7 +524,7 @@ boolean boozeBarrelsBusted() {
 	}
 
 	if (!group[boozeColumn])
-		setSmashedBarrelsToday();
+		setPropToday(propLastBarrelSmash);
 	
 	return group[boozeColumn];
 }
