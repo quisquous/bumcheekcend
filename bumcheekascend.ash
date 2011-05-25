@@ -1,5 +1,5 @@
 /*
-	bumcheekascend.ash v0.23
+	bumcheekascend.ash v0.24
 	A script to ascend a character from start to finish.
 	
 	0.1 - Spun initial release. Gets up to about level 10, haphazardly. 
@@ -165,6 +165,11 @@
 		- Don't equip hippy outfit in Hidden City as myst. 
 		- Don't use the hipster in the temple if you're on a 100% run. 
 		- New Cyrpt added. 
+	0.24- Change MCD to only go up to 10.
+		- Use evilometer at cyrpt to stop bug whereby it won't know how evil things are. 
+		- Don't infinitely adventure at Chasm for Myst characters.
+		- Warn if you don't have a recoveryScript or counterScript.
+		- Fix changes to the moon signs due to 2011 Valhalla update. 
 */
 
 script "bumcheekascend.ash";
@@ -249,7 +254,7 @@ boolean isExpectedMonster(string opp) {
 		if (haveOutfitEquipped("hippy disguise") || haveOutfitEquipped("war hippy fatigues"))
 			loc = $location[wartime frat house (hippy disguise)];
 	} else if (loc == $location[wartime hippy camp]) {
-		if (haveOutfitEquipped("frat boy ensemble") || haveOutfitEquipped("frat boy fatigues"))
+		if (haveOutfitEquipped("frat boy ensemble") || haveOutfitEquipped("frat warrior fatigues"))
 		loc = $location[wartime hippy camp (frat disguise)];
 	}
 
@@ -504,7 +509,7 @@ string bumRunCombat() {
 }
 
 boolean canMCD() {
-	return ((in_muscle_sign() || in_mysticality_sign()) || (in_moxie_sign() && item_amount($item[bitchin' meatcar]) > 0));
+	return ((knoll_available() || canadia_available()) || (gnomads_available() && (item_amount($item[bitchin' meatcar]) + item_amount($item[bus pass]) + item_amount($item[pumpkin carriage])) > 0));
 }
 
 boolean canZap() {
@@ -563,6 +568,11 @@ int cloversAvailable(boolean makeOneTenLeafClover) {
 int cloversAvailable() { return cloversAvailable(false); }
 
 string consultMyst(int round, string opp, string text) {
+	if (opp == "rampaging adding machine") {
+		print("The script will not, at the moment, automatically fight rampagaing adding machines. Please fight manually.");
+		return "abort";
+	}
+
 	boolean [skill] allMySkills() {
 		boolean [skill] allmyskills;
 		
@@ -785,7 +795,7 @@ string consultMyst(int round, string opp, string text) {
 		}
 	}
 	abort("Please fight the remainder of the fight yourself. You will be seeing this because you do not have a spell powerful enough to even four-shot the monster. ");
-	return "";
+	return "abort";
 }
 
 string consultBarrr(int round, string opp, string text) {
@@ -907,8 +917,9 @@ string consultJunkyard(int round, string opp, string text) {
 			print("BCC: The script is trying to use the moly magnet. This may be the cause of the NULL errors here.", "purple");
 			return "item molybdenum magnet";
 		} else {
-			if (my_hp() < 100) {
-				return "skill lasagna bandages";
+			if (my_hp() < 50) {
+				print("BCC: Let's cast bandages to heal you.", "purple");
+				return "skill Lasagna Bandages";
 			} else {
 				switch (my_class()) {
 					case $class[turtle tamer] : return "skill toss"; break;
@@ -1230,7 +1241,7 @@ boolean setMCD(int moxie, int sMox) {
 	if (canMCD()) {
 		print("BCC: We CAN set the MCD.", "purple");
 		//We do. Check maxMCD value
-		int maxmcd = 10 + to_int(in_mysticality_sign());
+		int maxmcd = 10;
 		int mcdval = my_buffedstat(my_primestat()) - sMox;
 		
 		if (mcdval > maxmcd) {
@@ -1417,6 +1428,7 @@ boolean levelMeInnerLoop(int sMox) {
 						bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 					}
 				}
+				bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 			} else {
 				setMood("-");
 				setFamiliar("");
@@ -1461,6 +1473,7 @@ boolean levelMeInnerLoop(int sMox) {
 						adventure(my_adventures(), $location[Haunted Pantry], "consultMyst");
 					}
 				}
+				bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 			} else {
 				setMood("-");
 				setFamiliar("");
@@ -1505,6 +1518,7 @@ boolean levelMeInnerLoop(int sMox) {
 						bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 					}
 				}
+				bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 			} else if (my_buffedstat($stat[Moxie]) < 120) {
 				setMood("-i");
 				setFamiliar("");
@@ -1585,11 +1599,6 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	//We initially set the MCD to 0 just in case we had it turned on before. 
 	if (my_adventures() == 0) { abort("No Adventures. How Sad."); }
 	if (canMCD()) cli_execute("mcd 0");
-	cli_execute("goal clear");
-	if (length(goals) > 0) {
-		cli_execute("goal set "+goals);
-		//print("BCC: Setting goals of '"+goals+"'...", "lime");
-	}
 	
 	if (length(printme) > 0) {
 		print("BCC: "+printme, "purple");
@@ -1606,6 +1615,13 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 		levelMe(sMox);
 	}
 	cli_execute("mood execute");
+	
+	//Goals must be set after trying to levelme()
+	cli_execute("goal clear");
+	if (length(goals) > 0) {
+		cli_execute("goal set "+goals);
+		print("BCC: Setting goals of '"+goals+"'...", "lime");
+	}
 	
 	//Finally, check for and use the MCD if we can. No need to do this in 
 	if (my_buffedstat(my_primestat()) > sMox) {
@@ -1721,7 +1737,10 @@ boolean bcascBats1() {
 					bumAdv($location[Entryway], "", "items", "1 Pine-Fresh air freshener", "Getting a pine-fresh air freshener.");
 			}
 			buMax("+1000 stench res");
-			if (elemental_resistance($element[stench]) == 0 && !haveStenchSkill()) abort("There is some error getting stench resist - perhaps you don't have enough Myst to equip the air freshener? Please manually sort this out.");
+			if (elemental_resistance($element[stench]) == 0 && !haveStenchSkill()) {
+				print("There is some error getting stench resist - perhaps you don't have enough Myst to equip the air freshener? Please manually sort this out.", "red");
+				return false;
+			}
 		}
 	
 		print("BCC: Getting Sonars", "purple");
@@ -1752,6 +1771,7 @@ boolean bcascBats1() {
 
 boolean bcascBats2() {
 	if (checkStage("bats2")) return true;
+	if (!checkStage("bats1")) return false;
 	while (index_of(visit_url("questlog.php?which=1"), "I Think I Smell a Bat") > 0) {
 		if (cli_execute("use 3 sonar")) {}
 		
@@ -1832,6 +1852,7 @@ boolean bcascCyrpt() {
 
 	if (checkStage("cyrpt")) return true;
 	set_property("choiceAdventure523", "4");
+	use(1, $item[evilometer]);
 	
 	while (!stageDone("Nook")) {
 		if (item_amount($item[evil eye]) > 0) use(1, $item[evil eye]);
@@ -1935,7 +1956,7 @@ boolean bcascEpicWeapons() {
 		}
 		
 		visit_url("guild.php?place=sgc");
-		if (my_meat() < 1000 && i_a("tenderizing hammer") == 0 && !in_muscle_sign()) return false;
+		if (my_meat() < 1000 && i_a("tenderizing hammer") == 0 && !knoll_available()) return false;
 		if (cli_execute("make "+theEpicWeaponYouWantToGet)) {}
 		return true;
 	}
@@ -2243,7 +2264,7 @@ boolean bcascInnaboxen() {
 		//Apart from the brain/skull, we need a box and spring and the chef's hat/beer goggles.
 		if (!contains_text(visit_url("campground.php?action=inspectkitchen"), "Chef-in-the-Box") && bcasc_chef) {
 			//We're not even going to bother to try if we don't have a chef's hat. 
-			if (i_a("chef's hat") > 0 && (i_a("spring") > 0 || in_muscle_sign())) {
+			if (i_a("chef's hat") > 0 && (i_a("spring") > 0 || knoll_available())) {
 				print("BCC: Going to try to make a chef", "purple");
 				if (getbox()) {
 					if (creatable_amount($item[chef-in-the-box]) == 0) {
@@ -2265,7 +2286,7 @@ boolean bcascInnaboxen() {
 		
 		if (bcasc_bartender) {
 			if (!contains_text(visit_url("campground.php?action=inspectkitchen"), "Bartender-in-the-Box")) {
-				if (i_a("spring") > 0 || in_muscle_sign()) {
+				if (i_a("spring") > 0 || knoll_available()) {
 					print("BCC: Going to try to get a bartender.", "purple");
 					if (getBox()) {
 						if (creatable_amount($item[bartender-in-the-box]) == 0) {
@@ -2454,7 +2475,7 @@ boolean bcascLairFirstGate() {
 					//Now check for any other item(s).
 					switch (lairitems[x].a) {
 						case "marzipan skull" :
-							if (in_moxie_sign()) {
+							if (gnomads_available()) {
 								cli_execute("buy marzipan skull");
 								numGatesWeHaveItemFor = numGatesWeHaveItemFor + 1;
 							} else {
@@ -3122,7 +3143,7 @@ boolean bcascMeatcar() {
 		if (item_amount($item[sweet rims]) + item_amount($item[dope wheels]) == 0)
 			cli_execute("hermit sweet rims");
 		
-		if (!in_muscle_sign()) {
+		if (!knoll_available()) {
 			print("BCC: Making the meatcar, getting the stuff from the Gnolls. Damned Gnolls...", "purple");
             visit_url("forestvillage.php?action=screwquest&submit=&quot;Sure Thing.&quot;");
 			buMax();
@@ -3415,11 +3436,10 @@ boolean bcascPirateFledges() {
 			
 			//Need to use the blueprints.
 			if (index_of(visit_url("questlog.php?which=1"), "Caronch has given you a set of blueprints") > 0) {
-				if ((in_muscle_sign() || i_a("frilly skirt") > 0)) {
+				if ((knoll_available() || i_a("frilly skirt") > 0)) {
 					if (item_amount($item[hot wing]) < 3) {
 						bumAdv($location[pandamonium slums], "", "items", "3 hot wing", "Getting 3 hot wings for the blueprints", "+i");
 					}
-
 					print("BCC: Using the skirt and hot wings to burgle the Frat House...", "purple");
 					cli_execute("checkpoint");
 					cli_execute("equip frilly skirt");
@@ -3549,6 +3569,7 @@ boolean bcascTavern() {
 	
 	while (!get_property("tavernLayout").contains_text("3")) {
 		if (my_adventures() == 0) abort("No adventures.");
+		print("BCC: We are adventuring at the tavern", "purple");
 		tavern();
 	}
 	visit_url("rats.php?action=faucetoff");
@@ -3609,7 +3630,7 @@ boolean bcascTelescope() {
 	telescope["catch a glimpse of a translucent wing"] 					= new lair("Sleazy Back Alley", "a ", "spider web", "");
 	telescope["see a fancy-looking tophat"] 							= new lair("Guano Junction", "a ", "sonar-in-a-biscuit", "bats1");
 	//telescope["see a flash of albumen"] 								= new lair("Black Forest", "", "black pepper", "macguffinprelim");
-	telescope["see a giant white ear"] 									= new lair("Hidden City", "a ", "pygmy blowgun", "macguffinhiddencity");
+	//telescope["see a giant white ear"] 									= new lair("Hidden City", "a ", "pygmy blowgun", "macguffinhiddencity");
 	telescope["see a huge face made of Meat"] 							= new lair("Orc Chasm", "a ", "meat vortex", "chasm");
 	telescope["see a large cowboy hat"] 								= new lair("Giant's Castle", "a ", "chaos butterfly", "castle");
 	telescope["see a periscope"] 										= new lair("Fantasy Airship", "a ", "photoprotoneutron torpedo", "airship");
@@ -3630,7 +3651,7 @@ boolean bcascTelescope() {
 	//telescope["see a formidable stinger"] 								= new lair("Mysticality Vacation", "a ", "tropical orchid", "dinghy");
 	//telescope["see a wooden beam"] 										= new lair("Muscle Vacation", "a ", "stick of dynamite", "dinghy");
 	
-	telescope["an armchair"] 											= new lair("Hidden City", "", "pygmy pygment", "macguffinhiddencity");
+	//telescope["an armchair"] 											= new lair("Hidden City", "", "pygmy pygment", "macguffinhiddencity");
 	//telescope["a cowardly-looking man"] 								= new lair("", "a ", "wussiness potion", "ZZZZZZZZZZZZZZZZZZZ");
 	//telescope["a banana peel"] 											= new lair("Next to that Barrel with Something Burning in it", "", "gremlin juice", "|||||ZZZZZZZZZZZZZZ");
 	telescope["a coiled viper"] 										= new lair("Black Forest", "an ", "adder bladder", "macguffinprelim");
@@ -4041,7 +4062,7 @@ void bcs12() {
 				
 				//Put on the outfit and adventure, printing debug information each time. 
 				buMax("+outfit "+bcasc_warOutfit);
-				while (my_adventures() > 0 && bumMiniAdv(1, $location[themthar hills])) {
+				while (my_adventures() > 0 && bumMiniAdv(1, $location[themthar hills]) && get_property("currentNunneryMeat").to_int() < 100000) {
 					print("BCC: Nunmeat retrieved: "+get_property("currentNunneryMeat")+" Estimated adventures remaining: "+estimated_advs(), "green");
 				}
 				
@@ -4133,6 +4154,7 @@ void bcs12() {
 		}
 		
 		while (my_basestat($stat[mysticality]) < 70) {
+			set_property("choiceAdventure105","1");
 			bumAdv($location[Haunted Bathroom], "", "", "70 mysticality", "Getting 70 myst to equip the " + bcasc_warOutfit + " outfit");
 		} 
 		
@@ -4297,12 +4319,22 @@ void bumcheekcend() {
 }
 
 void main() {
-	if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.23</b>") == -1) {
+	if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.24</b>") == -1) {
 		print("There is a new version available - go download the next version of bumcheekascend.ash at the sourceforge page, linked from http://kolmafia.us/showthread.php?t=4963!", "red");
 	}
 	
 	if (get_property("autoSatisfyWithNPCs") != "true") {
 		set_property("autoSatisfyWithNPCs", "true");
+	}
+	
+	if (get_property("recoveryScript") == "") {
+		print("You do not have a recoveryScript set. I highly recommend Bale's 'Universal Recovery' - http://kolmafia.us/showthread.php?t=1780 - You may find this script runs into problems with meat without it.", "red");
+		wait(1);
+	}
+	
+	if (get_property("counterScript") == "") {
+		print("You do not have a counterScript set. I highly recommend Bale's 'CounterChecker' http://kolmafia.us/showthread.php?t=2519 - This script, in combination with bumcheekascend, will allow you to get semi rares if you eat fortune cookies.", "red");
+		wait(1);
 	}
 
 	if (have_effect($effect[Teleportitis]) > 0 && my_level() < 13) {
