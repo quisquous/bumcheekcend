@@ -237,6 +237,7 @@ void dailyReadMessages() {
 		abort("Failed to read messages");
 	}
 
+	cli_execute("refresh inventory");
 	setPropToday(propLastReadMessages);
 }
 
