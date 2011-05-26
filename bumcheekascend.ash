@@ -509,7 +509,7 @@ string bumRunCombat() {
 }
 
 boolean canMCD() {
-	return ((knoll_available() || canadia_available()) || (gnomads_available() && (item_amount($item[bitchin' meatcar]) + item_amount($item[bus pass]) + item_amount($item[pumpkin carriage])) > 0));
+	return ((knoll_available() || canadia_available()) || (gnomads_available() && (item_amount($item[bitchin' meatcar]) + item_amount($item[desert bus pass]) + item_amount($item[pumpkin carriage])) > 0));
 }
 
 boolean canZap() {
