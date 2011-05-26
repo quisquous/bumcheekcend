@@ -874,7 +874,7 @@ void getGoatCheese() {
 		return;
 
 	// Assume the last day can be taken care of with war food.
-	int cheeseNeeded = (estimatedRunDays - my_daycount() - 1) * 2 + (fullness_limit() - my_fullness()) / 6;
+	int cheeseNeeded = (estimatedRunDays - my_daycount()) * 2 + (fullness_limit() - my_fullness()) / 6;
 
 	foreach thing in $items[
 		hellion cube,
