@@ -793,6 +793,9 @@ void pawnHipsterItemsInto(item goal)
 }
 
 void allowMining() {
+	if (!in_hardcore())
+		return;
+
 	// Mining is an excellent use of burning teleportitis turns.
 	// Once we've had teleportitis, no need to delay mining further.
 	if (have_effect($effect[Teleportitis]) > 0 || bcascStage("wand"))

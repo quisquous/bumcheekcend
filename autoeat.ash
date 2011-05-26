@@ -1195,7 +1195,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	FoodInfo[item] getMilkFoodInfo(boolean useMilk, boolean freeToCraft) {
 		FoodInfo[item] milkFoods = getInfo(milkFoodList, useMilk, freeToCraft);
 
-		if (couldEatFortuneCookie() && !checkPropToday(propLastFortuneCookie)) {
+		if (in_hardcore() && couldEatFortuneCookie() && !checkPropToday(propLastFortuneCookie)) {
 			milkFoods[$item[fortune cookie]].quantity = 1;
 			milkFoods[$item[fortune cookie]].quality = 1000;
 		}
@@ -1387,7 +1387,7 @@ boolean autoSpleen(boolean force) {
 
 void autoConsume(location loc) {
 
-	if (my_daycount() == 1 && my_inebriety() == 0 && stillAvailable()) {
+	if (my_daycount() == 1 && my_inebriety() == 0 && stillAvailable() && !bcascStage("pumpkinbeer")) {
 		tryCast($skill[mojomuscular melody]);
 		retrieve_item(4, $item[tonic water]);
 		summonRemainingGarnishes();
@@ -1415,6 +1415,7 @@ void autoConsume(location loc) {
 
 		// Hack: in case we levelled up, refresh current quests.
 		cli_execute("council");
+		setBcascStageComplete("pumpkinbeer");
 	}
 
 	if (my_daycount() == 1 && bcascStage("tavern") && !bcascStage("swill") && getCock()) {
