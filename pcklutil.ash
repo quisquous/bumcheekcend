@@ -143,6 +143,17 @@ boolean[item] combatItems = $items[
 	divine blowout,
 ];
 
+item[item] keyToPie;
+keyToPie[$item[digital key]] = $item[digital key lime pie];
+keyToPie[$item[sneaky pete's key]] = $item[sneaky pete's key lime pie];
+keyToPie[$item[boris's key]] = $item[boris's key lime pie];
+keyToPie[$item[jarlsberg's key]] = $item[jarlsberg's key lime pie];
+keyToPie[$item[richard's star key]] = $item[jarlsberg's key lime pie];
+
+item[item] pieToKey;
+foreach key in keyToPie
+	pieToKey[keyToPie[key]] = key;
+
 stat combatItemToStat(item thing) {
 	switch (thing) {
 	case $item[love song of vague ambiguity]:

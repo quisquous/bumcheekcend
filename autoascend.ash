@@ -1,6 +1,7 @@
 import <autoeat.ash>
 import <bumcheekascend.ash>
 import <pcklutil.ash>
+import <softcore.ash>
 
 void tryTeaParty() {
 	if (teaParty($item[reinforced beaded headband]))
@@ -16,12 +17,6 @@ void tryTeaParty() {
 		return;
 
 	// The pail is also useful, but +20 ML is not something to get here.
-}
-
-// FIXME: Make this a real function.
-boolean needTelescopeItem(item thing)
-{
-	return false;
 }
 
 void finishDailyCasts() {
@@ -242,6 +237,11 @@ void dailyReadMessages() {
 }
 
 void main() {
+
+	if (!in_hardcore()) {
+		setSoftcoreOptions();
+		pullSoftcoreItems();
+	}
 
 	dailyReadMessages();
 

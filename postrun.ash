@@ -1,3 +1,5 @@
+import <softcore.ash>
+
 boolean[item] useAll = $items[
 	31337 scroll,
 	ancient vinyl coin purse,
@@ -544,6 +546,8 @@ void main() {
 			abort("Unexpected error in using rumpus room");
 		}
 	}
+
+	stockUpForSoftcore(6);
 
 	void sendItems(string player, int[item] itemList) {
 		int maxItems = 11;
