@@ -1315,7 +1315,6 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 boolean autoSpleen(boolean force) {
 	// Assumption: all pulverization has already been done.
 	// FIXME: Use malus to turn nuggets -> wads.
-	// FIXME: Consider prismatic wads.
 
 	int spleenLeft() {
 		return spleen_limit() - my_spleen_use();
@@ -1376,6 +1375,11 @@ boolean autoSpleen(boolean force) {
 
 	boolean shouldUseWad() {
 		return spleenLeft() % 4 != 0;
+	}
+
+	if (spleenLeft() == 3 && haveItem($item[prismatic wad])) {
+		usedSomething = true;
+		use(1, $item[prismatic wad]);
 	}
 
 	// FIXME: Sort wads by stat relevance
