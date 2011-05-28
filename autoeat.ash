@@ -1134,7 +1134,7 @@ boolean autoDrink(boolean needStats, boolean needAdv) {
 }
 
 boolean couldEatFortuneCookie() {
-	return get_property(propNeedFortuneCookie).to_boolean() && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount();
+	return in_hardcore() && get_property(propNeedFortuneCookie).to_boolean() && !counterActive(fortuneCounter) && get_property(propSemirareCounter).to_int() != my_turncount() && !checkPropToday(propLastFortuneCookie);
 }
 
 boolean eatItem(item thing) {
@@ -1203,7 +1203,7 @@ boolean autoEat(boolean needStats, boolean needAdv) {
 	FoodInfo[item] getMilkFoodInfo(boolean useMilk, boolean freeToCraft) {
 		FoodInfo[item] milkFoods = getInfo(milkFoodList, useMilk, freeToCraft);
 
-		if (in_hardcore() && couldEatFortuneCookie() && !checkPropToday(propLastFortuneCookie)) {
+		if (couldEatFortuneCookie()) {
 			milkFoods[$item[fortune cookie]].quantity = 1;
 			milkFoods[$item[fortune cookie]].quality = 1000;
 		}
