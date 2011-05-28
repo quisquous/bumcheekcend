@@ -7,6 +7,8 @@ boolean[item] equip = $items[
 	navel ring,
 	little box of fireworks,
 	rock and roll legend,
+	leather aviator's cap,
+	sword behind inappropriate prepositions,
 ];
 
 boolean[item] corpseDrink = $items[
@@ -43,6 +45,7 @@ boolean pullItem(int count, item thing) {
 		return false;
 
 	try {
+		debug("Pulling " + count + " " + thing);
 		cli_execute("pull " + count + " " + thing);
 	} finally {
 		return pulls_remaining() == pulls - count;
@@ -119,8 +122,10 @@ void pullSoftcoreItems() {
 	if (in_hardcore() || can_interact() || pulls_remaining() == 0)
 		return;
 
-	foreach thing in equip
-		pullItem(thing);
+	foreach thing in equip {
+		if (item_amount(thing) + equipped_amount(thing) == 0)
+			pullItem(thing);
+	}
   
 	if (!haveItem($item[desert bus pass])) {
 		pullItem($item[solid gold bowling ball]);
@@ -139,6 +144,11 @@ void pullSoftcoreItems() {
 		pullPie();
 	}
 
+	if (my_level() > 5 && my_level() < 10) {
+		if (!haveItem($item[prismatic wad]))
+			pullItem(1, $item[prismatic wad]);
+	}
+
 	pullCorpse(2);
 	if (inebriety_limit() < 15) {
 		pullSuperCock(2);
@@ -148,8 +158,6 @@ void pullSoftcoreItems() {
 
 	pullStageItem("spookyforest", $item[spooky-gro fertilizer]);
 
-	pullItem(1, $item[disassembled clover]);
-
 	pullItem($item[knob goblin elite helm]);
 	pullItem($item[knob goblin elite pants]);
 	pullItem($item[knob goblin elite polearm]);
@@ -158,23 +166,23 @@ void pullSoftcoreItems() {
 	pullItem($item[filthy knitted dread sack]);
 	pullItem($item[filthy corduroys]);
 
-	pullItem(1, $item[disassembled clover]);
-
 	pullItem($item[ring of conflict]);
 	pullItem($item[eyepatch]);
 	pullItem($item[swashbuckling pants]);
 	pullItem($item[stuffed shoulder parrot]);
+
+	pullStageItem("piratefledges", $item[frilly skirt]);
+	if (bcascStage("friars"))
+		pullStageItem("piratefledges", 3, $item[hot wing]);
 
 	if (my_level() >= 8 && !bcascStage("mining")) {
 		item ore = to_item(get_property("trapperOre"));
 		pullItem(3 - item_amount(ore), ore);
 	}
 
-	pullItem(1, $item[disassembled clover]);
-
-	pullStageItem("piratefledges", $item[frilly skirt]);
-	if (bcascStage("friars"))
-		pullStageItem("piratefledges", 3, $item[hot wing]);
+	pullStageItem("castle", $item[furry fur]);
+	pullStageItem("castle", $item[giant needle]);
+	pullStageItem("castle", $item[awful poetry journal]);
 
 	pullStageItem("macguffinpalin", $item[stunt nuts]);
 	pullStageItem("macguffinpalin", $item[wet stew]);
@@ -219,6 +227,7 @@ void stockUpForSoftcore(int dayCount) {
 	stock(2 * dayCount, $item[fettucini inconnu]);
 	stock(3 * dayCount, $item[mae west]);
 	stock(3 * dayCount, $item[corpsetini]);
+	stock(5, $item[prismatic wad]);
 	stock(20 * dayCount, $item[disassembled clover]);
 	stock(1, $item[solid gold bowling ball]);
 	stock(dayCount, $item[milk of magnesium]);
@@ -226,12 +235,34 @@ void stockUpForSoftcore(int dayCount) {
 	stock(1, $item[knob goblin elite helm]);
 	stock(1, $item[knob goblin elite pants]);
 	stock(1, $item[knob goblin elite polearm]);
+
+	stock(1, $item[miner's helmet]);
+	stock(1, $item[7-foot dwarven mattock]);
+	stock(1, $item[miner's pants]);
+
 	stock(1, $item[filthy knitted dread sack]);
 	stock(1, $item[filthy corduroys]);
-	stock(1, $item[ring of conflict]);
+
 	stock(1, $item[eyepatch]);
 	stock(1, $item[swashbuckling pants]);
 	stock(1, $item[stuffed shoulder parrot]);
+
+    stock(1, $item[beer helmet]);
+    stock(1, $item[distressed denim pants]);
+    stock(1, $item[bejeweled pledge pin]);
+
+    stock(1, $item[orcish baseball cap]);
+    stock(1, $item[homoerotic frat-paddle]);
+    stock(1, $item[orcish cargo shorts]);
+
+    stock(1, $item[knob goblin harem veil]);
+    stock(1, $item[knob goblin harem pants]);
+
+    stock(1, $item[reinforced beaded headband]);
+    stock(1, $item[bullet-proof corduroys]);
+    stock(1, $item[round purple sunglasses]);
+
+	stock(1, $item[ring of conflict]);
 	stock(3, $item[asbestos ore]);
 	stock(3, $item[chrome ore]);
 	stock(3, $item[linoleum ore]);
@@ -243,6 +274,9 @@ void stockUpForSoftcore(int dayCount) {
 	stock(1, $item[cyclops eyedrops]);
 	stock(1, $item[acoustic guitar]);
 	stock(1, $item[rock and roll legend]);
+	stock(1, $item[leather aviator's cap]);
+	stock(1, $item[sword behind inappropriate prepositions]);
+	stock(1, $item[wand of nagamar]);
 
 	foreach thing in $items[
 		adder bladder,
