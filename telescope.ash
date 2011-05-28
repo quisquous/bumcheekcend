@@ -245,7 +245,7 @@ boolean locationAvailable(location loc) {
     return false;
 }
 
-int[item] telescopeItemsNeeded() {
+int[item] telescopeItemHelper(boolean breakIntoSubComponents) {
     // FIXME: If defeated the naughty sorceress, return nothing.
     int[item] needed;
 
@@ -286,23 +286,25 @@ int[item] telescopeItemsNeeded() {
         needItem(1, thing);
     }
 
-    // Break into subitems, if not already acquired.
-    foreach thing in needed {
-        void processSubItems(item thing) {
-            if (!(multipartItems contains thing))
-                return;
-            if (needed[thing] <= 0)
-                return;
+	if (breakIntoSubComponents) {
+		// Break into subitems, if not already acquired.
+		foreach thing in needed {
+			void processSubItems(item thing) {
+				if (!(multipartItems contains thing))
+					return;
+				if (needed[thing] <= 0)
+					return;
 
-            int subItemQuantity = needed[thing];
-            needed[thing] = 0;
-            foreach subItem in multipartItems[thing] {
-                needItem(subItemQuantity, subItem);
-                processSubItems(subItem);
-            }
-        }
-        processSubItems(thing);
-    }
+				int subItemQuantity = needed[thing];
+				needed[thing] = 0;
+				foreach subItem in multipartItems[thing] {
+					needItem(subItemQuantity, subItem);
+					processSubItems(subItem);
+				}
+			}
+			processSubItems(thing);
+		}
+	}
 
     foreach thing in needed {
         if (needed[thing] > 0)
@@ -313,8 +315,16 @@ int[item] telescopeItemsNeeded() {
     return needed;
 }
 
+int[item] telescopeItemsNeeded() {
+	return telescopeItemHelper(false);
+}
+
+int[item] telescopeComponentsNeeded() {
+	return telescopeItemHelper(true);
+}
+
 boolean needTelescopeItem(item thing) {
-    return telescopeItemsNeeded() contains thing;
+    return telescopeItemsNeeded() contains thing || telescopeComponentsNeeded() contains thing;
 }
 
 float baseCombatFrequency(location loc) {
