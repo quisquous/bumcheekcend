@@ -1881,6 +1881,9 @@ boolean bcascCyrpt() {
 }
 
 void bcascDailyDungeon() {
+	if (!in_hardcore())
+		return;
+
 	zapKeys();
 	if (numUniqueKeys() >= 2) return;
 	
