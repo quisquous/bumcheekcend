@@ -295,8 +295,16 @@ float baseFoodQuality(item thing)
 	if (!loadMafiaDataFiles())
 		abort("Failed to load data files");
 
+	// Pies save more turns than they give adventures, so improve quality.
+	int turnsFromPie = 0;
+	if (pieToKey contains thing) {
+		item key = pieToKey[thing];
+		if (!haveItem(key))
+			turnsFromPie = 10;
+	}
+
 	if (mafiaFood contains thing)
-		return baseFoodQuality(mafiaFood[thing]);
+		return baseFoodQuality(mafiaFood[thing]) + turnsFromPie;
 	else if (mafiaDrink contains thing)
 		return baseFoodQuality(mafiaDrink[thing]);
 
