@@ -3573,7 +3573,8 @@ boolean bcascTavern() {
 	while (!get_property("tavernLayout").contains_text("3")) {
 		if (my_adventures() == 0) abort("No adventures.");
 		print("BCC: We are adventuring at the tavern", "purple");
-		tavern();
+		// Bug: http://kolmafia.us/showthread.php?6510-tavern()-aborts-with-quot-Unable-to-find-faucet-quot-even-though-it-does
+		try { tavern(); } finally {}
 	}
 	visit_url("rats.php?action=faucetoff");
 	visit_url("tavern.php?place=barkeep");
