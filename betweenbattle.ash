@@ -1128,8 +1128,10 @@ void main() {
 	killKing();
 	if (my_level() < 6)
 		useRedRay(my_location());
-	getHellionCubes();
-	getGoatCheese();
+	if (in_hardcore()) {
+		getHellionCubes();
+		getGoatCheese();
+	}
 	openDispensary();
 
 	betweenBattleInternal(my_location());
@@ -1146,7 +1148,9 @@ void betweenBattleInternal(location loc) {
 
 	autoFax(false);
 	openGuild();
-	getBoxes();
+
+	if (in_hardcore())
+		getBoxes();
 
 	if (olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
 		bcasc8Bit();
