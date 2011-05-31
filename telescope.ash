@@ -189,12 +189,52 @@ boolean[item] bangPotions = $items[
 
 // Usable items contains any item that can trivially be used to turn into other
 // items.
-boolean[item, item] usableItems;
-usableItems[$item[black picnic basket]] = $items[black pepper];
-usableItems[$item[canopic jar]] = $items[powdered organs];
+record UsableItemResult {
+	float chancePerUse;
+	int maxUses;
+};
+
+// Black picnic basket gives 2-5 items, each one has a 1/6 chance of pepper.
+// Assuming they are independent and equally likely, pepper has an 0.461 chance.
+//
+// p = 5/6, pepper chance = 1.0 - (p^2 + p^3 + p^4 + p^5) / 4
+//
+// Similarly, candy has 3-5 items with 1/4 chance of each, so chance = 0.67.
+float candyChance = 0.67;
+
+UsableItemResult[item, item] usableItems;
+usableItems[$item[black picnic basket], $item[black pepper]] = new UsableItemResult(0.461, 5);
+usableItems[$item[canopic jar], $item[powdered organs]] = new UsableItemResult(0.495);
+usableItems[$item[pile of candy], $item[angry farmer candy]] = new UsableItemResult(candyChance);
+usableItems[$item[pile of candy], $item[marzipan skull]] = new UsableItemResult(candyChance);
+usableItems[$item[pile of candy], $item[tasty fun good rice candy]] = new UsableItemResult(candyChance);
+usableItems[$item[pile of candy], $item[yummy tummy bean]] = new UsableItemResult(candyChance);
+
+item findUsableFor(item thing) {
+    foreach useItem in usableItems {
+		foreach useResult in usableItems[useItem] {
+			if (useResult != thing)
+				continue;
+
+			return useItem;
+		}
+	}
+
+	return $item[none];
+}
+
+float useChanceFor(item thing) {
+	item useItem = findUsableFor(thing);
+	if (useItem == $item[none])
+		abort("No usable found?");
+
+	return usableItems[useItem, thing].chancePerUse;
+}
+
+/*
 usableItems[$item[large box]] = bangPotions;
-usableItems[$item[pile of candy]] = $items[angry farmer candy, marzipan skull, tasty fun good rice candy, yummy tummy bean];
 usableItems[$item[small box]] = bangPotions;
+*/
 
 boolean[monster] getMonstersForItem(location loc, item thing) {
     boolean[monster] droppers;
@@ -219,6 +259,31 @@ boolean[monster] getMonstersForItem(location loc, item thing) {
     }
 
     return droppers;
+}
+
+item getDropForMonster(monster mob, item thing) {
+
+    boolean[item] drop;
+
+	foreach useItem in usableItems {
+		foreach useResult in usableItems[useItem] {
+			if (useResult != thing)
+				continue;
+			drop[useItem] = true;
+		}
+	}
+
+	foreach dropIdx, rec in item_drops_array(mob) {
+		if (rec.drop == thing)
+			return thing;
+	}
+
+	foreach dropIdx, rec in item_drops_array(mob) {
+		if (drop contains rec.drop)
+			return rec.drop;
+	}
+
+    return $item[none];
 }
 
 int telescopeUpgrades() {
@@ -413,6 +478,7 @@ record CombatOptions {
     boolean useYellowRay;
     boolean useOlfaction;
     boolean useFax;
+	monster alreadyOlfacting;
     int[item] items;
 };
 
@@ -525,8 +591,16 @@ float maxMinusCombat(CombatOptions options) {
 float chanceForItemPerEncounter(monster mob, item thing, float itemModifier) {
     // FIXME: Initiative and pickpocketing.
     foreach dropIdx, rec in item_drops_array(mob) {
-		if (rec.drop != thing)
-			continue;
+		float usableMultiplier = 1.0;
+
+		if (rec.drop != thing) {
+			if (!(usableItems contains rec.drop))
+				continue;
+			if (!(usableItems[rec.drop] contains thing))
+				continue;
+
+			usableMultiplier = usableItems[rec.drop, thing].chancePerUse;
+		}
 
         float rate = rec.rate;
         if (rate <= 0) {
@@ -534,7 +608,7 @@ float chanceForItemPerEncounter(monster mob, item thing, float itemModifier) {
             return 0;
         }
 
-        float baseRate = rate / 100.0; 
+        float baseRate = usableMultiplier * rate / 100.0;
         float adjustedRate = baseRate * (1.0 + itemModifier);
         float cappedRate = max(min(adjustedRate, 1.0), 0.0);
         return cappedRate;
@@ -565,18 +639,48 @@ float chancePerNonCombat(location loc, item thing) {
     return 1.0 / count; 
 }
 
+boolean locContainsIndirectDropper(location loc, item thing) {
+	foreach mobIdx, mob in get_monsters(loc) {
+		if (getDropForMonster(mob, thing) != thing)
+			return true;
+	}
+
+	return false;
+}
+
+// Return all combinations of mobs.  Increment index from 0 to get a different
+// combination.  If it returns an empty array, then no more combinations.
+boolean[monster] mobCombination(boolean[monster] allMobs, int index) {
+	if (index < 0)
+		abort("Invalid index");
+
+	// Start from 1, internally..
+	int flag = index + 1;
+
+	int maxFlag = 2**count(allMobs) - 1;
+
+	boolean[monster] mobs;
+	if (flag > maxFlag)
+		return mobs;
+
+	int count = 0;
+	foreach mob in allMobs {
+		int mask = 2**count;
+		if ((flag & mask) != 0)
+			mobs[mob] = true;
+		count += 1;
+	}
+
+	return mobs;
+}
 float turnsToGetItem(location loc, item thing, CombatOptions options) {
 
     int banishedCount(CombatOptions options) {
         return options.items contains $item[divine champagne popper] ? 1 : 0;
     }
 
-    // If you get a combat in loc, what are the chances that it will be
-    // a monster that will drop thing?
-    float monsterChance(location loc, item thing, CombatOptions options) {
-        boolean[monster] mobs = getMonstersForItem(loc, thing);
+	float monsterChance(location loc, CombatOptions options, boolean[monster] mobs) {
         int banished = banishedCount(options);
-
         float totalChance = 0;
         foreach mob in mobs {
             float mobChance = monsterFrequency(loc, mob, $monster[none], banished);
@@ -584,12 +688,32 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         }
 
         return totalChance;
-    }
+	}
 
-    float yellowRayTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
+    float yellowRayTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, boolean[monster] mobs) {
 
-        if (options.useFax)
-            return 1.0;
+        if (options.useFax) {
+			foreach mob in mobs {
+				item drop = getDropForMonster(mob, thing);
+				if (drop == thing) {
+					// FIXME: Record which monster to fax
+					return 1.0;
+				}
+			}
+
+			// Can't fax a monster that drops this item directly (e.g. black
+			// pepper).  We could still fax something that indirectly drops
+			// this item, but then we can no longer fax or yellow ray.
+			CombatOptions optionsPostFax = options;
+			optionsPostFax.useFax = false;
+			optionsPostFax.useYellowRay = false;
+
+			float postFaxTurns = turnsToGetItem(loc, thing, optionsPostFax);
+			float useChance = useChanceFor(thing);
+
+			// FIXME: Record which monster to fax
+			return 1.0 + (1.0 - useChance) * postFaxTurns;
+		}
 
         // When using a yellow ray, the chance to get an item per turn is the
         // chance that we get a monster or the chance that we get a noncombat
@@ -599,12 +723,61 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         // queue, but that's more complicated to model.
         // http://kol.coldfront.net/thekolwiki/index.php/Adventure_Queue
         float combatFrequency = combatFrequency(loc, combatModifier);
-        float monsterChance = monsterChance(loc, thing, options) * combatFrequency;
+        float monsterChance = monsterChance(loc, options, mobs) * combatFrequency;
         float nonCombatChance = nonCombatRate * (1.0 - combatFrequency);
         float totalChance = monsterChance + nonCombatChance;
 
-        return totalChance > 0 ? 1.0 / totalChance : 0;
+		if (totalChance == 0.0)
+			return 0;
+
+		float turnsToFirstYellowRay = 1.0 / totalChance;
+
+		// Consider each mob equally likely to be hit.
+		float totalTurnsPostRay = 0.0;
+		foreach mob in mobs {
+			item drop = getDropForMonster(mob, thing);
+			if (drop == thing)
+				continue;
+				
+			CombatOptions optionsPostRay = options;
+			optionsPostRay.useYellowRay = false;
+			float turnsPostRay;
+			if (options.useOlfaction)
+				optionsPostRay.alreadyOlfacting = mob;
+
+			turnsPostRay = turnsToGetItem(loc, thing, optionsPostRay);
+
+			float useChance = usableItems[drop, thing].chancePerUse;
+			totalTurnsPostRay += turnsPostRay * (1.0 - useChance);
+		}
+
+		float turnsPostRay = totalTurnsPostRay / count(mobs);	
+		return turnsToFirstYellowRay + turnsPostRay;
     }
+
+    float yellowRayTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
+		boolean[monster] allMobs = getMonstersForItem(loc, thing);
+
+		// Iterate through all potential yellow ray targets.
+		float bestTurns = 0.0;
+		int index = 0;
+		while (true) {
+			boolean[monster] mobs = mobCombination(allMobs, index);
+			if (count(mobs) == 0)
+				break;
+
+			float thisTurns = yellowRayTurns(loc, thing, options, combatModifier, nonCombatRate, mobs);
+	
+			if (thisTurns < bestTurns || bestTurns == 0.0) {
+				bestTurns = thisTurns;
+				// FIXME: Record which monsters to yellow ray.
+			}
+
+			index += 1;
+		}
+
+		return bestTurns;
+	}
 
     float combatChance(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, monster olfactionTarget) {
         boolean[monster] mobs = getMonstersForItem(loc, thing);
@@ -629,9 +802,7 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         return chancePerTurn;
     }
 
-    float olfactionTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
-        boolean[monster] mobs = getMonstersForItem(loc, thing);
-
+    float olfactionTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, boolean[monster] mobs) {
         float combatFrequency = combatFrequency(loc, combatModifier);
         float nonCombatChance = nonCombatRate * (1.0 - combatFrequency);
 
@@ -642,20 +813,38 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
 
         // Turns including the initial olfaction combat.
         float turnsThroughOlfaction;
-        float monsterChance;
+        float monsterChance = 0.0;
         if (options.useFax) {
             turnsThroughOlfaction = 1.0;
             monsterChance = 1.0;
-        } else {
-            monsterChance = monsterChance(loc, thing, options) * combatFrequency;
+        } else if (mobs contains options.alreadyOlfacting) {
+			turnsThroughOlfaction = 0.0;
+			monsterChance = 0.0;
+		} else {
+            monsterChance = monsterChance(loc, options, mobs) * combatFrequency;
             if (monsterChance == 0)
-                abort("Unexpected monster chance");
+				abort("Unexpected monster chance");
 
             turnsThroughOlfaction = 1.0 / monsterChance;
         }
 
-        // FIXME: This assumes that we'll olfact the first thing that can drop
-        // this item and that there's an equal chance to see any of them.
+		// Calculate per-turn chance to get the item from a monster not in
+		// the mob list if we get a combat.
+		float otherMonsterChance = 0.0;
+		if (options.alreadyOlfacting != $monster[none] && !(mobs contains options.alreadyOlfacting)) {
+			boolean[monster] allMobs = getMonstersForItem(loc, thing);
+			foreach mob in allMobs {
+				if (mobs contains mob)
+					continue;
+				
+				float itemModifier = maxItemDrop(options);
+				float itemChance = chanceForItemPerEncounter(mob, thing, itemModifier);
+
+				int banished = banishedCount(options);
+				float mobChance = monsterFrequency(loc, mob, $monster[none], banished);
+				otherMonsterChance = mobChance * itemChance * combatFrequency;
+			}
+		}
 
         float totalTurns = 0;
         foreach mob in mobs {
@@ -668,19 +857,17 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
             float combatTurns = (1.0 - itemChance) / combatChance;
             float turns = combatTurns + turnsThroughOlfaction;
 
-            if (nonCombatChance == 0 || turnsThroughOlfaction == 1) {
-                totalTurns += turns;
-                continue;
-            }
-
-            // Consider the chance of getting the item in a noncombat prior
-            // to olfacting.
+			// Consider the chance of getting the item in a noncombat or from a
+			// mob not contained in mobs prior to olfacting.
             float p = 1.0;
             int turnCount = 1;
             float expected = 0;
             while (p > 0.00001) {
                 // Chance of noncombat with the item on this turn.
                 expected += nonCombatChance * turnCount * p;
+				// Chance of a combat with the monster on this turn.
+				expected += otherMonsterChance * turnCount * p;
+
                 // Chance of combat with this monster on this turn.
                 expected += monsterChance * (combatTurns + turnCount) * p;
 
@@ -696,15 +883,66 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         return totalTurns / count(mobs);
     }
 
+    float olfactionTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
+
+		if (options.alreadyOlfacting != $monster[none]) {
+			boolean[monster] mobs;
+			mobs[options.alreadyOlfacting] = true;
+			return olfactionTurns(loc, thing, options, combatModifier, nonCombatRate, mobs);
+		}
+
+        boolean[monster] allMobs = getMonstersForItem(loc, thing);
+
+		// Find best faxable monstr
+		if (options.useFax) {
+			float bestTurns = 0.0;
+			foreach mob in allMobs {
+				boolean[monster] mobs;
+				mobs[mob] = true;
+
+				float thisTurns = olfactionTurns(loc, thing, options, combatModifier, nonCombatRate, mobs);
+				if (thisTurns < bestTurns || bestTurns == 0.0) {
+					bestTurns = thisTurns;
+					// FIXME: Record which monsters to olfact/fax.
+				}
+			}
+
+			return bestTurns;
+		}
+
+		// Iterate through all combinations of monsters.  Depending on drop
+		// chances, it might be beneficial to olfact the first potential
+		// monster or wait for one with a better drop rate.
+		float bestTurns = 0.0;
+		int index = 0;
+		while (true) {
+			boolean[monster] mobs = mobCombination(allMobs, index);
+			if (count(mobs) == 0)
+				break;
+
+			float thisTurns = olfactionTurns(loc, thing, options, combatModifier, nonCombatRate, mobs);
+			if (thisTurns < bestTurns || bestTurns == 0.0) {
+				bestTurns = thisTurns;
+				// FIXME: Record which monsters to olfact.
+			}
+
+			index += 1;
+		}
+
+		return bestTurns;
+	}
 
     float turnsWithModifier(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
 
         if (options.useYellowRay)
             return yellowRayTurns(loc, thing, options, combatModifier, nonCombatRate);
 
+		if (options.alreadyOlfacting != $monster[none])
+			return 1.0 / combatChance(loc, thing, options, combatModifier, nonCombatRate, options.alreadyOlfacting);
+
         if (options.useOlfaction)
             return olfactionTurns(loc, thing, options, combatModifier, nonCombatRate);
-
+		
         float combatChance = combatChance(loc, thing, options, combatModifier, nonCombatRate, $monster[none]);
         float combatTurns = 1.0 / combatChance;
 
@@ -868,7 +1106,9 @@ void sanityCheck() {
 		}
 
 		compare(thing, loc, "base", baseTurns, "olfact", olfactTurns);
-		compare(thing, loc, "olfact", olfactTurns, "yellowRay", yellowRayTurns);
+
+		if (!locContainsIndirectDropper(loc, thing))
+			compare(thing, loc, "olfact", olfactTurns, "yellowRay", yellowRayTurns);
 		compare(thing, loc, "base", baseTurns, "baseFax", baseFaxTurns);
 		compare(thing, loc, "olfact", olfactTurns, "olfactFax", olfactFaxTurns);
 		compare(thing, loc, "yellowRay", yellowRayTurns, "yellowRayFax", yellowRayFaxTurns);
