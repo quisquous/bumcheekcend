@@ -240,6 +240,7 @@ boolean[item] keepAll = $items[
 	landscaper's leafblower,
 	larp membership card,
 	lavender candy heart,
+	leather aviator's cap,
 	lederhosen of the night,
 	left handed melodica,
 	lewd playing card,
