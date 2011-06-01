@@ -336,8 +336,6 @@ void stockUpForSoftcore(int dayCount) {
 void setSoftcoreOptions() {
 	setBcascStageComplete("friarssteel");
 	setBcascStageComplete("innaboxen");
-	setBcascStageComplete("pumpkinbeer");
-	setBcascStageComplete("swill");
 	setBcascStageComplete("wand");
 }
 
