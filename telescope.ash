@@ -1182,6 +1182,13 @@ void sanityCheck() {
         CombatPlan yellowRayFaxTurns = turnsToGetItem(loc, thing, yellowRayFaxOptions);
         check(yellowRayFaxOptions, yellowRayFaxTurns, "yellowRayFax", loc, thing);
 
+        CombatOptions yellowRayOlfactFaxOptions;
+        yellowRayOlfactFaxOptions.useYellowRay = true;
+        yellowRayOlfactFaxOptions.useFax = true;
+        yellowRayOlfactFaxOptions.useOlfaction = true;
+        CombatPlan yellowRayOlfactFaxTurns = turnsToGetItem(loc, thing, yellowRayOlfactFaxOptions);
+        check(yellowRayOlfactFaxOptions, yellowRayOlfactFaxTurns, "yellowRayOlfactFax", loc, thing);
+
         print("Item info for " + thing + " [" + loc + "]", "purple");
         print("Base turns: " + baseTurns.turns);
         print("Base fax turns: " + baseFaxTurns.turns);
@@ -1189,27 +1196,7 @@ void sanityCheck() {
         print("Olfact fax turns: " + olfactFaxTurns.turns);
         print("Yellow ray turns: " + yellowRayTurns.turns);
         print("Yellow ray fax turns: " + yellowRayFaxTurns.turns);
-        monster faxTarget;
-        foreach mob in baseFaxTurns.targets {
-            print("Base fax: " + mob);
-            faxTarget = mob;
-        }
-        foreach mob in olfactFaxTurns.targets
-            print("Olfact fax: " + mob);
-        foreach mob in yellowRayFaxTurns.targets
-            print("Yellow ray fax: " + mob);
-        foreach mob in olfactTurns.targets
-            print("Olfact target: " + mob);
-        foreach mob in yellowRayTurns.targets
-            print("Yellow ray target: " + mob);
-
-        // Verify fax target the same in all cases.
-        if (!(olfactFaxTurns.targets contains faxTarget))
-            abort("olfact fax not same as base fax");
-        if (!locContainsIndirectDropper(loc, thing)) {
-            if (!(yellowRayFaxTurns.targets contains faxTarget))
-                abort("yellow ray fax not same as base fax");
-        }
+        print("Yellow ray olfact fax turns: " + yellowRayOlfactFaxTurns.turns);
 
         void compare(item thing, location loc, string strSlow, float slow, string strFast, float fast) {
             float epsilon = 0.001;
@@ -1227,6 +1214,9 @@ void sanityCheck() {
         compare(thing, loc, "base", baseTurns.turns, "baseFax", baseFaxTurns.turns);
         compare(thing, loc, "olfact", olfactTurns.turns, "olfactFax", olfactFaxTurns.turns);
         compare(thing, loc, "yellowRay", yellowRayTurns.turns, "yellowRayFax", yellowRayFaxTurns.turns);
+
+        compare(thing, loc, "olfactFax", olfactFaxTurns.turns, "yellowRayOlfactFax", yellowRayOlfactFaxTurns.turns);
+        compare(thing, loc, "yellowRayFax", yellowRayFaxTurns.turns, "yellowRayOlfactFax", yellowRayOlfactFaxTurns.turns);
     }
 
     foreach thing in otherLairItems {
