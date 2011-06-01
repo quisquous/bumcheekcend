@@ -707,6 +707,8 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
             CombatOptions optionsPostFax = options;
             optionsPostFax.useFax = false;
             optionsPostFax.useYellowRay = false;
+            if (options.useOlfaction)
+                optionsPostFax.alreadyOlfacting = mob;
 
             float postFaxTurns = turnsToGetItem(loc, thing, optionsPostFax);
             float useChance = useChanceFor(thing);
