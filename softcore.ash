@@ -84,7 +84,7 @@ boolean pullFromList(int count, boolean[item] list) {
 		have += item_amount(thing);
 	}
 
-	int needed = have - count;
+	int needed = count - have;
 	if (needed <= 0)
 		return true;
 	
@@ -118,15 +118,26 @@ void pullStageItem(string stage, item thing) {
 	pullStageItem(stage, 1, thing);
 }
 
+void pullIfNeeded(int count, item thing) {
+	int needed = count - item_amount(thing) - equipped_amount(thing);
+	if (needed <= 0)
+		return;
+
+	pullItem(needed, thing);
+}
+
+void pullIfNeeded(item thing) {
+	pullIfNeeded(1, thing);
+}
+
 void pullSoftcoreItems() {
 	if (in_hardcore() || can_interact() || pulls_remaining() == 0)
 		return;
 
 	foreach thing in equip {
-		if (item_amount(thing) + equipped_amount(thing) == 0)
-			pullItem(thing);
+		pullIfNeeded(thing);
 	}
-  
+
 	if (!haveItem($item[desert bus pass])) {
 		pullItem($item[solid gold bowling ball]);
 		autoSell(1, $item[solid gold bowling ball]);
@@ -134,19 +145,13 @@ void pullSoftcoreItems() {
 	}
 
 	if (!haveItem($item[milk of magnesium]))
-		pullItem($item[milk of magnesium]);
+		pullIfNeeded($item[milk of magnesium]);
 
-	if (my_level() < 6) {
-		pullItem(2, $item[fettucini inconnu]);
-		pullPie();
-	} else {
-		pullItem(2, $item[sleazy hi mein]);
-		pullPie();
-	}
+	pullIfNeeded(2, $item[sleazy hi mein]);
+	pullPie();
 
 	if (my_level() > 5 && my_level() < 10) {
-		if (!haveItem($item[prismatic wad]))
-			pullItem(1, $item[prismatic wad]);
+		pullIfNeeded(1, $item[prismatic wad]);
 	}
 
 	pullCorpse(2);
@@ -158,18 +163,18 @@ void pullSoftcoreItems() {
 
 	pullStageItem("spookyforest", $item[spooky-gro fertilizer]);
 
-	pullItem($item[knob goblin elite helm]);
-	pullItem($item[knob goblin elite pants]);
-	pullItem($item[knob goblin elite polearm]);
+	pullIfNeeded($item[knob goblin elite helm]);
+	pullIfNeeded($item[knob goblin elite pants]);
+	pullIfNeeded($item[knob goblin elite polearm]);
 
 	// Don't really need these, but bcasc expects them.
-	pullItem($item[filthy knitted dread sack]);
-	pullItem($item[filthy corduroys]);
+	pullIfNeeded($item[filthy knitted dread sack]);
+	pullIfNeeded($item[filthy corduroys]);
 
-	pullItem($item[ring of conflict]);
-	pullItem($item[eyepatch]);
-	pullItem($item[swashbuckling pants]);
-	pullItem($item[stuffed shoulder parrot]);
+	pullIfNeeded($item[ring of conflict]);
+	pullIfNeeded($item[eyepatch]);
+	pullIfNeeded($item[swashbuckling pants]);
+	pullIfNeeded($item[stuffed shoulder parrot]);
 
 	pullStageItem("piratefledges", $item[frilly skirt]);
 	if (bcascStage("friars"))
@@ -177,7 +182,7 @@ void pullSoftcoreItems() {
 
 	if (my_level() >= 8 && !bcascStage("mining")) {
 		item ore = to_item(get_property("trapperOre"));
-		pullItem(3 - item_amount(ore), ore);
+		pullIfNeeded(3, ore);
 	}
 
 	pullStageItem("castle", $item[furry fur]);
@@ -187,29 +192,34 @@ void pullSoftcoreItems() {
 	pullStageItem("macguffinpalin", $item[stunt nuts]);
 	pullStageItem("macguffinpalin", $item[wet stew]);
 	pullStageItem("macguffinpyramid", $item[drum machine]);
-	pullItem($item[cyclops eyedrops]);
+	pullIfNeeded($item[cyclops eyedrops]);
 	pullStageItem("macguffinpalin", $item[acoustic guitar]);
 
 	int[item] telescopeItems = telescopeItemsNeeded();
 	foreach thing in telescopeItems {
-		pullItem(telescopeItems[thing], thing);
+		pullIfNeeded(telescopeItems[thing], thing);
 	}
 
 	while (pulls_remaining() > 0) {
 		if (!pullItem(1, $item[disassembled clover]))
 			break;
 	}
+
+	// FIXME: pull large boxes
 }
 
 void stockUpForSoftcore(int dayCount) {
 	void stock(int count, item thing) {
-		int needed = closet_amount(thing) + storage_amount(thing) - count;
+		debug("Stocking " + count + " " + thing);
+		int needed = count - closet_amount(thing) - storage_amount(thing);
 		if (needed <= 0)
 			return;
 
 		cli_execute("acquire " + needed + " " + thing);
 		if (item_amount(thing) < needed)
 			abort("Couldn't get " + needed + " " + thing);
+
+		debug("Closeting " + needed + " " + thing);
 		put_closet(needed, thing);
 	}
 
@@ -277,6 +287,7 @@ void stockUpForSoftcore(int dayCount) {
 	stock(1, $item[leather aviator's cap]);
 	stock(1, $item[sword behind inappropriate prepositions]);
 	stock(1, $item[wand of nagamar]);
+	stock(10, $item[large box]);
 
 	foreach thing in $items[
 		adder bladder,
