@@ -1131,6 +1131,7 @@ void main() {
 	if (in_hardcore()) {
 		getHellionCubes();
 		getGoatCheese();
+		getBoxes();
 	}
 	openDispensary();
 
@@ -1148,9 +1149,6 @@ void betweenBattleInternal(location loc) {
 
 	autoFax(false);
 	openGuild();
-
-	if (in_hardcore())
-		getBoxes();
 
 	if (olfactTarget() == $monster[blooper] && item_amount($item[digital key]) == 0) {
 		bcasc8Bit();
