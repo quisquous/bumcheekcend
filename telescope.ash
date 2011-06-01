@@ -482,12 +482,22 @@ record CombatOptions {
     int[item] items;
 };
 
+record OutMobs {
+    boolean[monster] list;
+};
+
 record CombatPlan {
     location loc;
-    float expectedTurns;
-    boolean useYellowRay;
+    item thing;
+    float turns;
+
     boolean useNonCombat;
-    monster olfactTarget;
+    CombatOptions options;
+
+    // If olfaction, olfact the first target encountered
+    // If ray, yellow ray the first target encountered.
+    // If fax, count(targets) == 1.
+    boolean[monster] targets;
 };
 
 int maxFamiliarWeightModifier(CombatOptions options) {
@@ -673,7 +683,26 @@ boolean[monster] mobCombination(boolean[monster] allMobs, int index) {
 
     return mobs;
 }
-float turnsToGetItem(location loc, item thing, CombatOptions options) {
+
+void setTargets(OutMobs out, boolean[monster] targets) {
+    clear(out.list);
+    foreach mob in targets {
+        out.list[mob] = true;
+    }
+}
+
+void setTargets(OutMobs out, monster mob) {
+    clear(out.list);
+    out.list[mob] = true;
+}
+
+void turnsToGetItem(location loc, item thing, CombatOptions options, CombatPlan result) {
+
+    float turnsToGetItem(location loc, item thing, CombatOptions options) {
+        CombatPlan dummy;
+        turnsToGetItem(loc, thing, options, dummy);
+        return dummy.turns;
+    }
 
     int banishedCount(CombatOptions options) {
         return options.items contains $item[divine champagne popper] ? 1 : 0;
@@ -690,33 +719,7 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         return totalChance;
     }
 
-    float yellowRayTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, boolean[monster] mobs) {
-
-        if (options.useFax) {
-            foreach mob in mobs {
-                item drop = getDropForMonster(mob, thing);
-                if (drop == thing) {
-                    // FIXME: Record which monster to fax
-                    return 1.0;
-                }
-            }
-
-            // Can't fax a monster that drops this item directly (e.g. black
-            // pepper).  We could still fax something that indirectly drops
-            // this item, but then we can no longer fax or yellow ray.
-            CombatOptions optionsPostFax = options;
-            optionsPostFax.useFax = false;
-            optionsPostFax.useYellowRay = false;
-            if (options.useOlfaction)
-                optionsPostFax.alreadyOlfacting = mob;
-
-            float postFaxTurns = turnsToGetItem(loc, thing, optionsPostFax);
-            float useChance = useChanceFor(thing);
-
-            // FIXME: Record which monster to fax
-            return 1.0 + (1.0 - useChance) * postFaxTurns;
-        }
-
+    float yellowRayTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, boolean[monster] mobs, OutMobs targets) {
         // When using a yellow ray, the chance to get an item per turn is the
         // chance that we get a monster or the chance that we get a noncombat
         // with that item.  These are all independent chances.
@@ -732,14 +735,25 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         if (totalChance == 0.0)
             return 0;
 
-        float turnsToFirstYellowRay = 1.0 / totalChance;
+        float turnsToFirstYellowRay;
+        if (options.useFax) {
+            turnsToFirstYellowRay = 1.0;
+        } else {
+            turnsToFirstYellowRay = 1.0 / totalChance;
+        }
+
+        float bestPostTurns;
+        monster bestMob;
 
         // Consider each mob equally likely to be hit.
         float totalTurnsPostRay = 0.0;
         foreach mob in mobs {
             item drop = getDropForMonster(mob, thing);
-            if (drop == thing)
+            if (drop == thing) {
+                bestMob = mob;
+                bestPostTurns = 0.0;
                 continue;
+            }
                 
             CombatOptions optionsPostRay = options;
             optionsPostRay.useYellowRay = false;
@@ -747,17 +761,30 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
             if (options.useOlfaction)
                 optionsPostRay.alreadyOlfacting = mob;
 
-            turnsPostRay = turnsToGetItem(loc, thing, optionsPostRay);
-
             float useChance = usableItems[drop, thing].chancePerUse;
-            totalTurnsPostRay += turnsPostRay * (1.0 - useChance);
+            turnsPostRay = turnsToGetItem(loc, thing, optionsPostRay) * (1.0 - useChance);
+            
+            totalTurnsPostRay += turnsPostRay;
+
+            if (turnsPostRay < bestPostTurns || bestMob == $monster[none]) {
+                bestPostTurns = turnsPostRay;
+                bestMob = mob;
+            }
         }
 
-        float turnsPostRay = totalTurnsPostRay / count(mobs);    
-        return turnsToFirstYellowRay + turnsPostRay;
+        if (options.useFax) {
+            // If faxing, we can take the best monster.
+            setTargets(targets, bestMob);
+            return turnsToFirstYellowRay + bestPostTurns;
+        }
+
+        // If not faxing, take the average.
+        float averagePostTurns = totalTurnsPostRay / count(mobs);
+        setTargets(targets, mobs);
+        return turnsToFirstYellowRay + averagePostTurns;
     }
 
-    float yellowRayTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
+    float yellowRayTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, OutMobs targets) {
         boolean[monster] allMobs = getMonstersForItem(loc, thing);
 
         // Iterate through all potential yellow ray targets.
@@ -768,11 +795,12 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
             if (count(mobs) == 0)
                 break;
 
-            float thisTurns = yellowRayTurns(loc, thing, options, combatModifier, nonCombatRate, mobs);
+            OutMobs thisTargets;
+            float thisTurns = yellowRayTurns(loc, thing, options, combatModifier, nonCombatRate, mobs, thisTargets);
     
             if (thisTurns < bestTurns || bestTurns == 0.0) {
                 bestTurns = thisTurns;
-                // FIXME: Record which monsters to yellow ray.
+                setTargets(targets, thisTargets.list);
             }
 
             index += 1;
@@ -804,7 +832,7 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         return chancePerTurn;
     }
 
-    float olfactionTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, boolean[monster] mobs) {
+    float olfactionTurnsForMobs(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, boolean[monster] mobs) {
         float combatFrequency = combatFrequency(loc, combatModifier);
         float nonCombatChance = nonCombatRate * (1.0 - combatFrequency);
 
@@ -885,27 +913,28 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         return totalTurns / count(mobs);
     }
 
-    float olfactionTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
+    float olfactionTurns(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, OutMobs targets) {
 
         if (options.alreadyOlfacting != $monster[none]) {
             boolean[monster] mobs;
             mobs[options.alreadyOlfacting] = true;
-            return olfactionTurns(loc, thing, options, combatModifier, nonCombatRate, mobs);
+            setTargets(targets, options.alreadyOlfacting);
+            return olfactionTurnsForMobs(loc, thing, options, combatModifier, nonCombatRate, mobs);
         }
 
         boolean[monster] allMobs = getMonstersForItem(loc, thing);
 
-        // Find best faxable monstr
+        // Find best faxable monster
         if (options.useFax) {
             float bestTurns = 0.0;
             foreach mob in allMobs {
                 boolean[monster] mobs;
                 mobs[mob] = true;
 
-                float thisTurns = olfactionTurns(loc, thing, options, combatModifier, nonCombatRate, mobs);
+                float thisTurns = olfactionTurnsForMobs(loc, thing, options, combatModifier, nonCombatRate, mobs);
                 if (thisTurns < bestTurns || bestTurns == 0.0) {
                     bestTurns = thisTurns;
-                    // FIXME: Record which monsters to olfact/fax.
+                    setTargets(targets, mobs);
                 }
             }
 
@@ -922,10 +951,10 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
             if (count(mobs) == 0)
                 break;
 
-            float thisTurns = olfactionTurns(loc, thing, options, combatModifier, nonCombatRate, mobs);
+            float thisTurns = olfactionTurnsForMobs(loc, thing, options, combatModifier, nonCombatRate, mobs);
             if (thisTurns < bestTurns || bestTurns == 0.0) {
                 bestTurns = thisTurns;
-                // FIXME: Record which monsters to olfact.
+                setTargets(targets, mobs);
             }
 
             index += 1;
@@ -934,16 +963,18 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
         return bestTurns;
     }
 
-    float turnsWithModifier(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate) {
+    float turnsWithModifier(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, OutMobs targets) {
 
         if (options.useYellowRay)
-            return yellowRayTurns(loc, thing, options, combatModifier, nonCombatRate);
+            return yellowRayTurns(loc, thing, options, combatModifier, nonCombatRate, targets);
 
         if (options.alreadyOlfacting != $monster[none])
             return 1.0 / combatChance(loc, thing, options, combatModifier, nonCombatRate, options.alreadyOlfacting);
 
-        if (options.useOlfaction)
-            return olfactionTurns(loc, thing, options, combatModifier, nonCombatRate);
+        if (options.useOlfaction) {
+            float turns = olfactionTurns(loc, thing, options, combatModifier, nonCombatRate, targets);
+            return turns;
+        }
         
         float combatChance = combatChance(loc, thing, options, combatModifier, nonCombatRate, $monster[none]);
         float combatTurns = 1.0 / combatChance;
@@ -956,8 +987,10 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
             foreach mob in mobs {
                 float itemModifier = maxItemDrop(options);
                 float itemChance = chanceForItemPerEncounter(mob, thing, itemModifier);
-                if (itemChance > bestItemChance)
+                if (itemChance > bestItemChance) {
+                    setTargets(targets, mob);
                     bestItemChance = itemChance;
+                }
             }
 
             return bestItemChance + (1.0 - bestItemChance) * (combatTurns + 1.0);
@@ -969,17 +1002,34 @@ float turnsToGetItem(location loc, item thing, CombatOptions options) {
     float maxCombat = maxPlusCombat(options);
     float minCombat = maxMinusCombat(options);
     float nonCombatRate = chancePerNonCombat(loc, thing);
+    OutMobs maxCombatTargets;
 
-    float minTurns = turnsWithModifier(loc, thing, options, maxCombat, nonCombatRate);
+    float bestTurns = turnsWithModifier(loc, thing, options, maxCombat, nonCombatRate, maxCombatTargets);
+    result.useNonCombat = false;
+    result.targets = maxCombatTargets.list;
+    result.turns = bestTurns;
 
     if (nonCombatRate > 0) {
-        float minCombatTurns = turnsWithModifier(loc, thing, options, minCombat, nonCombatRate);
-        minTurns = min(minTurns, minCombatTurns);
-    }
+        OutMobs minCombatTargets;
+        float minCombatTurns = turnsWithModifier(loc, thing, options, minCombat, nonCombatRate, minCombatTargets);
 
-    return minTurns;
+        if (minCombatTurns < bestTurns ) {
+            result.useNonCombat = true;
+            result.targets = minCombatTargets.list;
+            result.turns = minCombatTurns;
+        }
+    }
 }
 
+CombatPlan turnsToGetItem(location loc, item thing, CombatOptions options) {
+    CombatPlan result;
+    result.loc = loc;
+    result.thing = thing;
+    result.options = options;
+    turnsToGetItem(loc, thing, options, result);
+
+    return result;
+}
 boolean canYellowRay(monster mob, item thing) {
     foreach dropIdx, rec in item_drops_array(mob) {
         if (rec.drop != thing)
@@ -1047,6 +1097,54 @@ void sanityCheck() {
                 abort("No chance of getting " + thing + " from " + mob);
         }
 
+        // Sanity check a single plan generated by options
+        void check(CombatOptions options, CombatPlan plan, string desc, location loc, item thing) {
+            string suffix = " (" + desc + ", item: " + thing + ", loc: " + loc + ")";
+            void checkMonster(monster mob) {
+                boolean[monster] mobs = getMonstersForItem(loc, thing);
+                if (!(mobs contains mob))
+                    abort("Bad mob: " + mob + suffix);
+            }
+
+            if (plan.turns <= 0)
+                abort("Bad turns: " + plan.turns + suffix);
+
+            if (plan.loc != loc)
+                abort("Bad loc: " + plan.loc + suffix);
+
+            if (plan.thing != thing)
+                abort("Bad item : " + plan.thing + suffix);
+
+            foreach mob in plan.targets {
+                checkMonster(mob);
+            }
+
+            if (plan.options.useFax) {
+                if (count(plan.targets) != 1)
+                    abort("Expected 1 target, got " + (count(plan.targets)) + suffix);
+            }
+
+            if (plan.options.useOlfaction || plan.options.useYellowRay) {
+                if (count(plan.targets) == 0)
+                    abort("Expected non-zero targets" + suffix);
+            }
+
+            if (plan.options.useYellowRay != options.useYellowRay)
+                abort("Bad option: useYellowRay." + suffix);
+            if (plan.options.useOlfaction != options.useOlfaction)
+                abort("Bad option: useOlfaction." + suffix);
+            if (plan.options.useFax != options.useFax)
+                abort("Bad option: useFax." + suffix);
+            if (plan.options.alreadyOlfacting != options.alreadyOlfacting)
+                abort("Bad option: alreadyOlfacting" + suffix);
+            if (count(plan.options.items) != count(options.items))
+                abort("Bad option: item count" + suffix);
+            foreach optItem in options.items {
+                if (!(plan.options.items contains optItem))
+                    abort("Missing item option: " + optItem + suffix);
+            }
+        }
+
         // Run through trying to get the item using a variety of methods.
         // Make sure there's a sane number of turns to get each one.
         // Additionally, olfacting should never be slower than not,
@@ -1054,49 +1152,64 @@ void sanityCheck() {
         // Faxing should always be faster than not-faxing.
 
         CombatOptions baseOptions;
-        float baseTurns = turnsToGetItem(loc, thing, baseOptions);
-        if (baseTurns == 0)
-            abort("Unknown base turns to get item " + thing + " from " + loc);
+        CombatPlan baseTurns = turnsToGetItem(loc, thing, baseOptions);
+        check(baseOptions, baseTurns, "base", loc, thing);
 
         CombatOptions olfactOptions;
         olfactOptions.useOlfaction = true;
-        float olfactTurns = turnsToGetItem(loc, thing, olfactOptions);
-        if (olfactTurns == 0)
-            abort("Unknown olfact turns to get item " + thing + " from " + loc);
+        CombatPlan olfactTurns = turnsToGetItem(loc, thing, olfactOptions);
+        check(olfactOptions, olfactTurns, "olfact", loc, thing);
 
         CombatOptions yellowRayOptions;
         yellowRayOptions.useYellowRay = true;
-        float yellowRayTurns = turnsToGetItem(loc, thing, yellowRayOptions);
-        if (yellowRayTurns == 0)
-            abort("Unknown yellow ray turns to get item " + thing + " from " + loc);
+        CombatPlan yellowRayTurns = turnsToGetItem(loc, thing, yellowRayOptions);
+        check(yellowRayOptions, yellowRayTurns, "yellowRay", loc, thing);
 
         CombatOptions baseFaxOptions;
         baseFaxOptions.useFax = true;
-        float baseFaxTurns = turnsToGetItem(loc, thing, baseFaxOptions);
-        if (baseFaxTurns == 0)
-            abort("Unknown base fax turns to get item " + thing + " from " + loc);
+        CombatPlan baseFaxTurns = turnsToGetItem(loc, thing, baseFaxOptions);
+        check(baseFaxOptions, baseFaxTurns, "baseFax", loc, thing);
 
         CombatOptions olfactFaxOptions;
         olfactFaxOptions.useOlfaction = true;
         olfactFaxOptions.useFax = true;
-        float olfactFaxTurns = turnsToGetItem(loc, thing, olfactFaxOptions);
-        if (olfactFaxTurns == 0)
-            abort("Unknown olfact fax turns to get item " + thing + " from " + loc);
+        CombatPlan olfactFaxTurns = turnsToGetItem(loc, thing, olfactFaxOptions);
+        check(olfactFaxOptions, olfactFaxTurns, "olfactFax", loc, thing);
 
         CombatOptions yellowRayFaxOptions;
         yellowRayFaxOptions.useYellowRay = true;
         yellowRayFaxOptions.useFax = true;
-        float yellowRayFaxTurns = turnsToGetItem(loc, thing, yellowRayFaxOptions);
-        if (yellowRayFaxTurns == 0)
-            abort("Unknown yellow ray fax turns to get item " + thing + " from " + loc);
+        CombatPlan yellowRayFaxTurns = turnsToGetItem(loc, thing, yellowRayFaxOptions);
+        check(yellowRayFaxOptions, yellowRayFaxTurns, "yellowRayFax", loc, thing);
 
         print("Item info for " + thing + " [" + loc + "]", "purple");
-        print("Base turns: " + baseTurns);
-        print("Base fax turns: " + baseFaxTurns);
-        print("Olfact turns: " + olfactTurns);
-        print("Olfact fax turns: " + olfactFaxTurns);
-        print("Yellow ray turns: " + yellowRayTurns);
-        print("Yellow ray fax turns: " + yellowRayFaxTurns);
+        print("Base turns: " + baseTurns.turns);
+        print("Base fax turns: " + baseFaxTurns.turns);
+        print("Olfact turns: " + olfactTurns.turns);
+        print("Olfact fax turns: " + olfactFaxTurns.turns);
+        print("Yellow ray turns: " + yellowRayTurns.turns);
+        print("Yellow ray fax turns: " + yellowRayFaxTurns.turns);
+        monster faxTarget;
+        foreach mob in baseFaxTurns.targets {
+            print("Base fax: " + mob);
+            faxTarget = mob;
+        }
+        foreach mob in olfactFaxTurns.targets
+            print("Olfact fax: " + mob);
+        foreach mob in yellowRayFaxTurns.targets
+            print("Yellow ray fax: " + mob);
+        foreach mob in olfactTurns.targets
+            print("Olfact target: " + mob);
+        foreach mob in yellowRayTurns.targets
+            print("Yellow ray target: " + mob);
+
+        // Verify fax target the same in all cases.
+        if (!(olfactFaxTurns.targets contains faxTarget))
+            abort("olfact fax not same as base fax");
+        if (!locContainsIndirectDropper(loc, thing)) {
+            if (!(yellowRayFaxTurns.targets contains faxTarget))
+                abort("yellow ray fax not same as base fax");
+        }
 
         void compare(item thing, location loc, string strSlow, float slow, string strFast, float fast) {
             float epsilon = 0.001;
@@ -1107,13 +1220,13 @@ void sanityCheck() {
             abort(strFast + " slower than " + strSlow + " for " + thing + " from " + loc);
         }
 
-        compare(thing, loc, "base", baseTurns, "olfact", olfactTurns);
+        compare(thing, loc, "base", baseTurns.turns, "olfact", olfactTurns.turns);
 
         if (!locContainsIndirectDropper(loc, thing))
-            compare(thing, loc, "olfact", olfactTurns, "yellowRay", yellowRayTurns);
-        compare(thing, loc, "base", baseTurns, "baseFax", baseFaxTurns);
-        compare(thing, loc, "olfact", olfactTurns, "olfactFax", olfactFaxTurns);
-        compare(thing, loc, "yellowRay", yellowRayTurns, "yellowRayFax", yellowRayFaxTurns);
+            compare(thing, loc, "olfact", olfactTurns.turns, "yellowRay", yellowRayTurns.turns);
+        compare(thing, loc, "base", baseTurns.turns, "baseFax", baseFaxTurns.turns);
+        compare(thing, loc, "olfact", olfactTurns.turns, "olfactFax", olfactFaxTurns.turns);
+        compare(thing, loc, "yellowRay", yellowRayTurns.turns, "yellowRayFax", yellowRayFaxTurns.turns);
     }
 
     foreach thing in otherLairItems {
