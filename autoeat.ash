@@ -858,6 +858,33 @@ FoodInfo[item] getInfo(boolean[item] foodList, boolean useMilk, boolean freeToCr
 		foods[thing].quality = quality;
 	}
 
+	// Reserve one corpse drink for a nightcap, since it's of such
+	// high drunkenness.  If there were more drinks that fit this category,
+	// this could be generalized better.
+	FoodInfo[item] corpseDrinks;
+	int totalCorpses = 0;
+
+	foreach thing in $items[
+		corpsedriver,
+		corpse island iced tea,
+		corpse on the beach,
+		corpsetini,
+	] {
+		if (!(foods contains thing))
+			continue;
+
+		corpseDrinks[thing].quantity = foods[thing].quantity;
+		corpseDrinks[thing].quality = foods[thing].quality;
+
+		totalCorpses += foods[thing].quantity;
+	}
+
+	item[int] sorted = sortByQuality(corpseDrinks);
+	if (totalCorpses > 0) {
+		item worst = sorted[count(corpseDrinks) - 1];
+		foods[worst].quantity -= 1;
+	}
+
 	return foods;
 }
 
