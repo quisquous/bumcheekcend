@@ -2535,8 +2535,11 @@ boolean bcascLairMariachis() {
 	print("BCC: We are doing the Mariachi part.", "purple");
 	cli_execute("maximize hp");
 	
+	boolean armed() {
+		return contains_text(visit_url("lair2.php"), "lair3.php");
+	}
+
 	//Before we do anything, we must ensure we have the instruments. 
-	
 	
 	//We should have two keys. Two DISTINCT keys.
 	if (numUniqueKeys() >= 2) {
@@ -2574,10 +2577,6 @@ boolean bcascLairMariachis() {
 				abort("You don't have a wand. No Zapping for you.");
 			}
 			
-			boolean armed() {
-				return contains_text(visit_url("lair2.php"), "lair3.php");
-			}
-
 			if (entryway()) {}
 			if (!armed()) {
 				print("BCC: Maybe we're missing an instrument.", "purple");
@@ -2627,6 +2626,11 @@ boolean bcascLairMariachis() {
 		}
 	} else {
 		abort("You don't have two distinct legend keys. This script will not attempt to zap anything.");
+	}
+
+	if (armed()) {
+		checkStage("lair2", true);
+		return true;
 	}
 	abort("There has been a problem in the mariachi section. Please report this issue and complete the mariachi bit manually.");
 }
