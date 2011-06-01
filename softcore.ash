@@ -1,8 +1,8 @@
 import <telescope.ash>
 import <pcklutil.ash>
 
+// FIXME: Add back in jewel-eyed wizard hat after it stops messing up mafia.
 boolean[item] equip = $items[
-	jewel-eyed wizard hat,
 	mr. accessory jr,
 	navel ring,
 	little box of fireworks,
