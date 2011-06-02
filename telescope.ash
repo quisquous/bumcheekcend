@@ -101,7 +101,7 @@ obtainInfo[$item[baseball]] = new telescopeItemLoc($location[guano junction]);
 obtainInfo[$item[black no. 2]] = new telescopeItemLoc($location[black forest]);
 obtainInfo[$item[black pepper]] = new telescopeItemLoc($location[black forest]);
 obtainInfo[$item[bronzed locust]] = new telescopeItemLoc($location[desert (ultrahydrated)]);
-obtainInfo[$item[chaos butterfly]] = new telescopeItemLoc($location[giant's castle]);
+obtainInfo[$item[chaos butterfly]] = new telescopeItemLoc($location[giant's castle], true);
 obtainInfo[$item[disease]] = new telescopeItemLoc($location[knob harem]);
 obtainInfo[$item[fancy bath salts]] = new telescopeItemLoc($location[haunted bathroom]);
 obtainInfo[$item[frigid ninja stars]] = new telescopeItemLoc($location[ninja snowmen]);
@@ -124,7 +124,7 @@ obtainInfo[$item[mick's icyvapohotness rub]] = new telescopeItemLoc($location[gi
 obtainInfo[$item[original g]] = new telescopeItemLoc($location[giant's castle]);
 obtainInfo[$item[photoprotoneutron torpedo]] = new telescopeItemLoc($location[fantasy airship]);
 obtainInfo[$item[pickle-flavored chewing gum]] = new telescopeItemLoc($location[south of the border], true);
-obtainInfo[$item[plot hole]] = new telescopeItemLoc($location[giant's castle]);
+obtainInfo[$item[plot hole]] = new telescopeItemLoc($location[giant's castle], true);
 obtainInfo[$item[powdered organs]] = new telescopeItemLoc($location[middle chamber]);
 obtainInfo[$item[pygmy blowgun]] = new telescopeItemLoc($location[hidden city]);
 obtainInfo[$item[pygmy pygment]] = new telescopeItemLoc($location[hidden city]);
@@ -1030,6 +1030,7 @@ CombatPlan turnsToGetItem(location loc, item thing, CombatOptions options) {
 
     return result;
 }
+
 boolean canYellowRay(monster mob, item thing) {
     foreach dropIdx, rec in item_drops_array(mob) {
         if (rec.drop != thing)
@@ -1039,6 +1040,128 @@ boolean canYellowRay(monster mob, item thing) {
     }
 
     return false;
+}
+
+// Smallest integer with k bits set
+int combinationMin(int k) {
+    return (1 << k) - 1;
+}
+
+// No integer will ever be larger than this when choosing out of n
+int combinationMax(int n) {
+    return 1 << n;
+}
+
+// Find the next largest integer with the same number of bits set to 1.
+int nextCombination(int prev) {
+    // Gosper's hack.
+    int c = prev & (-prev);
+    int r = prev + c;
+    int next = (((r ^ prev) >> 2) / c) | r; 
+    return next;
+}
+
+boolean[int] flagToArray(int flag, int max) {
+    boolean[int] result;
+  
+    for idx from 1 to max {
+        int mask = 2**(idx - 1);
+        result[idx] = (flag & mask) != 0;
+    }
+
+    return result;
+}
+
+CombatPlan[int] makePlan(int[item] required, boolean haveFax, boolean haveRay, int softGreen) {
+    int itemCount = count(required);
+    int olfactionCount = min(softGreen + 1, itemCount);
+
+    int comb = combinationMin(olfactionCount);
+    int combMax = combinationMax(itemCount);
+
+    int faxCount = haveFax ? itemCount : 1;
+    int rayCount = haveRay ? itemCount : 1;
+
+    // Memoize results from planning to avoid redoing the same work.
+    CombatPlan[item, boolean, boolean, boolean] memo;
+    CombatPlan memoize(item thing, CombatOptions options) {
+        location loc = obtainInfo[thing].loc;
+
+        CombatPlan plan = memo[thing, options.useFax, options.useYellowRay, options.useOlfaction];
+
+        if (plan.turns == 0.0) {
+            plan = turnsToGetItem(loc, thing, options);
+            memo[thing, options.useFax, options.useYellowRay, options.useOlfaction] = plan;
+        }
+
+        return plan;
+    }
+
+    int count = 0;
+    float bestTurns = 0.0;
+    CombatPlan[int] bestResult;
+    while (comb < combMax) {
+        boolean[int] olfactFlag = flagToArray(comb, itemCount);
+
+        for faxIdx from 1 to faxCount {
+            for rayIdx from 1 to rayCount {
+
+                CombatPlan[int] thisResult;
+
+                int itemIdx = 1;
+                float totalTurns = 0.0;
+                foreach thing in required {
+                    CombatOptions options;
+                    options.useFax = haveFax && (faxIdx == itemIdx);
+                    options.useYellowRay = haveRay && (rayIdx == itemIdx);
+                    options.useOlfaction = olfactFlag[itemIdx];
+
+                    thisResult[itemIdx] = memoize(thing, options);
+                    totalTurns += thisResult[itemIdx].turns;
+
+                    itemIdx += 1;
+                }
+
+                if (totalTurns < bestTurns || bestTurns == 0.0) {
+                    bestResult = thisResult;
+                    bestTurns = totalTurns;
+                }
+            }
+        }
+
+        comb = nextCombination(comb);
+        count += 1;
+    }
+
+    return bestResult;
+}
+
+void printPlan(CombatPlan plan) {
+    print("Plan: " + plan.loc + ", " + plan.thing, "purple");
+    print("Turns: " + plan.turns);
+    print("Noncombat: " + plan.useNonCombat);
+    print("Fax: " + plan.options.useFax);
+    print("Olfact: " + plan.options.useOlfaction);
+    print("Ray: " + plan.options.useYellowRay);
+    foreach mob in plan.targets {
+        print("Mob: " + mob);
+    }
+}
+
+void testPlan() {
+    int[item] needed;
+    needed[$item[lowercase n]] = 1;
+    needed[$item[black pepper]] = 1;
+    needed[$item[adder bladder]] = 1;
+    needed[$item[gremlin juice]] = 1;
+    needed[$item[marzipan skull]] = 1;
+    needed[$item[plot hole]] = 1;
+
+    CombatPlan[int] plans = makePlan(needed, true, true, 3);
+
+    foreach key in plans {
+        printPlan(plans[key]);
+    }
 }
 
 void sanityCheck() {
