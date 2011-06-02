@@ -1508,8 +1508,8 @@ void autoConsume(location loc) {
 	}
 
 	if (my_fullness() == fullness_limit() && my_inebriety() == inebriety_limit() && needAdventures()) {
-		debug("Creating nightcap");
-		createNightcap();
+		item drink = createNightcap();
+		debug("Nightcap: " + drink);
 	}
 
 	int totalFullness = fullness_limit() - my_fullness();
