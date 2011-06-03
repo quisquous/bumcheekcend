@@ -964,6 +964,9 @@ void turnsToGetItem(location loc, item thing, CombatOptions options, CombatPlan 
     }
 
     float turnsWithModifier(location loc, item thing, CombatOptions options, float combatModifier, float nonCombatRate, OutMobs targets) {
+        if (count(getMonstersForItem(loc, thing)) == 0) {
+            return 1.0 / combatChance(loc, thing, options, combatModifier, nonCombatRate, $monster[none]);
+        }
 
         if (options.useYellowRay)
             return yellowRayTurns(loc, thing, options, combatModifier, nonCombatRate, targets);
@@ -1169,6 +1172,10 @@ void testPlan() {
     }
 }
 
+boolean onlyNonCombatDrop(location loc, item thing) {
+    return count(getMonstersForItem(loc, thing)) == 0;
+}
+
 void sanityCheck() {
     boolean verifyItem(item thing) {
         if (obtainInfo contains thing)
@@ -1212,12 +1219,13 @@ void sanityCheck() {
         if (obtainInfo[thing].nonCombat) {
             if (!(numberOfNonCombats contains loc))
                 abort("No noncombat info for " + loc);
-            continue;
         }
 
         boolean[monster] droppers = getMonstersForItem(loc, thing);
-        if (count(droppers) == 0)
-            abort("Couldn't find any monsters for " + thing + " in " + loc);
+        if (count(droppers) == 0) {
+            if (!obtainInfo[thing].nonCombat)
+                abort("Couldn't find any monsters for " + thing + " in " + loc);
+        }
 
         foreach mob in droppers {
             float itemDrop = chanceForItemPerEncounter(mob, thing, 0);
@@ -1247,12 +1255,12 @@ void sanityCheck() {
                 checkMonster(mob);
             }
 
-            if (plan.options.useFax) {
-                if (count(plan.targets) != 1)
-                    abort("Expected 1 target, got " + (count(plan.targets)) + suffix);
-            }
+            if (!onlyNonCombatDrop(plan.loc, plan.thing)) {
+                if (plan.options.useFax) {
+                    if (count(plan.targets) != 1)
+                        abort("Expected 1 target, got " + (count(plan.targets)) + suffix);
+                }
 
-            if (plan.options.useOlfaction || plan.options.useYellowRay) {
                 if (count(plan.targets) == 0)
                     abort("Expected non-zero targets" + suffix);
             }
