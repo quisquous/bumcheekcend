@@ -968,8 +968,11 @@ void turnsToGetItem(location loc, item thing, CombatOptions options, CombatPlan 
         if (options.useYellowRay)
             return yellowRayTurns(loc, thing, options, combatModifier, nonCombatRate, targets);
 
-        if (options.alreadyOlfacting != $monster[none])
-            return 1.0 / combatChance(loc, thing, options, combatModifier, nonCombatRate, options.alreadyOlfacting);
+        if (options.alreadyOlfacting != $monster[none]) {
+            float turns = 1.0 / combatChance(loc, thing, options, combatModifier, nonCombatRate, options.alreadyOlfacting);
+            setTargets(targets, getMonstersForItem(loc, thing));
+            return turns;
+        }
 
         if (options.useOlfaction) {
             float turns = olfactionTurns(loc, thing, options, combatModifier, nonCombatRate, targets);
@@ -994,6 +997,8 @@ void turnsToGetItem(location loc, item thing, CombatOptions options, CombatPlan 
             }
 
             return bestItemChance + (1.0 - bestItemChance) * (combatTurns + 1.0);
+        } else {
+            setTargets(targets, getMonstersForItem(loc, thing));
         }
 
         return combatTurns;
