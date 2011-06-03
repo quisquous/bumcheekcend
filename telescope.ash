@@ -1083,6 +1083,8 @@ boolean[int] flagToArray(int flag, int max) {
 CombatPlan[int] makePlan(int[item] required, boolean haveFax, boolean haveRay, int softGreen) {
     int itemCount = count(required);
     int olfactionCount = min(softGreen + 1, itemCount);
+    if (!have_skill($skill[olfaction]))
+        olfactionCount = 0;
 
     int comb = combinationMin(olfactionCount);
     int combMax = combinationMax(itemCount);
@@ -1104,6 +1106,9 @@ CombatPlan[int] makePlan(int[item] required, boolean haveFax, boolean haveRay, i
 
         return plan;
     }
+
+    // FIXME: It might be worth considering getting more soft greens, here.
+    // FIXME: consider banishers, as well.
 
     int count = 0;
     float bestTurns = 0.0;
@@ -1141,6 +1146,62 @@ CombatPlan[int] makePlan(int[item] required, boolean haveFax, boolean haveRay, i
         count += 1;
     }
 
+    // Zapping should be handled external to this function.  If zapping is
+    // needed, pick out the first gate items and do them first.  Then,
+    // once past the gate, zap for anything that's needed.
+
+    float planPriority(CombatPlan plan) {
+
+        // FIXME: Consider grouping combat and noncombat together?
+
+        float turnSavingsForOlfaction(CombatPlan plan) {
+            // This is gross, but there's no easy way to write a deep copy.
+            plan.options.useOlfaction = true;
+            CombatPlan olfactPlan = memoize(plan.thing, plan.options);
+            plan.options.useOlfaction = false;
+
+            float turnSavings = plan.turns - olfactPlan.turns;
+            return turnSavings;
+        }
+
+        // Airship non-olfaction first, because most likely to get more soft.
+        if (plan.loc == $location[fantasy airship] && !plan.options.useOlfaction)
+            return 1000 - turnSavingsForOlfaction(plan);
+        if (plan.loc == $location[fantasy airship])
+            return 2000;
+        
+        // Then, any location that has a duplicate with olfaction
+        boolean hasDuplicate(location loc) {
+            foreach key in bestResult {
+                CombatPlan plan = bestResult[key];
+                if (plan.options.useOlfaction && plan.loc == loc)
+                    return true;
+            }
+
+            return false;
+        }
+        
+        // Put duplicate locations first, starting with the least priority for
+        // olfaction.  Therefore, if an item drops without olfaction, we'll
+        // have the ability to best apply it to something else.  Additionally,
+        // it means that we won't have an olfacted location have olfaction
+        // on while we're adventuring in a non-olfacted one.
+        if (!plan.options.useOlfaction && hasDuplicate(plan.loc)) {
+            return 3000 + turnSavingsForOlfaction(plan);
+        }
+
+        // Olfacting locations.
+        if (plan.options.useOlfaction) {
+            return 4000;
+        }
+
+        // Order non-olfaction locations by increasing order of olfaction
+        // desirability.  Therefore, if we somehow run out of on the trail.
+        // turns then we can olfact the best remaining location for it.
+        return 5000 + turnSavingsForOlfaction(plan);
+    }
+
+    sort bestResult by planPriority(value);
     return bestResult;
 }
 
@@ -1158,13 +1219,18 @@ void printPlan(CombatPlan plan) {
 
 void testPlan() {
     int[item] needed;
+    needed[$item[torpedo]] = 1;
+    needed[$item[spiky hair gel]] = 1;
+    needed[$item[metallic a]] = 1;
     needed[$item[lowercase n]] = 1;
     needed[$item[black pepper]] = 1;
+    needed[$item[tamarind-flavored chewing gum]] = 1;
     needed[$item[adder bladder]] = 1;
     needed[$item[gremlin juice]] = 1;
     needed[$item[marzipan skull]] = 1;
     needed[$item[plot hole]] = 1;
 
+    // FIXME: Test if 0 olfactions work.
     CombatPlan[int] plans = makePlan(needed, true, true, 3);
 
     foreach key in plans {
