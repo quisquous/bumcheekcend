@@ -1405,6 +1405,8 @@ boolean autoSpleen(boolean force) {
 	}
 
 	if (spleenLeft() == 3 && haveItem($item[prismatic wad])) {
+		if (my_level() < 7 && !force)
+			return usedSomething;
 		usedSomething = true;
 		use(1, $item[prismatic wad]);
 	}
