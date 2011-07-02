@@ -300,7 +300,7 @@ float baseFoodQuality(item thing)
 	if (pieToKey contains thing) {
 		item key = pieToKey[thing];
 		if (!haveItem(key))
-			turnsFromPie = 10;
+			turnsFromPie = 1000;
 	}
 
 	if (mafiaFood contains thing)
