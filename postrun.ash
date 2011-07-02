@@ -550,6 +550,8 @@ void main() {
 
 	stockUpForSoftcore(6);
 
+	cli_execute("refresh inventory");
+
 	void sendItems(string player, int[item] itemList) {
 		int maxItems = 11;
 
