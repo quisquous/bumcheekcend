@@ -9,6 +9,7 @@ boolean[item] equip = $items[
 	rock and roll legend,
 	leather aviator's cap,
 	sword behind inappropriate prepositions,
+	loathing legion universal screwdriver,
 ];
 
 boolean[item] corpseDrink = $items[
@@ -60,11 +61,10 @@ boolean pullItem(item thing) {
 
 boolean pullPie() {
 	foreach thing in $items[
-		digital key,
 		sneaky pete's key,
-		richard's star key,
 		boris's key,
 		jarlsberg's key,
+		richard's star key,
 	] {
 		if (haveItem(thing))
 			continue;
@@ -154,12 +154,19 @@ void pullSoftcoreItems() {
 		pullIfNeeded(1, $item[prismatic wad]);
 	}
 
-	pullCorpse(2);
-	if (inebriety_limit() < 15) {
-		pullSuperCock(2);
+	if (my_daycount() == 1) {
+		pullCorpse(1);
+		pullSuperCock(1);
 	} else {
-		pullSuperCock(3);
+		pullCorpse(2);
+		if (inebriety_limit() < 15) {
+			pullSuperCock(2);
+		} else {
+			pullSuperCock(3);
+		}
 	}
+
+	// Pull more clovers here, depending on level.
 
 	pullStageItem("spookyforest", $item[spooky-gro fertilizer]);
 
@@ -191,6 +198,10 @@ void pullSoftcoreItems() {
 
 	pullStageItem("macguffinpalin", $item[stunt nuts]);
 	pullStageItem("macguffinpalin", $item[wet stew]);
+
+	pullIfNeeded($item[star crossbow]);
+	pullIfNeeded($item[star hat]);
+
 	pullStageItem("macguffinpyramid", $item[drum machine]);
 	pullIfNeeded($item[cyclops eyedrops]);
 	pullStageItem("macguffinpalin", $item[acoustic guitar]);
@@ -200,12 +211,14 @@ void pullSoftcoreItems() {
 		pullIfNeeded(telescopeItems[thing], thing);
 	}
 
+	// FIXME: be smarter about large box pulling?
+	if (my_daycount() >= 4)
+		pullItem(5, $item[large box]);
+
 	while (pulls_remaining() > 0) {
 		if (!pullItem(1, $item[disassembled clover]))
 			break;
 	}
-
-	// FIXME: pull large boxes
 }
 
 void stockUpForSoftcore(int dayCount) {
@@ -257,20 +270,23 @@ void stockUpForSoftcore(int dayCount) {
 	stock(1, $item[swashbuckling pants]);
 	stock(1, $item[stuffed shoulder parrot]);
 
-    stock(1, $item[beer helmet]);
-    stock(1, $item[distressed denim pants]);
-    stock(1, $item[bejeweled pledge pin]);
+	stock(1, $item[beer helmet]);
+	stock(1, $item[distressed denim pants]);
+	stock(1, $item[bejeweled pledge pin]);
 
-    stock(1, $item[orcish baseball cap]);
-    stock(1, $item[homoerotic frat-paddle]);
-    stock(1, $item[orcish cargo shorts]);
+	stock(1, $item[orcish baseball cap]);
+	stock(1, $item[homoerotic frat-paddle]);
+	stock(1, $item[orcish cargo shorts]);
 
-    stock(1, $item[knob goblin harem veil]);
-    stock(1, $item[knob goblin harem pants]);
+	stock(1, $item[knob goblin harem veil]);
+	stock(1, $item[knob goblin harem pants]);
 
-    stock(1, $item[reinforced beaded headband]);
-    stock(1, $item[bullet-proof corduroys]);
-    stock(1, $item[round purple sunglasses]);
+	stock(1, $item[reinforced beaded headband]);
+	stock(1, $item[bullet-proof corduroys]);
+	stock(1, $item[round purple sunglasses]);
+
+	stock(1, $item[star crossbow]);
+	stock(1, $item[star hat]);
 
 	stock(1, $item[ring of conflict]);
 	stock(3, $item[asbestos ore]);
@@ -302,7 +318,6 @@ void stockUpForSoftcore(int dayCount) {
 		fancy bath salts,
 		frigid ninja stars,
 		gremlin juice,
-		hair spray,
 		heavy d,
 		inkwell,
 		knob goblin firecracker,
@@ -331,6 +346,8 @@ void stockUpForSoftcore(int dayCount) {
 	] {
 		stock(1, thing);
 	}
+
+	take_closet(closet_amount($item[hair spray]), $item[hair spray]);
 }
 
 void setSoftcoreOptions() {
