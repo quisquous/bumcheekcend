@@ -1,5 +1,5 @@
 /*
-	bumcheekascend.ash v0.24
+	bumcheekascend.ash v0.25
 	A script to ascend a character from start to finish.
 	
 	0.1 - Spun initial release. Gets up to about level 10, haphazardly. 
@@ -64,7 +64,7 @@
 		- Make it not crash on DB chars when making boxen. 
 		- Made making a bartender an opt-in preference. 
 		- Do GMoB instead of Cyrus. Figuring out the Cyrus logic is too hard. 
-	0.10- Open ballroom by going through bedroom. NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE NOT YET DONE 
+	0.10- Open ballroom by going through bedroom.
 		- Check for the He-Boulder BEFORE making the pumpkin bomb. Not after. That would be a stupid idea. 
 		- Force MCD=0 in Junkyard. Maximize DR/DA as well. Force MCD=4,7 in Boss Bat, Throne Room.
 		- Fix bug where it'd continue to get the steel items. 
@@ -170,6 +170,22 @@
 		- Don't infinitely adventure at Chasm for Myst characters.
 		- Warn if you don't have a recoveryScript or counterScript.
 		- Fix changes to the moon signs due to 2011 Valhalla update. 
+	0.25- Add an option to disable the MCD.
+		- Fix bug where the script would adventure in the black forest to get the map if you had it. 
+		- Don't bother with your classes EW if you have the astral items that kick ass. 
+		- Massive fixes for Bees Hate You (virtually all of them from Winterbay). Thanks, Winterbay!
+		- Closet clovers instead of using them in BHY. 
+		- Use Massive Manual of Moodly Whatsis in BHY. 
+		- No YOROIDS or pumpkin bomb either. 
+		- Check for familiars with 'b' in their name. And don't use them in BHY. 
+		- Little things like the chest of the Bonerdagon, Innaboxen, tomb ratchets, black forest and a couple other places. 
+		- Major change for the meatcar. 
+		- Get the dispensiry password. If you're OK with bees. 
+		- When trying for the GMoB, set the choice adventure to primestat. 
+		- Fix bug where it would advnture in the pantry when it would be massively inappropriate to do so. 
+		- Fix bug where it wouldn't adventure in the filthworms if you already had the Heart of the Queen.
+		- Olfact stuff as a myst class if it's set in your CCS.
+		- Estimate monster HP where necessary as a myst class.
 */
 
 script "bumcheekascend.ash";
@@ -541,7 +557,10 @@ boolean checkStage(string what) { return checkStage(what, false); }
 
 int cloversAvailable(boolean makeOneTenLeafClover) {
 	if (bcasc_cloverless) {
-		if (item_amount($item[ten-leaf clover]) > 0) use(item_amount($item[ten-leaf clover]), $item[ten-leaf clover]);
+		if (item_amount($item[ten-leaf clover]) > 0 && my_path() != "Bees Hate You")
+			use(item_amount($item[ten-leaf clover]), $item[ten-leaf clover]);
+		else if(item_amount($item[ten-leaf clover]) > 0)
+			put_closet(item_amount($item[ten-leaf clover]), $item[ten-leaf clover]);
 		print("BCC: You have the option for a cloverless ascention turned on, so we won't be using them.", "purple");
 		return 0;
 	}
@@ -554,16 +573,27 @@ int cloversAvailable(boolean makeOneTenLeafClover) {
 		//print("BCC: We've already got Clovers Today", "purple");
 	}
 	
-	if (makeOneTenLeafClover && (item_amount($item[ten-leaf clover]) + item_amount($item[disassembled clover])) > 0) {
-		print("BCC: We're going to end up with one and exactly one ten leaf clover", "purple");
-		if (item_amount($item[ten-leaf clover]) > 0) {
-			cli_execute("use * ten-leaf clover; use 1 disassembled clover;");
-		} else {
-			cli_execute("use 1 disassembled clover;");
+	if (my_path() != "Bees Hate You") {
+		if (makeOneTenLeafClover && (item_amount($item[ten-leaf clover]) + item_amount($item[disassembled clover])) > 0) {
+			print("BCC: We're going to end up with one and exactly one ten leaf clover", "purple");
+			if (item_amount($item[ten-leaf clover]) > 0) {
+				cli_execute("use * ten-leaf clover; use 1 disassembled clover;");
+			} else {
+				cli_execute("use 1 disassembled clover;");
+			}
 		}
+	} else {
+		if (makeOneTenLeafClover && (item_amount($item[ten-leaf clover]) + closet_amount($item[disassembled clover])) > 0) {
+			print("BCC: We're going to end up with one and exactly one ten leaf clover", "purple");
+			if (item_amount($item[ten-leaf clover]) > 0) {
+				put_closet(item_amount($item[ten-leaf clover]) - 1, $item[ten-leaf clover]);
+			} else {
+				take_closet(1,$item[ten-leaf clover]);
+			}
+		}		
 	}
 	
-	return item_amount($item[ten-leaf clover]) + item_amount($item[disassembled clover]);
+	return (my_path() == "Bees Hate You") ? item_amount($item[ten-leaf clover]) + closet_amount($item[disassembled clover]) : item_amount($item[ten-leaf clover]) + item_amount($item[disassembled clover]);
 }
 int cloversAvailable() { return cloversAvailable(false); }
 
@@ -571,6 +601,13 @@ string consultMyst(int round, string opp, string text) {
 	if (opp == "rampaging adding machine") {
 		print("The script will not, at the moment, automatically fight rampagaing adding machines. Please fight manually.");
 		return "abort";
+	}
+	
+	//Override for olfaction. 
+	if (contains_text(get_ccs_action(round), "olfact")) {
+		if (contains_text(text, ">Transcendent Olfaction (")) {
+			return "skill Transcendent Olfaction";
+		}
 	}
 
 	boolean [skill] allMySkills() {
@@ -605,6 +642,17 @@ string consultMyst(int round, string opp, string text) {
 			case $effect[Spirit of Bacon Grease]: return $element[sleaze]; break;
 		}
 		return $element[none];
+	}
+	
+	//This estimates monster HP if necessary.
+	int monsterHP() {
+		if (monster_hp(to_monster(opp)) > 0) {
+			return monster_hp();
+		}
+		
+		print("BCC: This script is estimating this ("+opp+") monster's HP as "+monster_attack()+" - "+monster_hp()+".", "purple");
+		
+		return monster_attack() - monster_hp();
 	}
 	
 	//Checks if the monster we're fighting is weak against element e. For sauce spells, if called directly. 
@@ -728,7 +776,7 @@ string consultMyst(int round, string opp, string text) {
 		return -1;
 	}
 
-	int hp = monster_hp();
+	int hp = monsterHP();
 	print("BCC: Monster HP is "+hp, "purple");
 	int isWeak = isWeak();
 	int wtfpwn;
@@ -801,6 +849,7 @@ string consultMyst(int round, string opp, string text) {
 string consultBarrr(int round, string opp, string text) {
 	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	if (round == 1) {
+		if (my_path() == "Bees Hate You") return "item Massive Manual of Marauder Mockery";
 		return "item the big book of pirate insults";
 	}
 	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
@@ -863,6 +912,11 @@ string consultHeBo(int round, string opp, string text) {
 	
 	//Let's check that the monster IS the correct one
 	if (contains_text(text, "Harem Girl") || contains_text(text, "y hippy") || contains_text(text, "War Hippy") || contains_text(text, "Foot Dwarf") || contains_text(text, "bobrace.gif") || contains_text(text, "Frat Warrior") || contains_text(text, "War Pledge") || isGremlin) {
+		if (my_path() == "Bees Hate You") {
+			print("BCC: We are trying to use the HeBoulder, but you can't use it (nor a pumpkin bomb) due to bees hating you, so I'm attacking.", "purple");
+			return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+		}
+		
 		if (my_familiar() == $familiar[He-Boulder]) {
 			print("BCC: We are using the hebo against the right monster.", "purple");
 			if (contains_text(text, "yellow eye")) {
@@ -979,6 +1033,218 @@ void defaultMood(boolean castMojo) {
 	}
 }
 void defaultMood() { defaultMood(true); }
+
+//Thanks, picklish!
+boolean faxMeA(monster mon) {
+	// Time to wait for FaxBot in seconds.
+    int wait_time = 60;
+    // Number of tries to repeat before failing.
+    int faxbot_tries = 3;
+
+    // Return the text to search for in the photocopied monster item
+    // description to verify that this fax has the right monster. Most of the
+    // time this is just to_string(monster), but there are special cases due to
+    // KoLmafia's naming scheme.
+    string photocopy_text(monster mon) {
+        switch (mon) {
+            case $monster[Knight (snake)]: return "knight";
+            case $monster[Somebody Else's Butt]: return "butt";
+            case $monster[Slime1]: return "slime";
+            case $monster[Slime2]: return "slime";
+            case $monster[Slime3]: return "slime";
+            case $monster[Slime4]: return "slime";
+            case $monster[Slime5]: return "slime";
+            case $monster[Some Bad ASCII Art]: return "bad ASCII art";
+        }
+
+        return mon;
+    }
+
+    // Return true if you have a fax and it contains this monster.
+    boolean check_fax(monster mon) {
+        if (item_amount($item[photocopied monster]) == 0)
+            return false;
+
+        string fax = visit_url("desc_item.php?whichitem=835898159");
+        if (!contains_text(fax, "This is a sheet of copier paper"))
+            return false;
+        if (contains_text(fax, "grainy, blurry likeness of a monster on it."))
+            return false;
+
+        return contains_text(to_lower_case(fax), to_lower_case(photocopy_text(mon)));
+    }
+
+    // Returns true if we were able to get a fax into the inventory.
+    boolean get_fax() {
+        if (item_amount($item[photocopied monster]) != 0)
+            return true;
+        cli_execute("fax get");
+        return item_amount($item[photocopied monster]) != 0;
+    }
+
+    // Returns true if we were able to remove all faxes from the inventory.
+    boolean put_fax() {
+        if (item_amount($item[photocopied monster]) == 0)
+            return true;
+        cli_execute("fax put");
+        return item_amount($item[photocopied monster]) == 0;
+    }
+
+    // Return the request string that FaxBot expects for a given monster.
+    // See: http://kolspading.com/forums/viewtopic.php?f=13&t=169
+    string faxbot_name(monster mon) {
+        switch (mon) {
+            case $monster[Blooper]: return "blooper";
+            case $monster[Knob Goblin Elite Guard Captain]: return "kge";
+            case $monster[Lobsterfrogman]: return "lobsterfrogman";
+            case $monster[Rampaging Adding Machine]: return "adding_machine";
+            case $monster[Sleepy Mariachi]: return "sleepy_mariachi";
+            case $monster[Some Bad ASCII Art]: return "ascii";
+            case $monster[7-Foot Dwarf]: return "miner";
+            case $monster[Alphabet Giant]: return "alphabet";
+            case $monster[Angels of Avalon]: return "avalon";
+            case $monster[Astronomer]: return "astronomer";
+            case $monster[Batwinged Gremlin]: return "batwinged";
+            case $monster[Blur]: return "blur";
+            case $monster[Bob Racecar]: return "bob";
+            case $monster[Booze Giant]: return "booze";
+            case $monster[Brainsweeper]: return "brainsweeper";
+            case $monster[Cleanly Pirate]: return "cleanly";
+            case $monster[Creamy Pirate]: return "creamy";
+            case $monster[Curmudgeonly Pirate]: return "curmudgeonly";
+            case $monster[Dairy Goat]: return "dairy_goat";
+            case $monster[Dirty Thieving Brigand]: return "brigand";
+            case $monster[Erudite Gremlin]: return "erudite";
+            case $monster[Furry Giant]: return "furry";
+            case $monster[Gang of Hobo Muggers]: return "muggers";
+            case $monster[Gaudy Pirate]: return "gaudy";
+            case $monster[Ghost]: return "ghost";
+            case $monster[Gnollish Crossdresser]: return "crossdresser";
+            case $monster[Gnollish Gearhead]: return "gearhead";
+            case $monster[Gnollish Tirejuggler]: return "tirejuggler";
+            case $monster[Goth Giant]: return "goth";
+            case $monster[Harem Girl]: return "harem_girl";
+            case $monster[Hellion]: return "hellion";
+            case $monster[Jilted Mistress]: return "jilted";
+            case $monster[Knight (snake)]: return "knight";
+            case $monster[Lemon-in-the-Box]: return "lemonbox";
+            case $monster[Ninja Snowman Janitor]: return "janitor";
+            case $monster[Peeved Roommate]: return "hipster";
+            case $monster[Quantum Mechanic]: return "mechanic";
+            case $monster[Quiet Healer]: return "healer";
+            case $monster[Raver Giant]: return "raver";
+            case $monster[Screambat]: return "screambat";
+            case $monster[Shaky Clown]: return "shaky";
+            case $monster[Skeletal Sommelier]: return "wine";
+            case $monster[Skinflute]: return "skinflute";
+            case $monster[Spider Gremlin]: return "spider_gremlin";
+            case $monster[Swarm of Scarab Beatles]: return "beatles";
+            case $monster[Tomb Rat]: return "tomb_rat";
+            case $monster[Unemployed Knob Goblin]: return "beer_lens";
+            case $monster[Vegetable Gremlin]: return "vegetable";
+            case $monster[War Hippy Elite Fire Spinner]: return "fire_spinner";
+            case $monster[White Lion]: return "white_lion";
+            case $monster[White Snake]: return "white_snake";
+            case $monster[Zombie Waltzers]: return "waltzers";
+            case $monster[Baseball Bat]: return "baseball";
+            case $monster[Big Creepy Spider]: return "spider";
+            case $monster[Black Widow]: return "black_widow";
+            case $monster[Plaque of Locusts]: return "locust";
+            case $monster[Claw-foot Bathtub]: return "bathtub";
+            case $monster[Demonic Icebox]: return "icebox";
+            case $monster[Grungy Pirate]: return "grungy";
+            case $monster[Handsome Mariachi]: return "handsomeness";
+            case $monster[Irate Mariachi]: return "irate";
+            case $monster[MagiMechTech MechaMech]: return "mech";
+            case $monster[Mariachi Calavera]: return "calavera";
+            case $monster[Pygmy Assault Squad]: return "pygmy_assault";
+            case $monster[Sub-Assistant Knob Mad Scientist]: return "firecracker";
+            case $monster[Tomb Servant]: return "tomb_servant";
+            case $monster[Writing Desk]: return "writing_desk";
+            case $monster[XXX pr0n]: return "pron";
+            case $monster[W Imp]: return "wimp";
+            case $monster[Reanimated Baboon Skeleton]: return "reanim_baboon";
+            case $monster[Reanimated Bat Skeleton]: return "reanim_bat";
+            case $monster[Reanimated Demon Skeleton]: return "reanim_demon";
+            case $monster[Reanimated Giant Spider Skeleton]: return "reanim_spider";
+            case $monster[Reanimated Serpent Skeleton]: return "reanim_serpent";
+            case $monster[Reanimated Wyrm Skeleton]: return "reanim_wyrm";
+            case $monster[Clod Hopper]: return "clodhopper";
+            case $monster[Rockfish]: return "rockfish";
+            case $monster[Toilet-Papered Tree]: return "tp_tree";
+            case $monster[C. H. U. M. Chieftain]: return "chieftain";
+            case $monster[Scary Pirate]: return "cursed";
+            case $monster[Hustled Spectre]: return "hustled_spectre";
+            case $monster[Neptune Flytrap]: return "neptune_flytrap";
+            case $monster[Slime1]: return "slime";
+            case $monster[Slime2]: return "slime";
+            case $monster[Slime3]: return "slime";
+            case $monster[Slime4]: return "slime";
+            case $monster[Slime5]: return "slime";
+            case $monster[Unholy Diver]: return "unholy_diver";
+            case $monster[Large Kobold]: return "kobold";
+            case $monster[Smarmy Pirate]: return "smarmy";
+            case $monster[Spam Witch]: return "spam_witch";
+            case $monster[Triffid]: return "triffid";
+            case $monster[Bolt-Cuttin' Elf]: return "bolt_elf ";
+            case $monster[Cement Cobbler Penguin]: return "cement_penguin";
+            case $monster[Mesmerizing Penguin]: return "mesmerizing";
+            case $monster[Mob Penguin Demolitionist]: return "demolitionist";
+            case $monster[Monkey Wrenchin' Elf]: return "monkey_elf ";
+            case $monster[Propaganda-spewin' Elf]: return "prop_elf";
+            case $monster[Hobelf]: return "hobo_elf";
+            case $monster[Somebody Else's Butt]: return "bigbutt";
+        }
+
+        return "";
+    }
+
+    // Attempt to request a monster from FaxBot. Returns true if successful.
+    boolean faxbot_request(monster mon) {
+        string request = faxbot_name(mon);
+        if (request == "")
+            return false;
+
+        if (!put_fax())
+            return false;
+
+        print("Making faxbot request for " + request + ".", "green");
+        print("(Waiting for " + wait_time + " seconds.)", "green");
+
+        chat_private("FaxBot", request);
+        waitq(wait_time);
+
+        if (!get_fax())
+            return false;
+
+        return check_fax(mon);
+    }
+
+    if (faxbot_name(mon) == "") {
+        print("Unknown fax monster: " + mon, "red");
+        return false;
+    }
+
+    print("Checking existing fax first.", "green");
+    if (!get_fax()) {
+        print("Unable to get fax. Do you have a fax machine?", "red");
+        return false;
+    }
+    if (check_fax(mon)) {
+        print("You already have a " + mon + " fax.", "green");
+        return true;
+    }
+
+    for i from 1 to faxbot_tries {
+        if (faxbot_request(mon)) {
+            print("Successfully got a " + mon + " fax.", "green");
+            return true;
+        }
+    }
+
+    print("Unable to receive fax for " + mon + " after " + faxbot_tries + " tries.", "red");
+    return false;
+}
 
 //Returns true if we have the elite guard outfit. 
 boolean haveElite() {
@@ -1163,7 +1429,7 @@ boolean setFamiliar(string famtype) {
 		load_current_map("bcs_fam_"+famtype, famlist);
 		foreach x in famlist {
 			//print("Checking for familiar '"+famlist[x]+"' where x="+x, "purple");
-			if (have_familiar(famlist[x].to_familiar())) {
+			if (have_familiar(famlist[x].to_familiar()) && ((my_path() != "Bees Hate You") || !contains_text(famlist[x], "b"))) {
 				bumFamiliar(famlist[x].to_familiar());
 				return true;
 			}
@@ -1174,7 +1440,7 @@ boolean setFamiliar(string famtype) {
 	int maxspleen = 12;
 	if (have_skill($skill[Spleen of Steel])) maxspleen = 20;
 	
-	if (have_familiar($familiar[Rogue Program]) || have_familiar($familiar[Baby Sandworm])) {
+	if (have_familiar($familiar[Rogue Program]) || (have_familiar($familiar[Baby Sandworm]) && my_path() != "Bees Hate You")) {
 		//Before we do anything, let's check if there's any spleen to do. May as well do this as we go along.
 		if (my_spleen_use() <= maxspleen-4 && my_level() >= 4) {
 			print("BCC: Going to try to use some spleen items if you have them.", "purple");
@@ -1198,7 +1464,7 @@ boolean setFamiliar(string famtype) {
 			print("Total Spleen: "+(my_spleen_use() + (i_a("agua de vida") + i_a("coffee pixie stick") + i_a("Game Grid token")) * 4), "purple");
 			
 			//Then we have space for some spleen items.
-			if (have_familiar($familiar[Rogue Program]) && have_familiar($familiar[Baby Sandworm])) {
+			if (have_familiar($familiar[Rogue Program]) && (have_familiar($familiar[Baby Sandworm]) && my_path() != "Bees Hate You")) {
 				//Alternate spleen familiars, starting with the rogue.
 				int agua = get_property("_aguaDrops").to_int();
 				int token = get_property("_tokenDrops").to_int();
@@ -1224,10 +1490,13 @@ boolean setFamiliar(string famtype) {
 	}
 	
 	//Now either we have neither of the above, or we have enough spleen today.
-	if (have_familiar($familiar[Frumious Bandersnatch])) {
+	if (have_familiar($familiar[Frumious Bandersnatch]) && my_path() != "Bees Hate You") {
 		bumFamiliar($familiar[Frumious Bandersnatch]);
 		return true;
-	} else {
+	} else if (have_familiar($familiar[Smiling Rat])) {
+		bumFamiliar($familiar[Smiling Rat]);
+		return true;
+	} else if (my_path() != "Bees Hate You") {
 		bumFamiliar($familiar[Blood-Faced Volleyball]);
 		return true;
 	}
@@ -1236,7 +1505,7 @@ boolean setFamiliar(string famtype) {
 boolean setMCD(int moxie, int sMox) {
 	//Can't be bothered to deal with this for other classes. 
 	//if (!(my_primestat() == $stat[Moxie])) return false;
-	
+	if (get_property("bcasc_disableMCD") == "true") return false;
 	
 	if (canMCD()) {
 		print("BCC: We CAN set the MCD.", "purple");
@@ -1279,6 +1548,38 @@ string tryBeerPong() {
 	}
 
 	return page;
+}
+
+monster whatShouldIFax() {
+	//Set p to be primestat as a shortcut.
+	int p = my_buffedstat(my_primestat());
+	if (my_primestat() == $stat[Mysticality]) p = p + 30;
+	
+	if (!contains_text("questlog.php?which=2", "with his monster problem") && i_a("64735 scroll") == 0) {
+		if (p > monster_attack($monster[Bad ASCII Art])) {
+			boolean a = (i_a("668 scroll") > 0) || (i_a("334 scroll") > 1);
+			boolean b = (i_a("64067 scroll") > 0) || ((i_a("30669 scroll") > 0) && (i_a("33398 scroll") > 0));
+			
+			if (!a || !b) {
+				abort("fax an ascii");
+				return $monster[Bad ASCII Art];
+			}
+		}
+		
+		if (p > monster_attack($monster[rampaging adding machine])) {
+			abort("fax an ascii");
+			return $monster[rampaging adding machine];
+		}
+	}
+	
+	if (p > monster_attack($monster[lobsterfrogman])) {
+		if (bcasc_doSideQuestBeach && i_a("barrel of gunpowder") < 5) {
+			abort("fax an LFM");
+			return $monster[lobsterfrogman];
+		}
+	}
+	
+	return $monster[none];
 }
 
 boolean willMood() {
@@ -1423,12 +1724,12 @@ boolean levelMeInnerLoop(int sMox) {
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
 						if (get_property("bcasc_dontLevelInTemple") == "true") abort("You don't want to level in the temple.");
 						setFamiliar("hipster");
-						bumMiniAdv(my_adventures(), $location[Hidden Temple]);
+						return bumMiniAdv(my_adventures(), $location[Hidden Temple]);
 					} else {
-						bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
+						return bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 					}
 				}
-				bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
+				return bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 			} else {
 				setMood("-");
 				setFamiliar("");
@@ -1468,12 +1769,12 @@ boolean levelMeInnerLoop(int sMox) {
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
 						if (get_property("bcasc_dontLevelInTemple") == "true") abort("You don't want to level in the temple.");
 						setFamiliar("hipster");
-						adventure(my_adventures(), $location[Hidden Temple]);
+						return adventure(my_adventures(), $location[Hidden Temple]);
 					} else {
-						adventure(my_adventures(), $location[Haunted Pantry], "consultMyst");
+						return adventure(my_adventures(), $location[Haunted Pantry], "consultMyst");
 					}
 				}
-				bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
+				return bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 			} else {
 				setMood("-");
 				setFamiliar("");
@@ -1513,12 +1814,12 @@ boolean levelMeInnerLoop(int sMox) {
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
 						if (get_property("bcasc_dontLevelInTemple") == "true") abort("You don't want to level in the temple.");
 						setFamiliar("hipster");
-						bumMiniAdv(my_adventures(), $location[Hidden Temple]);
+						return bumMiniAdv(my_adventures(), $location[Hidden Temple]);
 					} else {
-						bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
+						return bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 					}
 				}
-				bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
+				return bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
 			} else if (my_buffedstat($stat[Moxie]) < 120) {
 				setMood("-i");
 				setFamiliar("");
@@ -1579,7 +1880,7 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	setFamiliar(famtype);
 	
 	//Do we have a HeBo, and are we blocked from using it by a 100% run? Have to do this first, because we re-set the goals below.
-	if ((consultScript == "consultHeBo") && (my_familiar() != $familiar[He-Boulder]) && have_effect($effect[Everything Looks Yellow]) == 0) {
+	if ((my_path() != "Bees Hate You") && (consultScript == "consultHeBo") && (my_familiar() != $familiar[He-Boulder]) && have_effect($effect[Everything Looks Yellow]) == 0) {
 		print("BCC: We don't have the HeBo equipped, so we're either on a 100% run or you just don't have one. Trying a pumpkin bomb. If you have one, we'll use it.", "purple");
 		//Hit the pumpkin patch
 		visit_url("campground.php?action=garden&pwd="+my_hash());
@@ -1869,7 +2170,7 @@ boolean bcascCyrpt() {
 			bumAdv($location[Haert of the Cyrpt], "", "meatboss");
 			visit_url("council.php");
 			if (item_amount($item[chest of the Bonerdagon]) > 0) {
-				cli_execute("use chest of the Bonerdagon");
+				if (cli_execute("use chest of the Bonerdagon")) {}
 				checkStage("cyrpt", true);
 				return true;
 			}
@@ -1945,6 +2246,19 @@ boolean bcascDinghyHippy() {
 boolean bcascEpicWeapons() {
 	if (bcasc_cloverless) return false;
 	
+	//Returns true if you lack one of the kickass astral weapons for your Mox/Mus class as appropriate.
+	boolean dontHaveAstral() {
+		switch (my_primestat()) {
+			case $stat[Muscle] :
+				return (i_a("astral mace") == 0);
+			break;
+			
+			case $stat[Moxie] :
+				return (i_a("astral longbow") + i_a("astral pistol") == 0);
+			break;
+		}
+	}
+	
 	boolean getEpic(string className, string baseWeapon, string theOtherThingYouNeed, string theEpicWeaponYouWantToGet) {
 		print("BCC: Getting the "+className+" Epic Weapon", "purple");
 		
@@ -1986,15 +2300,15 @@ boolean bcascEpicWeapons() {
 	}
 	
 	if (my_class() == $class[Disco Bandit] && my_basestat(my_primestat()) > 10 && i_a("Disco Banjo") == 0 && i_a("Shagadelic Disco Banjo") == 0 && i_a("Seeger's Unstoppable Banjo") == 0) {
-		getEpic("DB", "disco ball", "banjo strings", "disco banjo");
+		if (dontHaveAstral()) getEpic("DB", "disco ball", "banjo strings", "disco banjo");
 	}
 	
 	if (my_class() == $class[Turtle Tamer] && my_basestat(my_primestat()) > 10 && i_a("Mace of the Tortoise") == 0 && i_a("Chelonian Morningstar") == 0 && i_a("Flail of the Seven Aspects") == 0) {
-		getEpic("TT", "turtle totem", "chisel", "Mace of the Tortoise");
+		if (dontHaveAstral()) getEpic("TT", "turtle totem", "chisel", "Mace of the Tortoise");
 	}
 	
 	if (my_class() == $class[Seal Clubber] && my_basestat(my_primestat()) > 10 && i_a("Bjorn's Hammer") == 0 && i_a("Hammer of Smiting") == 0 && i_a("Sledgehammer of the Vælkyr") == 0) {
-		getEpic("SC", "seal-clubbing club", "seal tooth", "Bjorn's Hammer");
+		if (dontHaveAstral()) getEpic("SC", "seal-clubbing club", "seal tooth", "Bjorn's Hammer");
 	}
 	
 	if (my_basestat(my_primestat()) > 10 && i_a("Rock and Roll Legend") == 0 && i_a("Squeezebox of the Ages") == 0 && i_a("The Trickster's Trikitixa") == 0 && requireRNR()) {
@@ -2211,6 +2525,7 @@ boolean bcascHoleInTheSky() {
 
 boolean bcascInnaboxen() {
 	if (bcasc_cloverless) return false;
+	if (my_path() == "Bees Hate You") return false;
 	if (checkStage("innaboxen")) return true;
 	
 	int[item] campground = get_campground();
@@ -2347,7 +2662,7 @@ boolean bcascKnobKing() {
 		}
 	}
 	
-	if (!contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King")) {
+	if (!contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King") || (!dispensary_available() && my_path() != "Bees Hate You")) {
 		//First we need the KGE outfit. 
 		while (i_a($item[Knob Goblin elite pants]) == 0 || i_a($item[Knob Goblin elite polearm]) == 0 || i_a($item[Knob Goblin elite helm]) == 0) {
 			bumAdv($location[Cobb's Knob Barracks], "", "items", "1 Knob Goblin elite pants, 1 Knob Goblin elite polearm, 1 Knob Goblin elite helm", "Getting the KGE Outfit");
@@ -2381,6 +2696,15 @@ boolean bcascKnobKing() {
 				bumAdv($location[Throne Room], "+outfit knob goblin elite", "meatboss", "", "Killing the Knob King");
 				checkStage("knobking", true);
 				return true;
+			}
+		}
+		
+		if (contains_text(visit_url("questlog.php?which=2"), "slain the Goblin King") && !dispensary_available() && my_path() != "Bees Hate You") {
+			//Just get the password.
+			cli_execute("outfit knob goblin elite");
+			while (!dispensary_available() && my_path() != "Bees Hate You") {
+				print("BCC: Adventuring once to learn it's FARQUAR. Surely you'd remember this when you reincarnate.", "purple");
+				adventure(1, $location[Cobb's Knob Barracks]);
 			}
 		}
 	} else {
@@ -2645,6 +2969,9 @@ boolean bcascLairTower() {
 	cli_execute("use * black picnic basket");
 	item missing = guardians();
 	if (missing == $item[none]) {
+		if (cli_execute("pool 1")) {}
+		if (cli_execute("concert dilated pu")) {}
+		
 		if (contains_text(visit_url("lair6.php"), "?place=5")) {
 			bcascLairFightNS();
 		} else {
@@ -2673,7 +3000,7 @@ boolean bcascMacguffinFinal() {
 			boolean pyrstep(string stepname,string posnum) {
 				print("BCC: "+stepname+" (image "+posnum+")", "purple");
 				while (get_property("pyramidPosition") != posnum) {
-					if (item_amount($item[tomb ratchet]) > 0) {
+					if (item_amount($item[tomb ratchet]) > 0 && my_path() != "Bees Hate You") {
 						use(1, $item[tomb ratchet]);
 					} else {
 						bumAdv($location[Middle Chamber], "", "", "choiceadv", "Getting another choice adventure", "-");
@@ -2896,10 +3223,14 @@ boolean bcascMacguffinPrelim() {
 	
 	while (!black_market_available()) {
 		if (i_a("sunken eyes") > 0 && i_a("broken wings") > 0) cli_execute("use reassembled blackbird");
-		if (have_familiar($familiar[reassembled blackbird])) {
+		if (i_a("bird brain") > 0 && i_a("busted wings") > 0) cli_execute("use reconstituted crow");
+		
+		if (have_familiar($familiar[reassembled blackbird]) || have_familiar($familiar[reconstituted crow])) {
 			bumAdv($location[Black Forest], "", "items", "1 black market map", "Finding the black market");
-		} else {
+		} else if(my_path() != "Bees Hate You") {
 			bumAdv($location[Black Forest], "", "items", "1 black market map, 1 sunken eyes, 1 broken wings", "Finding the black market");
+		} else {
+			bumAdv($location[Black Forest], "", "items", "1 black market map, 1 bird brain, 1 busted wings", "Finding the black market");
 		}
 		use(1,$item[black market map]);
 	}
@@ -3143,26 +3474,56 @@ boolean bcascMeatcar() {
 	if (checkStage("meatcar")) return true;
 	//Degrassi Knoll. Like the billiards room, we don't have to check Mox here. 
 	//It's before the boss bat so we can set the MCD.
-	if (item_amount($item[bitchin' meatcar]) + item_amount($item[pumpkin carriage]) + item_amount($item[desert bus pass]) == 0) {
-		print("BCC: Getting the Meatcar", "purple");
-		//Gotta hit up paco.
-		visit_url("guild.php?place=paco");
-		if (item_amount($item[sweet rims]) + item_amount($item[dope wheels]) == 0)
-			cli_execute("hermit sweet rims");
-		
-		if (!knoll_available()) {
-			print("BCC: Making the meatcar, getting the stuff from the Gnolls. Damned Gnolls...", "purple");
-            visit_url("forestvillage.php?action=screwquest&submit=&quot;Sure Thing.&quot;");
-			buMax();
-			use(item_amount($item[gnollish toolbox]), $item[gnollish toolbox]);
-			while (creatable_amount($item[bitchin' meatcar]) == 0) {
+	if(my_path() != "Bees Hate You" || knoll_available())
+	{
+		if (item_amount($item[bitchin' meatcar]) + item_amount($item[pumpkin carriage]) + item_amount($item[desert bus pass]) == 0) {
+			print("BCC: Getting the Meatcar", "purple");
+			//Gotta hit up paco.
+			visit_url("guild.php?place=paco");
+			if (item_amount($item[sweet rims]) + item_amount($item[dope wheels]) == 0)
+				cli_execute("hermit sweet rims");
+			
+			if (!knoll_available()) {
+				print("BCC: Making the meatcar, getting the stuff from the Gnolls. Damned Gnolls...", "purple");
+				visit_url("forestvillage.php?action=screwquest&submit=&quot;Sure Thing.&quot;");
+				buMax();
 				use(item_amount($item[gnollish toolbox]), $item[gnollish toolbox]);
+				while (creatable_amount($item[bitchin' meatcar]) == 0) {
+					use(item_amount($item[gnollish toolbox]), $item[gnollish toolbox]);
+					if (my_adventures() == 0) abort("No Adventures");
+					bumMiniAdv(1, $location[Degrassi Knoll]);
+				}
+			}
+			cli_execute("make meatcar");
+			visit_url("guild.php?place=paco");
+		}
+	}
+	else if(i_a("pumpkin") > 0)
+	{
+		if (item_amount($item[pumpkin carriage]) + item_amount($item[desert bus pass]) == 0) {
+			print("BCC: Bees hate You: Getting a Pumpkin Carriage", "purple");
+			//Gotta hit up paco.
+			visit_url("guild.php?place=paco");
+			if (item_amount($item[sweet rims]) + item_amount($item[dope wheels]) == 0)
+				cli_execute("hermit sweet rims");
+				
+			print("BCC: Making the dope wheels, getting the stuff from the Gnolls. Damned Gnolls...", "purple");
+			visit_url("forestvillage.php?action=screwquest&submit=&quot;Sure Thing.&quot;");			
+			buMax();
+			while (creatable_amount($item[dope wheels]) == 0) {
 				if (my_adventures() == 0) abort("No Adventures");
 				bumMiniAdv(1, $location[Degrassi Knoll]);
 			}
+			cli_execute("make pumpkin carriage");
+			visit_url("guild.php?place=paco");
 		}
-		cli_execute("make meatcar");
-		visit_url("guild.php?place=paco");
+	}
+	else
+	{
+		if(my_meat() > 5000)
+			cli_execute("buy 1 desert bus pas");
+		else
+			abort("BCC: Bees Hate You. You have no pumpkins. You have no meat. Go fix!");
 	}
 	checkStage("meatcar", true);
 	return true;
@@ -3398,8 +3759,14 @@ boolean bcascPirateFledges() {
 			setFamiliar("");
 			setMood("i");
 			
-			if (i_a("the big book of pirate insults") == 0) {
-				buy(1, $item[the big book of pirate insults]);
+			if (my_path() != "Bees Hate You") {
+				if (i_a("the big book of pirate insults") == 0) {
+					buy(1, $item[the big book of pirate insults]);
+				}
+			} else {
+				if (i_a("Massive Manual of Marauder Mockery") == 0) {
+					buy(1, $item[Massive Manual of Marauder Mockery]);
+				}
 			}
 			
 			cli_execute("conditions clear");
@@ -3608,9 +3975,15 @@ boolean bcascTeleportitisBurn() {
 		} else {
 			abort("Internal error.  Couldn't sort out telescope text.");
 		}
-		if (item_amount(goal) == 0)
+		if (item_amount(goal) == 0) {
 			bumMiniAdv(1, vacation);
+		}
+	} else if (my_path() == "Bees Hate You") {
+		location vacation = $location[mysticality vacation];
+		bumMiniAdv(1, vacation);
+		use(1, $item[packet of orchid seeds]);
 	}
+	
 	if (have_effect($effect[Teleportitis]) == 0) return true;
 	bcascMining();
 	if (have_effect($effect[Teleportitis]) == 0) return true;
@@ -3770,7 +4143,11 @@ boolean bcascWand() {
 	if (checkStage("wand")) return true;
 
 	//Before we do the next thing, let's just check for and use the dead mimic.
-	if (i_a("dead mimic") > 0) cli_execute("use dead mimic; use * small box; use * large box");
+	if (i_a("dead mimic") > 0) {
+		cli_execute("use dead mimic");
+		if (my_path() != "Bees Hate You") cli_execute("use * small box; use * large box");
+	}
+	
 	
 	//Check for a wand. Any wand will do. 
 	if (i_a("aluminum wand") + i_a("ebony wand") + i_a("hexagonal wand") + i_a("marble wand") + i_a("pine wand") == 0) {
@@ -3922,7 +4299,7 @@ void bcs9() {
 	
 	if (!checkStage("leaflet")) {
 		if (cli_execute("leaflet")) {}
-		if (item_amount($item[instant house]) > 0)
+		if (my_path() != "Bees Hate You" && item_amount($item[instant house]) > 0)
 			use(1, $item[instant house]);
 		if (i_a("giant pinky ring") > 0)
 			checkStage("leaflet", true);
@@ -3983,6 +4360,11 @@ void bcs12() {
 				
 				print("BCC: Finding the GMoB to flyer him...", "purple");
 				set_property("choiceAdventure105","3");     // say "guy made of bees"
+				switch (my_primestat()) {
+					case $stat[Muscle] :		set_property("choiceAdventure402", "1");	break;
+					case $stat[Mysticality] :	set_property("choiceAdventure402", "2");	break;
+					case $stat[Moxie] :			set_property("choiceAdventure402", "3");	break;
+				}
 				while (to_int(get_property("guyMadeOfBeesCount")) < 5 && get_property("flyeredML").to_int() < 10000) {
 					bumAdv($location[Haunted Bathroom], "", "", "1 choiceadv", "You need to say 'Guy made of bees' "+(5-to_int(get_property("guyMadeOfBeesCount")))+" more times.", "-", "consultGMOB");
 				}
@@ -4063,7 +4445,7 @@ void bcs12() {
 				if (have_effect($effect[red tongue]) == 0) bumUse(1, $item[red snowcone]);
 				if (get_property("sidequestArenaCompleted") == "fratboy" && cli_execute("concert 2")) {}
 				if (get_property("demonName2") != "" && cli_execute("summon 2")) {}
-				bumUse(ceil((estimated_advs()-have_effect($effect[wasabi sinuses]))/10), $item[Knob Goblin nasal spray]);
+				if (my_path() != "Bees Hate You") bumUse(ceil((estimated_advs()-have_effect($effect[wasabi sinuses]))/10), $item[Knob Goblin nasal spray]);
 				bumUse(ceil((estimated_advs()-have_effect($effect[your cupcake senses are tingling]))/20), $item[pink-frosted astral cupcake]);
 				bumUse(ceil((estimated_advs()-have_effect($effect[heart of pink]))/10), $item[pink candy heart]);
 				cli_execute("trigger lose_effect, Polka of Plenty, cast 1 Polka of Plenty");
@@ -4080,19 +4462,21 @@ void bcs12() {
 			case "orchard" :
 				if (get_property("sidequestOrchardCompleted") != "none") return true;
 				print("BCC: doSideQuest(Orchard)", "purple");
-				while (have_effect($effect[Filthworm Guard Stench]) == 0) {
-					while (have_effect($effect[Filthworm Drone Stench]) == 0) {
-							while (have_effect($effect[Filthworm Larva Stench]) == 0) {
-								bumAdv($location[hatching chamber], "", "items", "1 filthworm hatchling scent gland", "Getting the Hatchling Gland (1/3)", "i");
-								use(1, $item[filthworm hatchling scent gland]);
+				while (item_amount($item[heart of the filthworm queen]) == 0) {
+					while (have_effect($effect[Filthworm Guard Stench]) == 0) {
+						while (have_effect($effect[Filthworm Drone Stench]) == 0) {
+								while (have_effect($effect[Filthworm Larva Stench]) == 0) {
+									bumAdv($location[hatching chamber], "", "items", "1 filthworm hatchling scent gland", "Getting the Hatchling Gland (1/3)", "i");
+									use(1, $item[filthworm hatchling scent gland]);
+								}
+								bumAdv($location[feeding chamber], "", "items", "1 filthworm drone scent gland", "Getting the Drone Gland (2/3)", "i");
+								use(1, $item[filthworm drone scent gland]);
 							}
-							bumAdv($location[feeding chamber], "", "items", "1 filthworm drone scent gland", "Getting the Drone Gland (2/3)", "i");
-							use(1, $item[filthworm drone scent gland]);
-						}
-					bumAdv($location[guards' chamber], "", "items", "1 filthworm royal guard scent gland", "Getting the Royal Guard Gland (3/3)", "i");
-					use(1, $item[filthworm royal guard scent gland]);
+						bumAdv($location[guards' chamber], "", "items", "1 filthworm royal guard scent gland", "Getting the Royal Guard Gland (3/3)", "i");
+						use(1, $item[filthworm royal guard scent gland]);
+					}
+					bumAdv($location[Queen's Chamber], "", "", "1 heart of the filthworm queen", "Fighting the Queen");
 				}
-				bumAdv($location[Queen's Chamber], "", "", "1 heart of the filthworm queen", "Fighting the Queen");
 				cli_execute("outfit "+bcasc_warOutfit);
 				visit_url("bigisland.php?place=orchard&action=stand&pwd=");
 				visit_url("bigisland.php?place=orchard&action=stand&pwd=");
@@ -4272,7 +4656,7 @@ void bcs12() {
 			break;
 			
 			default :
-				abort("Not yet doing the boss as Muscle.");
+				abort("Not yet doing the boss as Muscle or Mysticality.");
 			break;
 		}
 		
@@ -4329,7 +4713,7 @@ void bumcheekcend() {
 }
 
 void main() {
-	if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.24</b>") == -1) {
+	if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.25</b>") == -1) {
 		print("There is a new version available - go download the next version of bumcheekascend.ash at the sourceforge page, linked from http://kolmafia.us/showthread.php?t=4963!", "red");
 	}
 	
