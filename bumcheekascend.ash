@@ -4129,9 +4129,11 @@ void bcs12() {
 			if (my_adventures() == 0) abort("No adventures in the Battlefield.");
 			
 			if (bcasc_doWarAs == "frat") {
+				buMax("+outfit frat war");
 				bumMiniAdv(1, $location[Battlefield (Frat Uniform)]);
 				numKilled = to_int(get_property("hippiesDefeated"));
 			} else if (bcasc_doWarAs == "hippy") {
+				buMax("+outfit war hippy");
 				bumMiniAdv(1, $location[Battlefield (Hippy Uniform)]);
 				numKilled = to_int(get_property("fratboysDefeated"));
 			} else {
