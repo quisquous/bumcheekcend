@@ -1,5 +1,5 @@
 /*
-	bumcheekascend.ash v0.27
+	bumcheekascend.ash v0.28
 	A script to ascend a character from start to finish.
 	
 	0.1 - Spun initial release. Gets up to about level 10, haphazardly. 
@@ -192,6 +192,11 @@
 		- Fix issue with the Dooks quest which would break if you didn't have a chaos butterfly. 
 		- Equip scratch 'n' sniff for nuns. 
 		- Fixed handling of the sorceress quest when you have the SCUBA gear. Or, more likely, broke it horrifically for hardcore. 
+	0.28- Don't use consultMyst for softcore.
+		- Fix he-bo for myst classes and BHY.
+		- Use antique hand mirror aganist GMOB. Not Cyrus.
+		- Calculate Weapon of the Pastalord damage correctly. Also abort properly if necessary. 
+		- Work out if you're already unlocked the beach manually. 
 */
 
 script "bumcheekascend.ash";
@@ -533,7 +538,7 @@ boolean buMax() { buMax(""); }
 boolean bumMiniAdv(int adventures, location loc, string override) {
 	betweenBattle();
 
-	if (my_primestat() == $stat[Mysticality] && override == "")
+	if (my_primestat() == $stat[Mysticality] && override == "" && in_hardcore())
 		return bumMiniAdv(adventures, loc, "consultMyst");
 
 	try {
@@ -564,7 +569,7 @@ string bumRunCombat() {
 		return to_string(run_combat());
 	}
 	
-	if (my_primestat() == $stat[Mysticality] && !can_interact()) {
+	if (my_primestat() == $stat[Mysticality] && in_hardcore()) {
 		print("BCC: This isn't actually adventuring at the noob cave. Don't worry!", "purple");
 		adv1($location[noob cave], -1, "consultMyst");
 	}
@@ -792,7 +797,7 @@ string consultMyst(int round, string opp, string text) {
 				return (40*bPer + 0.35*myst*bPer + min(55, bAbs) + bElm)*isWeak();
 			break;
 			case $skill[Weapon of the Pastalord] :
-				int weak = isWeak();
+				float weak = isWeak();
 				if (weak == 2) weak = 1.5;
 				return (48*bPer + 0.35*myst*bPer + bAbs + bElm)*weak;
 			break;
@@ -894,17 +899,17 @@ string consultMyst(int round, string opp, string text) {
 			return "skill "+cast;
 		}
 	}
-	abort("Please fight the remainder of the fight yourself. You will be seeing this because you do not have a spell powerful enough to even four-shot the monster. ");
+	print("Please fight the remainder of the fight yourself. You will be seeing this because you do not have a spell powerful enough to even four-shot the monster.", "red");
 	return "abort";
 }
 
 string consultBarrr(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	if (round == 1) {
 		if (my_path() == "Bees Hate You") return "item Massive Manual of Marauder Mockery";
 		return "item the big book of pirate insults";
 	}
-	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+	return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 string consultCasual(int round, string opp, string text) {
@@ -956,8 +961,34 @@ string consultCasual(int round, string opp, string text) {
 }
 
 string consultCyrus(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	if (round == 1) {
+		if (bcasc_doWarAs == "frat") {
+			return "item rock band flyers";
+		} else {
+			return "item jam band flyers";
+		}
+	}
+	return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+}
+
+//This consult script is just to be used to sling !potions against 
+string consultDoD(int round, string opp, string text) {
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round));
+	foreach pot, eff in allBangPotions() {
+		if (item_amount(pot) > 0) {
+			if (eff == $effect[none]) return "item "+pot;
+			print("BCC: We've identified "+pot+" already.", "purple");
+		}
+	}
+	print("BCC: We've identified all the bang potions we have to hand.", "purple");
+	return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+}
+
+string consultGMOB(int round, string opp, string text) {
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round));
+	if (contains_text(text, "Guy Made Of Bees")) {
+		print("BCC: We are fighting the GMOB!", "purple");
 		if (bcasc_doWarAs == "frat") {
 			if(item_amount(to_item("antique hand mirror")) == 0)
 				return "item rock band flyers";
@@ -970,34 +1001,8 @@ string consultCyrus(int round, string opp, string text) {
 				return "item jam band flyers;item antique hand mirror";
 		}
 	}
-	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
-}
-
-//This consult script is just to be used to sling !potions against 
-string consultDoD(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
-	foreach pot, eff in allBangPotions() {
-		if (item_amount(pot) > 0) {
-			if (eff == $effect[none]) return "item "+pot;
-			print("BCC: We've identified "+pot+" already.", "purple");
-		}
-	}
-	print("BCC: We've identified all the bang potions we have to hand.", "purple");
-	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
-}
-
-string consultGMOB(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
-	if (contains_text(text, "Guy Made Of Bees")) {
-		print("BCC: We are fighting the GMOB!", "purple");
-		if (bcasc_doWarAs == "frat") {
-			return "item rock band flyers";
-		} else {
-			return "item jam band flyers";
-		}
-	}
 	print("BCC: We are not fighting the GMOB!", "purple");
-	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+	return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 string consultHeBo(int round, string opp, string text) {
@@ -1005,7 +1010,7 @@ string consultHeBo(int round, string opp, string text) {
 	//If we're under the effect "Everything Looks Yellow", then ignore everything and attack.
 	if (have_effect($effect[Everything Looks Yellow]) > 0) {
 		print("BCC: We would LIKE to use a Yellow Ray somewhere in this zone, but we can't because Everything Looks Yellow.", "purple");
-		return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+		return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 	}
 
 	boolean isGremlin = contains_text(text, "A.M.C. gremlin") || contains_text(text, "batwinged gremlin") || contains_text(text, "erudite gremlin") || contains_text(text, "spider gremlin") || contains_text(text, "vegetable gremlin");
@@ -1014,7 +1019,7 @@ string consultHeBo(int round, string opp, string text) {
 	if (contains_text(text, "Harem Girl") || contains_text(text, "y hippy") || contains_text(text, "War Hippy") || contains_text(text, "Foot Dwarf") || contains_text(text, "bobrace.gif") || contains_text(text, "Frat Warrior") || contains_text(text, "War Pledge") || isGremlin) {
 		if (my_path() == "Bees Hate You") {
 			print("BCC: We are trying to use the HeBoulder, but you can't use it (nor a pumpkin bomb) due to bees hating you, so I'm attacking.", "purple");
-			return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+			return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 		}
 		
 		if (my_familiar() == $familiar[He-Boulder]) {
@@ -1025,6 +1030,8 @@ string consultHeBo(int round, string opp, string text) {
 				switch (my_class()) {
 					case $class[turtle tamer] : return "skill toss"; break;
 					case $class[seal clubber] : return "skill clobber"; break;
+					case $class[pastamancer] : return "skill Spaghetti Spear"; break;
+					case $class[sauceror] : return "skill salsaball"; break;
 					case $class[Disco Bandit] : return "skill suckerpunch"; break;
 					case $class[Accordion Thief] : return "skill sing"; break;
 					default: abort("unsupported class"); break;
@@ -1035,7 +1042,7 @@ string consultHeBo(int round, string opp, string text) {
 			return "item pumpkin bomb";
 		} else {
 			print("BCC: We are trying to use the HeBoulder, but you don't have one (nor a pumpkin bomb), so I'm attacking.", "purple");
-			return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+			return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 		}
 	}
 	print("BCC: We are trying to use the HeBoulder, but this is not the right monster, so I'm attacking.", "purple");
@@ -1043,17 +1050,17 @@ string consultHeBo(int round, string opp, string text) {
 	if (my_familiar() == $familiar[He-Boulder] && have_effect($effect[Everything Looks Red]) == 0 && contains_text(text, "red eye"))
 		return "skill point at your opponent";
 	
-	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+	return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 string consultJunkyard(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	boolean isRightMonster = false;
 	
 	//AMC Gremlins are useless. 
 	if (opp == $monster[a.m.c. gremlin]) {
 		if (item_amount($item[divine champagne popper]) > 0) return "item divine champagne popper";
-		return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+		return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 	} else {
 		//Check to see if the monster CAN carry the item we want. This comes straight from Zarqon's SmartStasis.ash. 
 		if (my_location() == to_location(get_property("currentJunkyardLocation"))) {
@@ -1088,11 +1095,11 @@ string consultJunkyard(int round, string opp, string text) {
 	} else {
 		print("BCC: This is the wrong monster.", "purple");
 	}
-	return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
+	return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round)); 
 }
 
 string consultRunaway(int round, string opp, string text) {
-	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality]) ? consultMyst(round, opp, text) : get_ccs_action(round));
+	if (!isExpectedMonster(opp)) return ((my_primestat() == $stat[Mysticality] && in_hardcore()) ? consultMyst(round, opp, text) : get_ccs_action(round));
 	if (round == 1 && have_skill($skill[Entangling Noodles])) { return "skill entangling noodles"; }
 	return "try to run away";
 }
@@ -1525,7 +1532,7 @@ boolean setFamiliar(string famtype) {
 	}
 	
 	//Then a quick check for if we have Everything Looks Yellow
-	if (have_effect($effect[Everything Looks Yellow]) > 0 && famtype == "hebo") { famtype = "items"; }
+	if ((have_effect($effect[Everything Looks Yellow]) > 0 || (my_path() == "Bees Hate You")) && famtype == "hebo") { famtype = "items"; }
 	
 	//THEN a quick check for a spanglerack
 	if (i_a("spangly sombrero") > 0 && have_familiar($familiar[Mad Hatrack]) && (contains_text(famtype, "item") || contains_text(famtype, "equipment"))) {
@@ -1603,6 +1610,7 @@ boolean setFamiliar(string famtype) {
 		return bumFamiliar(to_familiar(get_property("bcasc_defaultFamiliar")));
 	}
 	
+	print("BCC: Using a default stat familiar.", "purple");
 	//Now either we have neither of the above, or we have enough spleen today.
 	if (have_familiar($familiar[Frumious Bandersnatch]) && my_path() != "Bees Hate You") {
 		bumFamiliar($familiar[Frumious Bandersnatch]);
@@ -2078,7 +2086,7 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 		if (adventure(my_adventures(), loc, "consultCasual")) {}
 	} else if (consultScript != "") {
 		if (adventure(my_adventures(), loc, consultScript)) {}
-	} else if (my_primestat() == $stat[Mysticality]) {
+	} else if (my_primestat() == $stat[Mysticality] && in_hardcore()) {
 		if (adventure(my_adventures(), loc, "consultMyst")) {}
 	} else {
 		if (adventure(numAdv, loc)) {}
@@ -2461,7 +2469,7 @@ boolean bcascEpicWeapons() {
 		if (have_skill($skill[ Ur-Kel's Aria of Annoyance ])) n += 0.4;
 		if (have_skill($skill[ Dirge of Dreadfulness ])) n += 0.1;
 		if (have_skill($skill[ Inigo's Incantation of Inspiration ])) n+= 0.7;
-		return (n >= 1.0);
+		return (n >= 1.0 || my_class() == $class[Accordion Thief]);
 	}
 	
 	if (my_class() == $class[Disco Bandit] && my_basestat(my_primestat()) > 10 && i_a("Disco Banjo") == 0 && i_a("Shagadelic Disco Banjo") == 0 && i_a("Seeger's Unstoppable Banjo") == 0) {
@@ -3345,7 +3353,7 @@ boolean bcascMacguffinHiddenCity() {
 		
 		//Finish function and start the actual adventuring code bit.
 		find_all();
-		setFamiliar("meatboss");
+		setFamiliar("");
 		while (!(item_amount($item[triangular stone]) + sphere_count() == 4 && altar_check())) {
 			print("BCC: Continuing to adventure in the Hidden City.", "purple");
 			if (my_adventures() == 0) abort("You're out of adventures.");
@@ -3735,10 +3743,10 @@ boolean bcascManorLibrary() {
 
 boolean bcascMeatcar() {
 	if (checkStage("meatcar")) return true;
-	//Degrassi Knoll. Like the billiards room, we don't have to check Mox here. 
-	//It's before the boss bat so we can set the MCD.
-	if(my_path() != "Bees Hate You" || knoll_available())
-	{
+	
+	if (contains_text(visit_url("beach.php"), "shore.php")) return checkStage("meatcar", true);
+	
+	if (my_path() != "Bees Hate You" || knoll_available()) {
 		if (item_amount($item[bitchin' meatcar]) + item_amount($item[pumpkin carriage]) + item_amount($item[desert bus pass]) == 0) {
 			print("BCC: Getting the Meatcar", "purple");
 			//Gotta hit up paco.
@@ -3760,9 +3768,7 @@ boolean bcascMeatcar() {
 			cli_execute("make meatcar");
 			visit_url("guild.php?place=paco");
 		}
-	}
-	else if(i_a("pumpkin") > 0)
-	{
+	} else if(i_a("pumpkin") > 0) {
 		if (item_amount($item[pumpkin carriage]) + item_amount($item[desert bus pass]) == 0) {
 			print("BCC: Bees hate You: Getting a Pumpkin Carriage", "purple");
 			//Gotta hit up paco.
@@ -3780,9 +3786,7 @@ boolean bcascMeatcar() {
 			cli_execute("make pumpkin carriage");
 			visit_url("guild.php?place=paco");
 		}
-	}
-	else
-	{
+	} else {
 		if(my_meat() > 5000)
 			cli_execute("buy 1 desert bus pas");
 		else
@@ -4847,13 +4851,13 @@ void bcs12() {
 				if (i_a("Orcish baseball cap") == 0 || i_a("homoerotic frat-paddle") == 0 || i_a("Orcish cargo shorts") == 0) {
 					bumAdv($location[Frat House], "", "equipmentnc", "1 Orcish baseball cap, 1 homoerotic frat-paddle, 1 Orcish cargo shorts", "Getting the Frat Boy Outfit to then get the hippy one.", "-");
 				}
-				buMax("+outfit frat boy");
 				if (my_primestat() == $stat[Moxie]) abort("Adventure in the Wartime Hippy Camp to get the Hippy Outfit. Why can't this script do this? Because you're wearing a melee weapon.");
+				buMax("+outfit frat boy");
 				bumAdv($location[Wartime Hippy Camp], "+outfit frat boy", "hebo", "1 reinforced beaded headband, 1 bullet-proof corduroys, 1 round purple sunglasses", "Getting the War Hippy Outfit", "", "consultHeBo");
 			}
 		} else if (bcasc_doWarAs == "frat") {
 			if (i_a("beer helmet") == 0 || i_a("distressed denim pants") == 0 || i_a("bejeweled pledge pin") == 0) 
-				bumAdv($location[Wartime Frat House], "+outfit hippy", "hebo", "1 beer helmet, 1 distressed denim pants, 1 bejeweled pledge pin", "Getting the Frat Warrior Outfit", "", "consultHeBo");
+				bumAdv($location[Wartime Frat House], "+outfit filthy hippy disguise", "hebo", "1 beer helmet, 1 distressed denim pants, 1 bejeweled pledge pin", "Getting the Frat Warrior Outfit", "", "consultHeBo");
 		} else {
 			abort("Please specify if you want the war done as a Hippy or a Fratboy.");
 		}
@@ -5024,12 +5028,16 @@ void bumcheekcend() {
 }
 
 void main() {
-	if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.27</b>") == -1) {
+	if (index_of(visit_url("http://kolmafia.us/showthread.php?t=4963"), "0.28</b>") == -1) {
 		print("There is a new version available - go download the next version of bumcheekascend.ash at the sourceforge page, linked from http://kolmafia.us/showthread.php?t=4963!", "red");
 	}
 	
 	if (get_property("autoSatisfyWithNPCs") != "true") {
 		set_property("autoSatisfyWithNPCs", "true");
+	}
+	
+	if (get_property("autoSatisfyWithCoinmasters") != "true") {
+		set_property("autoSatisfyWithCoinmasters", "true");
 	}
 	
 	if (get_property("bcasc_shutUpAboutOtherScripts") != "true") {
