@@ -2417,7 +2417,7 @@ boolean bcascLairFightNS() {
 			print("BCC: Getting all your items out of Storage. Not all bankers are evil, eh?", "purple");
 			visit_url("storage.php?action=takeall&pwd");
 		}
-		abort("Tada! Thankyou for using bumcheekascend.ash.");
+		print("Tada! Thankyou for using bumcheekascend.ash.", "purple");
 	} else {
 		abort("Bring it on.");
 	}
