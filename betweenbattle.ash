@@ -870,7 +870,7 @@ void killKing() {
 }
 
 void getGoatCheese() {
-	if (bcascStage("goatlet") || olfactTarget() != $monster[dairy goat])
+	if (!bcascStage("goatlet") || olfactTarget() != $monster[dairy goat])
 		return;
 
 	// Assume the last day can be taken care of with war food.
