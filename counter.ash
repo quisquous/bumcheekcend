@@ -1,6 +1,16 @@
 import <betweenbattle.ash>
 
 boolean main(string counter, int turns) {
+	if (counter == fortuneCounter) {
+		if (turns == 0) {
+			getFortune();
+		} else {
+			// FIXME: Surely we can do something useful here?
+			abort("Need to burn turns before fortune cookie is used up");
+		}
+		return true;
+	}
+
 	if (counter == danceCardCounter) {
 		if (turns == 0) {
 			if (my_location() != $location[haunted ballroom]) {
@@ -9,16 +19,6 @@ boolean main(string counter, int turns) {
 			}
 		} else {
 			debug("Sadly, skipping the dance card counter.  (Turns=" + turns +")");
-		}
-		return true;
-	}
-
-	if (counter == fortuneCounter) {
-		if (turns == 0) {
-			getFortune();
-		} else {
-			// FIXME: Surely we can do something useful here?
-			abort("Need to burn turns before fortune cookie is used up");
 		}
 		return true;
 	}
