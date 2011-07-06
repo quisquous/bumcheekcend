@@ -211,7 +211,7 @@ boolean haveLegendaryWeapon() {
 }
 
 boolean haveKGEOutfit() {
-	return haveItem($item[Knob Goblin elite pants]) || haveItem($item[Knob Goblin elite polearm]) || haveItem($item[Knob Goblin elite helm]);
+	return haveItem($item[Knob Goblin elite pants]) && haveItem($item[Knob Goblin elite polearm]) && haveItem($item[Knob Goblin elite helm]);
 }
 
 boolean checkPropToday(string prop) {
