@@ -1990,7 +1990,7 @@ boolean levelMeInnerLoop(int sMox) {
 				while (my_basestat($stat[Moxie]) < sMox) {
 					if (my_adventures() == 0) abort("No Adventures to level :(");
 					if ((my_buffedstat($stat[Moxie]) < 130) && canMCD()) cli_execute("mcd 0");
-					if (item_amount($item[dance card]) > 0) {
+					if (item_amount($item[dance card]) > 0 && !contains_text(get_counters("Fortune Cookie", 4, 4), "Fortune Cookie")) {
 						use(1, $item[dance card]);
 						bumMiniAdv(4, $location[Haunted Ballroom]);
 					} else {
