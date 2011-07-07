@@ -3515,6 +3515,7 @@ boolean bcascMacguffinPrelim() {
 		setFamiliar("hipster");
 		bumAdv($location[hidden temple], "", "hipster", "1 choiceadv", "Getting another ChoiceAdv to open the Temple");
 	}
+	cli_execute("refresh inventory");
 	
 	//At this point, Zarqon opens up the bedroom. But I'd like to do this earlier. 
 	//Setting an abort() here to make sure we can get in. 
@@ -3522,8 +3523,8 @@ boolean bcascMacguffinPrelim() {
 	while (!contains_text(visit_url("manor.php"),"sm8b.gif")) {
 		print("BCC: Opening the Spookyraven Cellar", "purple");
 		bumMiniAdv(my_adventures(), $location[haunted ballroom]);
-		betweenBattle();
 	}
+	cli_execute("refresh inventory");
 
 	boolean needFledges() { return my_primestat() != $stat[Moxie]; }
 	boolean canEquipFledges() { return my_basestat($stat[Mysticality]) >= 60; }
