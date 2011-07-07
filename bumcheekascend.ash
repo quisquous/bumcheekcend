@@ -2318,15 +2318,16 @@ boolean bcascCyrpt() {
 	if (!contains_text(visit_url("questlog.php?which=2"), "defeated the Bonerdagon")) {
 		set_property("choiceAdventure523", "4");
 		use(1, $item[evilometer]);
-		
+	
+		// Niche and alcove can use olfaction, so separate them.
+		while (!stageDone("Niche")) bumAdv($location[Defiled Niche], "", "", "", "Un-Defiling the Niche (1/4)");
 		while (!stageDone("Nook")) {
 			if (item_amount($item[evil eye]) > 0) use(1, $item[evil eye]);
-			bumAdv($location[Defiled Nook], "", "items", "1 evil eye", "Un-Defiling the Nook (1/4)", "i");
+			bumAdv($location[Defiled Nook], "", "items", "1 evil eye", "Un-Defiling the Nook (2/4)", "i");
 			if (item_amount($item[evil eye]) > 0) use(1, $item[evil eye]);
 		}
-		while (!stageDone("Alcove")) bumAdv($location[Defiled Alcove], "", "", "", "Un-Defiling the Alcove (2/4)", "n");
-		while (!stageDone("Niche")) bumAdv($location[Defiled Niche], "", "", "", "Un-Defiling the Niche (3/4)");
-		while (!stageDone("Cranny")) bumAdv($location[Defiled Cranny], "", "", "", "Un-Defiling the Cranny (4/4)");
+		while (!stageDone("Cranny")) bumAdv($location[Defiled Cranny], "-", "", "", "Un-Defiling the Cranny (3/4)");
+		while (!stageDone("Alcove")) bumAdv($location[Defiled Alcove], "", "", "", "Un-Defiling the Alcove (4/4)", "n");
 		
 		if (my_buffedstat(my_primestat()) > 101) {
 			set_property("choiceAdventure527", "1");
