@@ -3966,7 +3966,12 @@ boolean bcascNaughtySorceress() {
 			bumAdv($location[Hedge Maze], "", "items", "1 hedge maze puzzle", "Getting another Hedge Maze");
 			if (hedgemaze()) {}
 		}
-		
+
+		if (have_familiar($familiar[Baby Sandworm]) && my_path() != "Bees Hate You")
+			bumFamiliar($familiar[Baby Sandworm]);
+		else
+			setFamiliar("");
+
 		while (!contains_text(visit_url("lair4.php"), "lair5.php")) {
 			bcascLairTower();
 		}
