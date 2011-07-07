@@ -1226,6 +1226,9 @@ void main() {
 	}
 	openDispensary();
 
+	if (have_effect($effect[teleportitis]) > 0 && bcascStage("wand"))
+		bcascTeleportitisBurn();
+
 	betweenBattleInternal(my_location());
 }
 
