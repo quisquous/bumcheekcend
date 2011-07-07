@@ -2011,7 +2011,7 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	setFamiliar(famtype);
 	
 	//Do we have a HeBo, and are we blocked from using it by a 100% run? Have to do this first, because we re-set the goals below.
-	if ((my_path() != "Bees Hate You") && (consultScript == "consultHeBo") && (my_familiar() != $familiar[He-Boulder]) && have_effect($effect[Everything Looks Yellow]) == 0) {
+	if ((my_path() != "Bees Hate You") && (consultScript == "consultHeBo") && have_familiar($familiar[He-Boulder]) && have_effect($effect[Everything Looks Yellow]) == 0) {
 		print("BCC: We don't have the HeBo equipped, so we're either on a 100% run or you just don't have one. Trying a pumpkin bomb. If you have one, we'll use it.", "purple");
 		//Hit the pumpkin patch
 		visit_url("campground.php?action=garden&pwd="+my_hash());
