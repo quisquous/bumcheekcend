@@ -951,9 +951,6 @@ item createNightcap() {
 	if (my_adventures() == 0)
 		abort("FIXME: implement inigo's");
 
-	if (stills_available() < 2)
-		abort("FIXME: implement night cap without still");
-
 	foreach key in sorted {
 		item thing = sorted[key];
 		debug("Creating " + thing + " for nightcap");
