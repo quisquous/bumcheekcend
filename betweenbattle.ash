@@ -1084,7 +1084,7 @@ void locationSkills(location loc) {
 			use(1, $item[reodorant]);
 	}
 
-	if (loc == $location[defiled cranny] || loc == $location[defiled alcove]) {
+	if (loc == $location[defiled cranny]) {
 		tryShrug($skill[fat leon's phat loot lyric]);
 		needPolka = true;
 	}
