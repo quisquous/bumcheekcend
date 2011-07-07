@@ -1900,9 +1900,9 @@ boolean levelMeInnerLoop(int sMox) {
 					if (contains_text(visit_url("woods.php"), "temple.gif")) {
 						if (get_property("bcasc_dontLevelInTemple") == "true") abort("You don't want to level in the temple.");
 						setFamiliar("hipster");
-						return adventure(my_adventures(), $location[Hidden Temple]);
+						return bumMiniAdv(my_adventures(), $location[Hidden Temple]);
 					} else {
-						return adventure(my_adventures(), $location[Haunted Pantry], "consultMyst");
+						return bumMiniAdv(my_adventures(), $location[Haunted Pantry], "consultMyst");
 					}
 				}
 				return bumMiniAdv(my_adventures(), $location[Haunted Pantry]);
@@ -2019,7 +2019,7 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 		//Have a quick check for a KGF first. 
 		if (i_a("pumpkin") > 0 && i_a("knob goblin firecracker") == 0) {
 			cli_execute("conditions clear; conditions set 1 knob goblin firecracker");
-			adventure(my_adventures(), $location[Outskirts of the Knob]);
+			bumMiniAdv(my_adventures(), $location[Outskirts of the Knob]);
 		}
 		
 		if (((i_a("pumpkin") > 0 && i_a("knob goblin firecracker") > 0)) || i_a("pumpkin bomb") > 0) {
@@ -2897,7 +2897,7 @@ boolean bcascKnobKing() {
 			cli_execute("outfit knob goblin elite");
 			while (!dispensary_available() && my_path() != "Bees Hate You") {
 				print("BCC: Adventuring once to learn it's FARQUAR. Surely you'd remember this when you reincarnate.", "purple");
-				adventure(1, $location[Cobb's Knob Barracks]);
+				bumMiniAdv(1, $location[Cobb's Knob Barracks]);
 			}
 		}
 	} else {
@@ -3252,8 +3252,7 @@ boolean bcascMacguffinFinal() {
 						bumAdv($location[Middle Chamber], "", "", "choiceadv", "Getting another choice adventure", "-");
 					}
 				}
-				//No need to use bumMiniAdv here. Doing so causes a problem for casual runs.
-				return adventure(1, $location[lower chambers]);
+				return bumMiniAdv(1, $location[lower chambers]);
 			}
 			
 			if (item_amount($item[ancient bronze token]) == 0 && item_amount($item[ancient bomb]) == 0 && !pyrstep("Step 1 / 3: get a token.","4"))
