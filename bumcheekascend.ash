@@ -543,18 +543,17 @@ boolean bumMiniAdv(int adventures, location loc, string override) {
 
 	try {
 		if (loc.nocombats) {
-			for i from 1 to adventures {
-				callBetweenBattleScript();
-				if (override == "")
-					adventure(1, loc);
-				else
-					adventure(1, loc, override);
-			}
-		} else
+			callBetweenBattleScript();
 			if (override == "")
 				adventure(1, loc);
 			else
 				adventure(1, loc, override);
+		} else {
+			if (override == "")
+				adventure(adventures, loc);
+			else
+				adventure(adventures, loc, override);
+		}
 		boolean success = true;
 	} finally {
 		return success;
