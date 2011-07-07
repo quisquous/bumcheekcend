@@ -3297,6 +3297,20 @@ boolean bcascMacguffinHiddenCity() {
 		boolean altar_check() {
 			return (altarcount == 4 && contains_text(urldata, "map_temple"));
 		}
+
+		boolean know_all_stones() {
+			int count = 0;
+			foreach desc in $strings[lightning, water, fire, nature] {
+				for i from 2174 to 2177 {
+					if (get_property("lastStoneSphere"+i) == desc) {
+						count += 1;
+						break;
+					}
+				}
+			}
+
+			return (count == 4);
+		}
 		
 		//Returns the stone you need for a given temple. 
 		item give_appropriate_stone(string page) {
@@ -3379,7 +3393,21 @@ boolean bcascMacguffinHiddenCity() {
 				return true;
 			}
 		}
-		
+
+		if (sphere_count() != 4)
+			abort("Didn't get all the spheres, somehow");
+	
+		if (!know_all_stones()) {
+			print("BCC: Adventuring to discover stone types", "purple");
+			for count from 1 to 4 {
+				bumMiniAdv(1, $location[haunted ballroom]);
+				if (know_all_stones())
+					break;
+			}
+			if (!know_all_stones())
+				abort("Adventured, but couldn't determine stone type");
+		}
+
 		//Now we've found it, we have to finish off the city. First get the triangular stones. 
 		print("BCC: We have to get the triangular stones.", "purple");
 		if (item_amount(to_item("triangular stone")) < 4) {
