@@ -8,12 +8,6 @@ attack with weapon
 skill entangling noodles
 attack with weapon
 
-[ blooper ]
-consult consultromantic.ash
-special action
-skill transcendent olfaction
-attack with weapon
-
 [ blue-haired girl ]
 skill entangling noodles
 attack with weapon
@@ -24,7 +18,9 @@ skill transcendent olfaction
 attack with weapon
 
 [ default ]
+consult consultromantic.ash
 special action
+consult consultolfact.ash
 attack with weapon
 
 [ dr. awkward ]
@@ -37,23 +33,10 @@ attack with weapon
 skill entangling noodles
 attack with weapon
 
-[ hellion ]
-special action
-skill transcendent olfaction
-attack with weapon
-
-[ lobsterfrogman ]
-consult consultromantic.ash
-
 [ lord spookyraven ]
 skill saucy salve
 skill entangling noodles
 skill saucegeyser
-attack with weapon
-
-[ mind flayer ]
-special action
-skill transcendent olfaction
 attack with weapon
 
 [ peeved roommate ]
@@ -63,11 +46,6 @@ attack with weapon
 [ protector spectre ]
 skill saucegeyser
 
-[ quantum mechanic ]
-special action
-skill transcendent olfaction
-attack with weapon
-
 [ random scenester ]
 skill entangling noodles
 attack with weapon
@@ -75,21 +53,8 @@ attack with weapon
 [ tomb rat ]
 if hascombatitem tangle of rat tails
     item tangle of rat tails
-    abort
+    consult consulthard.ash
 endif
-special action
-skill transcendent olfaction
-attack with weapon
-
-[ tomb rat king ]
-consult consulthard.ash
-
-[ wealthy pirate ]
-special action
-skill transcendent olfaction
-attack with weapon
-
-[ zombie waltzers ]
 special action
 skill transcendent olfaction
 attack with weapon

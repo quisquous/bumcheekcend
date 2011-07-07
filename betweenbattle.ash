@@ -3,6 +3,7 @@ import <fax.ash>
 import <makemeat.ash>
 import <pcklutil.ash>
 import <bumcheekascend.ash>
+import <telescope.ash>
 
 // Forward declarations
 void betweenBattleInternal(location loc);
@@ -164,6 +165,111 @@ void getFortune() {
 	}
 }
 
+boolean[monster] olfactionTargets(location loc) {
+
+	switch (loc) {
+	case $location[8-bit realm]:
+		return $monsters[blooper];
+	case $location[goatlet]:
+		return $monsters[dairy goat];
+	case $location[haunted ballroom]:
+		return $monsters[zombie waltzers];
+	case $location[dark neck of the woods]:
+	case $location[pandamonium slums]:
+		return $monsters[hellion];
+	case $location[poop deck]:
+		return $monsters[wealthy pirate];
+	case $location[upper chamber]:
+		return $monsters[tomb rat];
+	case $location[battlefield (frat uniform)]:
+		return $monsters[war hippy green gourmet];
+	case $location[defiled alcove]:
+		return $monsters[modern zmobie];
+	case $location[defiled niche]:
+		return $monsters[dirty old lihc];
+	case $location[wartime hippy camp (frat disguise)]:
+		return $monsters[war hippy drill sergeant];
+	}
+
+	if (loc == $location[dungeons of doom]) {
+		if (!bcascStage("goatlet"))
+			return $monsters[none];
+		return $monsters[mind flayer, quantum mechanic];
+	}
+
+	boolean[monster] olfactIfNeedOne(int[item] required) {
+		item target;
+		foreach thing in required {
+			if (item_amount(thing) < required[thing]) {
+				// We need two types of items, so don't olfact.
+				if (target != $item[none])
+					return $monsters[none];
+				target = thing;
+			}
+		}
+
+		return getMonstersForItem(loc, target);
+	}
+
+	if (loc == $location[haunted library]) {
+		int[item] required;
+		required[$item[disintegrating quill pen]] = 1;
+		required[$item[tattered scrap of paper]] = 1;
+		required[$item[inkwell]] = 1;
+		return olfactIfNeedOne(required);
+	}
+	
+	if (loc == $location[whitey's grove]) {
+		int[item] required;
+		required[$item[lion oil]] = 1;
+		required[$item[bird rib]] = 1;
+		return olfactIfNeedOne(required);
+	}
+
+	if (loc == $location[orc chasm]) {
+		int[item] required;
+		required[$item[334 scroll]] = haveItem($item[668 scroll]) ? 0 : 2;
+		required[$item[30669 scroll]] = haveItem($item[64067 scroll]) ? 0 : 1;
+		required[$item[33398 scroll]] = haveItem($item[64067 scroll]) ? 0 : 1;
+		int[item] telescope = telescopeItemsNeeded();
+		required[$item[lowercase n]] = telescope[$item[lowercase n]];
+		return olfactIfNeedOne(required);
+	}
+
+	if (loc == $location[black forest]) {
+		int[item] required;
+		required[$item[sunken eyes]] = 1;
+		required[$item[broken wings]] = 1;
+
+		int[item] telescope = telescopeItemsNeeded();
+		if (telescope[$item[black pepper]] > 0)
+			required[$item[black picnic basket]] = 1;
+		return olfactIfNeedOne(required);
+	}
+
+	if (loc == $location[oasis]) {
+		if (!haveItem($item[drum machine]))
+			return $monsters[none];
+
+		// Drum machine usually drops easily, so olfact for mojo filters.
+		return $monsters[swarm of scarab beatles];
+	}
+
+	if (loc == $location[desert (ultrahydrated)]) {
+		// Oasis done at same time.  Drum machine more important than
+		// the telescope item.
+		if (haveItem($item[drum machine])) {
+			int[item] telescope = telescopeItemsNeeded();
+			if (telescope[$item[bronzed locust]] > 0)
+				return $monsters[plaque of locusts];
+		}
+
+		return $monsters[none];
+	}
+
+	return $monsters[none];
+}
+
 boolean needOlfaction(location loc) {
 	if (!have_skill($skill[transcendent olfaction]))
 		return false;
@@ -172,22 +278,7 @@ boolean needOlfaction(location loc) {
 		return true;
 	}
 
-	// TODO(picklish) - don't depend on CSS settings here.
-	switch (loc) {
-	case $location[8-bit realm]:
-	case $location[goatlet]:
-	case $location[haunted ballroom]:
-		return true;
-	case $location[dark neck of the woods]:
-	case $location[pandamonium slums]:
-		return item_amount($item[hellion cube]) <= 10;
-	case $location[dungeons of doom]:
-		// This is hacky, but it is too close to the goatlet, where we really
-		// olfaction.
-		return bcascStage("goatlet");
-	}
-
-	return false;
+	return count(olfactionTargets(loc)) > 0;
 }
 
 void olfactionPreparation() {
