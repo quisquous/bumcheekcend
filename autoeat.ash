@@ -3,6 +3,7 @@ import <pcklutil.ash>
 record MafiaEntry {
 	int fullness;
 	int levelReq;
+	string quality;
 	string advRange;
 	string musRange;
 	string mysRange;
