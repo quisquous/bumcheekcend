@@ -30,8 +30,9 @@ void finishDailyCasts() {
 		return safeUseSkill(1, s);
 	}
 
-
 	while (mp_cost($skill[summon party favor]) < 30) {
+		if (my_meat() <= 1000)
+			break;
 		if (!safeUseSkill($skill[summon party favor]))
 			break;
 	}
