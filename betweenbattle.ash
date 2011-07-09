@@ -278,7 +278,8 @@ boolean needOlfaction(location loc) {
 		return true;
 	}
 
-	return count(olfactionTargets(loc)) > 0;
+	boolean[monster] targets = olfactionTargets(loc);
+	return count(targets) > 1 || !(targets contains $monster[none]);
 }
 
 void olfactionPreparation() {
