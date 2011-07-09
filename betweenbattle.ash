@@ -581,7 +581,7 @@ void checkFamiliar(location loc) {
 	if (have_familiar($familiar[organ grinder])) {
 		// FIXME: This could be smarter by killing mini-bosses and making pies,
 		// but there's no easy way to track if a boss made it into the pie.
-		if (loc == $location[defiled cranny] || loc == $location[defiled alcove]) {
+		if (loc == $location[defiled cranny]) {
 			int parts = get_property(propOrganTurns).to_int();
 			int pie = get_property(propPieCount).to_int();
 			if (parts < 4 && pie == 0 && !get_property(propOrganFinishPie).to_boolean()) {
@@ -627,10 +627,8 @@ void checkFamiliar(location loc) {
 	int hipster = get_property(propHipsterAdv).to_int();
 	if (have_familiar($familiar[mini-hipster]) && hipster < 7) {
 		boolean inCrypt = (
-			loc == $location[defiled alcove] ||
-			loc == $location[defiled cranny] ||
 			loc == $location[defiled niche] ||
-			loc == $location[defiled nook]);
+			loc == $location[defiled alcove]);
 		if (loc == $location[hidden temple] ||
 			loc == $location[spooky forest] && hipster <= 4 ||
 			inCrypt ||
