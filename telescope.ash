@@ -489,6 +489,7 @@ record OutMobs {
 record CombatPlan {
     location loc;
     item thing;
+    int quantity;
     float turns;
 
     boolean useNonCombat;
@@ -1034,6 +1035,8 @@ CombatPlan turnsToGetItem(location loc, item thing, CombatOptions options) {
     result.loc = loc;
     result.thing = thing;
     result.options = options;
+    // FIXME
+    result.quantity = 1;
     turnsToGetItem(loc, thing, options, result);
 
     return result;
