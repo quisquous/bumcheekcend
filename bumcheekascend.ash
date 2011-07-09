@@ -2319,7 +2319,7 @@ boolean bcascCyrpt() {
 			bumAdv($location[Defiled Nook], "", "items", "1 evil eye", "Un-Defiling the Nook (2/4)", "i");
 			if (item_amount($item[evil eye]) > 0) use(1, $item[evil eye]);
 		}
-		while (!stageDone("Cranny")) bumAdv($location[Defiled Cranny], "-", "", "", "Un-Defiling the Cranny (3/4)");
+		while (!stageDone("Cranny")) bumAdv($location[Defiled Cranny], "", "", "", "Un-Defiling the Cranny (3/4)", "-");
 		while (!stageDone("Alcove")) bumAdv($location[Defiled Alcove], "", "", "", "Un-Defiling the Alcove (4/4)", "n");
 		
 		if (my_buffedstat(my_primestat()) > 101) {
