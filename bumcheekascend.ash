@@ -4553,13 +4553,13 @@ void bcs6() {
 	bcascFriars();
 	//Setting a second call to this as we want the equipment before the steel definitely. 
 	bcascKnobKing();
-	bcascFriarsSteel();
 	
 	//Get the Swashbuckling Kit. The extra moxie boost will be incredibly helpful for the Cyrpt
 	while ((i_a("eyepatch") == 0 || i_a("swashbuckling pants") == 0 || i_a("stuffed shoulder parrot") == 0) && i_a("pirate fledges") == 0) {
 		bumAdv($location[Pirate Cove], "", "equipmentnc", "1 eyepatch, 1 swashbuckling pants, 1 stuffed shoulder parrot", "Getting the Swashbuckling Kit", "-i");
 	}
 	
+	bcascFriarsSteel();
 	bcascManorLibrary();
 	levelMe(40, true);
 }
