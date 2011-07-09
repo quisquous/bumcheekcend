@@ -1829,13 +1829,6 @@ boolean levelMe(int sMox, boolean needBaseStat) {
 		}
 	}
 
-	string command = get_property("bcasc_preLevelMe");
-	if (command != "") {
-		cli_execute(command + " " + sMox + " " + needBaseStat);
-		if (my_basestat(my_primestat()) >= sMox)
-			return true;
-	}
-
 	// Adventuring can abort sometimes, so recheck if conditions were met.
 	while (my_basestat(my_primestat()) < sMox) {
 		levelMeInnerLoop(sMox);
