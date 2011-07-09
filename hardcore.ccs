@@ -18,6 +18,7 @@ skill transcendent olfaction
 attack with weapon
 
 [ default ]
+consult consulttelescope.ash
 consult consultromantic.ash
 special action
 consult consultolfact.ash
