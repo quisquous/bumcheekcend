@@ -1079,7 +1079,8 @@ string consultJunkyard(int round, string opp, string text) {
 		} else {
 			if (my_hp() < 50 && have_skill($skill[lasagna bandages])) {
 				print("BCC: Let's cast bandages to heal you.", "purple");
-				return "skill Lasagna Bandages";
+				//FIXME
+				//return "skill lasagna bandages";
 			} else {
 				switch (my_class()) {
 					case $class[turtle tamer] : return "skill toss"; break;
