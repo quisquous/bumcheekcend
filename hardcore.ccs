@@ -51,12 +51,3 @@ skill saucegeyser
 skill entangling noodles
 attack with weapon
 
-[ tomb rat ]
-if hascombatitem tangle of rat tails
-    item tangle of rat tails
-    consult consulthard.ash
-endif
-special action
-skill transcendent olfaction
-attack with weapon
-
