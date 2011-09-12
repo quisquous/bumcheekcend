@@ -117,8 +117,8 @@ void getFortune() {
 	}
 
 	if (my_level() >= 5 && !haveKGEOutfit()) {
+		visit_url("council.php");
 		if (item_amount($item[Cobb's Knob map]) > 0) {
-			visit_url("council.php");
 			use(1, $item[Cobb's Knob map]);
 		}
 
