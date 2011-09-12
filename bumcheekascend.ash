@@ -2000,7 +2000,13 @@ boolean levelMe(int sMox) { levelMe(sMox, false); }
 boolean bumAdv(location loc, string maxme, string famtype, string goals, string printme, string combat, string consultScript) {
 	int sMox = safeMox(loc);
 	buMax(maxme);
-	
+
+	if (my_buffedstat(my_primestat()) < sMox && loc != $location[Haunted Bedroom])	{
+		//Do something to get more moxie.
+		print("Need to Level up a bit to get "+sMox+" Mainstat", "fuschia");
+		levelMe(sMox);
+	}
+
 	sellJunk();
 	setFamiliar(famtype);
 	
@@ -2033,13 +2039,6 @@ boolean bumAdv(location loc, string maxme, string famtype, string goals, string 
 	cli_execute("trigger clear");
 	setMood(combat);
 
-	cli_execute("mood execute");
-	
-	if (my_buffedstat(my_primestat()) < sMox && loc != $location[Haunted Bedroom])	{
-		//Do something to get more moxie.
-		print("Need to Level up a bit to get "+sMox+" Mainstat", "fuschia");
-		levelMe(sMox);
-	}
 	cli_execute("mood execute");
 	
 	//Goals must be set after trying to levelme()
