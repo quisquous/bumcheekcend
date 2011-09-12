@@ -1020,7 +1020,7 @@ void openDispensary() {
 	}
 
 	if (guild_store_available()) {
-		if (my_class() == $class[accordion thief] || my_primestat() == $stat[mysticality])
+		if (my_class() == $class[accordion thief] && my_level() >= 9 || my_primestat() == $stat[mysticality])
 			return;
 	}
 
